@@ -1,0 +1,269 @@
+import discord
+from discord.ext import commands
+import os
+import json
+from flask import Flask
+from threading import Thread
+
+# Bot setup
+intents = discord.Intents.default()
+intents.message_content = True
+intents.guilds = True
+intents.members = True
+bot = commands.Bot(command_prefix='/', intents=intents)
+
+# File to store scripts
+SCRIPT_FILE = "scripts.json"
+ROLE_FILE = "roles.json"
+
+# Load scripts from file
+def load_scripts():
+    if os.path.exists(SCRIPT_FILE):
+        with open(SCRIPT_FILE, 'r') as file:
+            return json.load(file)
+    return {}
+
+# Save scripts to file
+def save_scripts():
+    with open(SCRIPT_FILE, 'w') as file:
+        json.dump(scripts, file, indent=4)
+
+# Load roles from file
+def load_roles():
+    if os.path.exists(ROLE_FILE):
+        with open(ROLE_FILE, 'r') as file:
+            return json.load(file)
+    return []
+
+# Save roles to file
+def save_roles():
+    with open(ROLE_FILE, 'w') as file:
+        json.dump(roles, file, indent=4)
+
+# Dictionary to store scripts
+scripts = load_scripts()
+roles = load_roles()
+
+# Check if user has any of the required roles
+def has_any_role(member, roles):
+    member_role_ids = [role.id for role in member.roles]
+    return any(role_id in member_role_ids for role_id in roles)
+
+from discord import app_commands  # Import app_commands
+
+class MyClient(discord.Client):
+    def __init__(self):
+        super().__init__(intents=intents)
+        self.tree = app_commands.CommandTree(self)
+
+    async def setup_hook(self):
+        # Sync the commands with the server
+        await self.tree.sync()
+
+client = MyClient()
+
+@client.event
+async def on_ready():
+    print(f'Bot connected as {client.user}')
+
+# Command to add a script
+@client.tree.command(name="addscript", description="Add a new script")
+@app_commands.describe(script_name="The name of the script", script_content="The content of the script")
+async def addscript(interaction: discord.Interaction, script_name: str, script_content: str):
+    if has_any_role(interaction.user, roles):
+        if script_name in scripts:
+            await interaction.response.send_message(embed=discord.Embed(
+                title="❌ Script Already Exists",
+                description=f"A script with the name **'{script_name}'** already exists.",
+                color=discord.Color.red()
+            ), ephemeral=True)
+        else:
+            scripts[script_name] = script_content
+            save_scripts()
+            await interaction.response.send_message(embed=discord.Embed(
+                title="✅ Script Added",
+                description=f"Script **'{script_name}'** has been successfully added.",
+                color=discord.Color.green()
+            ))
+    else:
+        await interaction.response.send_message(embed=discord.Embed(
+            title="🚫 Access Denied",
+            description="You do not have any of the required roles to use this command.",
+            color=discord.Color.red()
+        ), ephemeral=True)
+
+# Command to remove a script
+@client.tree.command(name="removescript", description="Remove an existing script")
+@app_commands.describe(script_name="The name of the script to remove")
+async def removescript(interaction: discord.Interaction, script_name: str):
+    if has_any_role(interaction.user, roles):
+        if script_name in scripts:
+            del scripts[script_name]
+            save_scripts()
+            await interaction.response.send_message(embed=discord.Embed(
+                title="✅ Script Removed",
+                description=f"Script **'{script_name}'** has been successfully removed.",
+                color=discord.Color.green()
+            ))
+        else:
+            await interaction.response.send_message(embed=discord.Embed(
+                title="❌ Script Not Found",
+                description=f"No script found with the name **'{script_name}'**.",
+                color=discord.Color.red()
+            ), ephemeral=True)
+    else:
+        await interaction.response.send_message(embed=discord.Embed(
+            title="🚫 Access Denied",
+            description="You do not have any of the required roles to use this command.",
+            color=discord.Color.red()
+        ), ephemeral=True)
+
+# Command to edit a script
+@client.tree.command(name="editscript", description="Edit an existing script")
+@app_commands.describe(script_name="The name of the script", new_content="The new content of the script")
+async def editscript(interaction: discord.Interaction, script_name: str, new_content: str):
+    if has_any_role(interaction.user, roles):
+        if script_name in scripts:
+            scripts[script_name] = new_content
+            save_scripts()
+            await interaction.response.send_message(embed=discord.Embed(
+                title="✅ Script Updated",
+                description=f"Script **'{script_name}'** has been successfully updated.",
+                color=discord.Color.green()
+            ))
+        else:
+            await interaction.response.send_message(embed=discord.Embed(
+                title="❌ Script Not Found",
+                description=f"No script found with the name **'{script_name}'**.",
+                color=discord.Color.red()
+            ), ephemeral=True)
+    else:
+        await interaction.response.send_message(embed=discord.Embed(
+            title="🚫 Access Denied",
+            description="You do not have any of the required roles to use this command.",
+            color=discord.Color.red()
+        ), ephemeral=True)
+
+# Command to retrieve a script
+@client.tree.command(name="script", description="Retrieve a script by its name")
+@app_commands.describe(script_name="The name of the script to retrieve")
+async def script(interaction: discord.Interaction, script_name: str):
+    if script_name in scripts:
+        await interaction.response.send_message(embed=discord.Embed(
+            title=f"📜 Script: {script_name}",
+            description=f"```{scripts[script_name]}```",
+            color=discord.Color.blue()
+        ), ephemeral=True)
+    else:
+        await interaction.response.send_message(embed=discord.Embed(
+            title="❌ Script Not Found",
+            description=f"No script found with the name **'{script_name}'**.",
+            color=discord.Color.red()
+        ), ephemeral=True)
+
+# Command to add a role that can manage scripts
+@client.tree.command(name="addrole", description="Add a role that can manage scripts")
+@app_commands.describe(role="The role to add")
+@app_commands.checks.has_permissions(administrator=True)
+async def addrole(interaction: discord.Interaction, role: discord.Role):
+    if role.id not in roles:
+        roles.append(role.id)
+        save_roles()
+        await interaction.response.send_message(embed=discord.Embed(
+            title="✅ Role Added",
+            description=f"Role **'{role.name}'** has been added to the list of roles that can manage scripts.",
+            color=discord.Color.green()
+        ))
+    else:
+        await interaction.response.send_message(embed=discord.Embed(
+            title="❌ Role Already Exists",
+            description=f"Role **'{role.name}'** is already in the list of roles that can manage scripts.",
+            color=discord.Color.red()
+        ), ephemeral=True)
+
+# Command to remove a role that can manage scripts
+@client.tree.command(name="removerole", description="Remove a role that can manage scripts")
+@app_commands.describe(role="The role to remove")
+@app_commands.checks.has_permissions(administrator=True)
+async def removerole(interaction: discord.Interaction, role: discord.Role):
+    if role.id in roles:
+        roles.remove(role.id)
+        save_roles()
+        await interaction.response.send_message(embed=discord.Embed(
+            title="✅ Role Removed",
+            description=f"Role **'{role.name}'** has been removed from the list of roles that can manage scripts.",
+            color=discord.Color.green()
+        ))
+    else:
+        await interaction.response.send_message(embed=discord.Embed(
+            title="❌ Role Not Found",
+            description=f"Role **'{role.name}'** is not in the list of roles that can manage scripts.",
+            color=discord.Color.red()
+        ), ephemeral=True)
+
+# Custom help command to display available commands
+@client.tree.command(name="commands", description="List of available commands")
+async def commands(interaction: discord.Interaction):
+    embed = discord.Embed(title="📖 Help - Script Bot", description="List of available commands", color=discord.Color.gold())
+    embed.add_field(name="**For All Users**", value=(
+        "/script `<name of script>` - Retrieve a script by its name.\n"
+        "/listscripts - List all available scripts."
+    ), inline=False)
+    embed.add_field(name="**For Script Managers**", value=(
+        "/addscript `<name>` `<content>` - Add a new script.\n"
+        "/removescript `<name>` - Remove an existing script.\n"
+        "/editscript `<name>` `<new content>` - Edit an existing script."
+    ), inline=False)
+    embed.add_field(name="**For Administrators**", value=(
+        "/addrole `<role>` - Add a role that can manage scripts.\n"
+        "/removerole `<role>` - Remove a role that can manage scripts."
+    ), inline=False)
+    embed.set_footer(text="Use these commands responsibly!")
+    await interaction.response.send_message(embed=embed, ephemeral=True)
+
+# Command to list all scripts
+@client.tree.command(name="listscripts", description="List all available scripts")
+async def listscripts(interaction: discord.Interaction):
+    if scripts:
+        embed = discord.Embed(
+            title="📜 Available Scripts",
+            description="Here are all the available scripts. Use `/script <name>` to retrieve a script.",
+            color=discord.Color.blue()
+        )
+
+        # Adding a horizontal line at the top
+        embed.add_field(name="\u200b", value="━━━━━━━━━━━━━━━━━", inline=False)
+
+        # Listing all script names
+        for name in scripts.keys():
+            embed.add_field(name=f"• {name}", value="\u200b", inline=True)
+
+        # Adding a horizontal line at the bottom
+        embed.add_field(name="\u200b", value="━━━━━━━━━━━━━━━━━", inline=False)
+
+        # Setting footer with a consistent message
+        embed.set_footer(text="Use these scripts responsibly!")
+
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+    else:
+        await interaction.response.send_message(embed=discord.Embed(
+            title="📜 No Scripts Available",
+            description="There are no scripts available at the moment.",
+            color=discord.Color.blue()
+        ), ephemeral=True)
+
+# Keep the bot alive
+app = Flask('')
+
+@app.route('/')
+def home():
+    return "Hello. I am alive!"
+
+def run():
+    app.run(host='0.0.0.0', port=8080)
+
+t = Thread(target=run)
+t.start()
+
+# Run the bot
+client.run(os.getenv('DISCORD_TOKEN'))
