@@ -1,0 +1,549 @@
+local OrionLib = loadstring(game:HttpGet('https://raw.githubusercontent.com/AbdouGG/uiliborin/main/lib'))()
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Camera = workspace.CurrentCamera
+
+-- Configuration
+local Config = {
+    WindowName = "Nurk Hub | V1.5 | Aimbot & ESP",
+    DiscordInvite = "https://discord.com/invite/8ub8UQNzbT",
+    AimbotKey = Enum.KeyCode.Q,
+    AimbotMobileButton = nil, -- Will be created later
+    ESPColor = Color3.fromRGB(255, 0, 0),
+    ESPTextSize = 14,
+    AimbotSmoothness = 0.5,
+    AimbotFOV = 100,
+    AimbotTargetPart = "Head", -- Can be "Head" or "HumanoidRootPart"
+    FOVColor = Color3.fromRGB(255, 255, 255),
+    FOVThickness = 1,
+    FOVTransparency = 0.7,
+    TeamCheck = false, -- New option for team checking
+    ESPBoxes = true,
+    ESPNames = true,
+    ESPDistance = false,
+    ESPHealth = false,
+    ESPTracer = false,
+    MaxESPDistance = 1000 -- Maximum distance for ESP rendering
+}
+
+-- Changelog Data
+local ChangelogData = {
+    {
+        version = "1.5",
+        date = "2024-09-18",
+        color = Color3.fromRGB(0, 255, 0),
+        changes = {
+            "Added Changelog tab",
+            "Improved Aimbot prediction",
+            "Enhanced ESP performance",
+            "Added Team Check"
+        }
+    },
+    {
+        version = "1.4",
+        date = "2024-09-10",
+        color = Color3.fromRGB(255, 165, 0),
+        changes = {
+            "Introduced FOV Circle customization",
+            "Added mobile support for Aimbot",
+            "Fixed minor bugs in ESP"
+        }
+    },
+    {
+        version = "1.3",
+        date = "2024-09-01",
+        color = Color3.fromRGB(0, 191, 255),
+        changes = {
+            "Implemented Aimbot smoothness slider",
+            "Added target part selection for Aimbot",
+            "Improved overall UI responsiveness"
+        }
+    }
+}
+
+-- State
+local State = {
+    AimbotActive = false,
+    TargetPlayer = nil,
+    ESPEnabled = false,
+    FOVCircle = nil,
+    ESPObjects = {}
+}
+
+-- Create FOV Circle
+local function CreateFOVCircle()
+    State.FOVCircle = Drawing.new("Circle")
+    State.FOVCircle.Visible = false
+    State.FOVCircle.Radius = Config.AimbotFOV
+    State.FOVCircle.Color = Config.FOVColor
+    State.FOVCircle.Thickness = Config.FOVThickness
+    State.FOVCircle.Transparency = Config.FOVTransparency
+    State.FOVCircle.Filled = false
+    State.FOVCircle.NumSides = 50
+end
+
+-- Update FOV Circle
+local function UpdateFOVCircle()
+    if State.FOVCircle then
+        State.FOVCircle.Visible = State.AimbotActive
+        State.FOVCircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+    end
+end
+
+-- Utility Functions
+local function GetNearestPlayerInFOV()
+    local nearestDistance, nearestPlayer = math.huge, nil
+    local screenCenter = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild(Config.AimbotTargetPart) then
+            -- Team check
+            if not Config.TeamCheck or player.Team ~= LocalPlayer.Team then
+                local targetPart = player.Character[Config.AimbotTargetPart]
+                local screenPos, onScreen = Camera:WorldToScreenPoint(targetPart.Position)
+                
+                if onScreen then
+                    local distanceFromCenter = (Vector2.new(screenPos.X, screenPos.Y) - screenCenter).Magnitude
+                    
+                    if distanceFromCenter <= Config.AimbotFOV then
+                        local distance = (targetPart.Position - Camera.CFrame.Position).Magnitude
+                        if distance < nearestDistance then
+                            nearestDistance, nearestPlayer = distance, player
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return nearestPlayer
+end
+
+-- Enhanced ESP Functions
+local function CreateESPObject(player)
+    local esp = {}
+    
+    esp.Box = Drawing.new("Square")
+    esp.Box.Thickness = 1
+    esp.Box.Filled = false
+    esp.Box.Color = Config.ESPColor
+    esp.Box.Visible = false
+
+    esp.Name = Drawing.new("Text")
+    esp.Name.Center = true
+    esp.Name.Outline = true
+    esp.Name.Color = Config.ESPColor
+    esp.Name.Size = Config.ESPTextSize
+    esp.Name.Visible = false
+
+    esp.Distance = Drawing.new("Text")
+    esp.Distance.Center = true
+    esp.Distance.Outline = true
+    esp.Distance.Color = Config.ESPColor
+    esp.Distance.Size = Config.ESPTextSize
+    esp.Distance.Visible = false
+
+    esp.Health = Drawing.new("Text")
+    esp.Health.Center = true
+    esp.Health.Outline = true
+    esp.Health.Color = Config.ESPColor
+    esp.Health.Size = Config.ESPTextSize
+    esp.Health.Visible = false
+
+    esp.Tracer = Drawing.new("Line")
+    esp.Tracer.Thickness = 1
+    esp.Tracer.Color = Config.ESPColor
+    esp.Tracer.Visible = false
+
+    State.ESPObjects[player] = esp
+end
+
+local function RemoveESPObject(player)
+    local esp = State.ESPObjects[player]
+    if esp then
+        for _, object in pairs(esp) do
+            object:Remove()
+        end
+        State.ESPObjects[player] = nil
+    end
+end
+
+local function UpdateESP()
+    for player, esp in pairs(State.ESPObjects) do
+        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") and player.Character:FindFirstChild("Humanoid") then
+            local hrp = player.Character.HumanoidRootPart
+            local humanoid = player.Character.Humanoid
+            local vector, onScreen = Camera:WorldToViewportPoint(hrp.Position)
+            local distance = (hrp.Position - Camera.CFrame.Position).Magnitude
+
+            if onScreen and distance <= Config.MaxESPDistance and State.ESPEnabled then
+                -- Update Box ESP
+                if Config.ESPBoxes then
+                    local rootPart = player.Character.HumanoidRootPart
+                    local head = player.Character.Head
+                    local rootPos = Camera:WorldToViewportPoint(rootPart.Position)
+                    local headPos = Camera:WorldToViewportPoint(head.Position + Vector3.new(0, 0.5, 0))
+                    local legPos = Camera:WorldToViewportPoint(rootPart.Position - Vector3.new(0, 3, 0))
+
+                    esp.Box.Size = Vector2.new(2350 / rootPos.Z, headPos.Y - legPos.Y)
+                    esp.Box.Position = Vector2.new(rootPos.X - esp.Box.Size.X / 2, rootPos.Y - esp.Box.Size.Y / 2)
+                    esp.Box.Visible = true
+                else
+                    esp.Box.Visible = false
+                end
+
+                -- Update Name ESP
+                if Config.ESPNames then
+                    esp.Name.Text = player.Name
+                    esp.Name.Position = Vector2.new(vector.X, vector.Y - 40)
+                    esp.Name.Visible = true
+                else
+                    esp.Name.Visible = false
+                end
+
+                -- Update Distance ESP
+                if Config.ESPDistance then
+                    esp.Distance.Text = string.format("%.0f studs", distance)
+                    esp.Distance.Position = Vector2.new(vector.X, vector.Y + 40)
+                    esp.Distance.Visible = true
+                else
+                    esp.Distance.Visible = false
+                end
+
+                -- Update Health ESP
+                if Config.ESPHealth then
+                    esp.Health.Text = string.format("%.0f HP", humanoid.Health)
+                    esp.Health.Position = Vector2.new(vector.X, vector.Y + 60)
+                    esp.Health.Visible = true
+                else
+                    esp.Health.Visible = false
+                end
+
+                -- Update Tracer ESP
+                if Config.ESPTracer then
+                    esp.Tracer.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
+                    esp.Tracer.To = Vector2.new(vector.X, vector.Y)
+                    esp.Tracer.Visible = true
+                else
+                    esp.Tracer.Visible = false
+                end
+            else
+                -- Hide ESP objects if not on screen or too far
+                for _, object in pairs(esp) do
+                    object.Visible = false
+                end
+            end
+        else
+            -- Hide ESP objects if character is not available
+            for _, object in pairs(esp) do
+                object.Visible = false
+            end
+        end
+    end
+end
+
+
+
+-- UI Creation
+local Window = OrionLib:MakeWindow({
+    Name = Config.WindowName,
+    HidePremium = false,
+    SaveConfig = true,
+    ConfigFolder = "Nurk Hub",
+    IntroText = "Nurk Hub",
+    IntroIcon = "rbxassetid://17817072276"
+})
+
+local MainTab = Window:MakeTab({
+    Name = "Main",
+    Icon = "rbxassetid://7733687281",
+    PremiumOnly = false
+})
+
+local VisualsTab = Window:MakeTab({
+    Name = "Visuals",
+    Icon = "rbxassetid://7733774602",
+    PremiumOnly = false
+})
+
+local ChangelogTab = Window:MakeTab({
+    Name = "Changelog",
+    Icon = "rbxassetid://7734053495",
+    PremiumOnly = false
+})
+
+-- Function to add colored text
+local function AddColoredText(text, color)
+    return string.format('<font color="rgb(%d,%d,%d)">%s</font>', color.R * 255, color.G * 255, color.B * 255, text)
+end
+
+-- Function to format a changelog entry
+local function FormatChangelogEntry(entry)
+    local header = AddColoredText(string.format("Version %s (%s):", entry.version, entry.date), entry.color)
+    local changes = ""
+    for _, change in ipairs(entry.changes) do
+        changes = changes .. "\n* " .. change
+    end
+    return header .. changes
+end
+
+-- Combine all changelog entries
+local fullChangelog = ""
+for i, entry in ipairs(ChangelogData) do
+    fullChangelog = fullChangelog .. FormatChangelogEntry(entry)
+    if i < #ChangelogData then
+        fullChangelog = fullChangelog .. "\n\n"
+    end
+end
+
+-- Add the full changelog to the tab
+ChangelogTab:AddParagraph("Changelog", fullChangelog)
+
+
+MainTab:AddParagraph("Bug Report", "If you find any issues with Aimbot or ESP, please report them in our Discord server.")
+
+MainTab:AddButton({
+    Name = "Copy Discord Server",
+    Callback = function()
+        setclipboard(Config.DiscordInvite)
+        OrionLib:MakeNotification({
+            Name = "Notification",
+            Content = "Discord invite copied!",
+            Image = "rbxassetid://7733655912",
+            Time = 3
+        })
+    end
+})
+
+local AimbotSection = MainTab:AddSection({Name = "Aimbot"})
+local TargetLabel = MainTab:AddLabel("No Target")
+
+AimbotSection:AddToggle({
+    Name = "Aimbot",
+    Default = false,
+    Callback = function(Value)
+        State.AimbotActive = Value
+        if not Value then
+            State.TargetPlayer = nil
+            TargetLabel:Set("No Target")
+        end
+    end
+})
+
+AimbotSection:AddToggle({
+    Name = "Team Check",
+    Default = false,
+    Callback = function(Value)
+        Config.TeamCheck = Value
+    end
+})
+
+AimbotSection:AddSlider({
+    Name = "Aimbot Smoothness",
+    Min = 0,
+    Max = 1,
+    Default = 0.5,
+    Color = Color3.fromRGB(255, 255, 255),
+    Increment = 0.05,
+    ValueName = "Smoothness",
+    Callback = function(Value)
+        Config.AimbotSmoothness = Value
+    end
+})
+
+AimbotSection:AddSlider({
+    Name = "Aimbot FOV",
+    Min = 10,
+    Max = 500,
+    Default = 100,
+    Color = Color3.fromRGB(255, 255, 255),
+    Increment = 10,
+    ValueName = "FOV",
+    Callback = function(Value)
+        Config.AimbotFOV = Value
+        if State.FOVCircle then
+            State.FOVCircle.Radius = Value
+        end
+    end
+})
+
+AimbotSection:AddDropdown({
+    Name = "Target Part",
+    Default = "Head",
+    Options = {"Head", "HumanoidRootPart"},
+    Callback = function(Value)
+        Config.AimbotTargetPart = Value
+    end
+})
+
+AimbotSection:AddColorpicker({
+    Name = "FOV Circle Color",
+    Default = Config.FOVColor,
+    Callback = function(Value)
+        Config.FOVColor = Value
+        if State.FOVCircle then
+            State.FOVCircle.Color = Value
+        end
+    end
+})
+
+local ESPSection = VisualsTab:AddSection({Name = "ESP Settings"})
+
+ESPSection:AddToggle({
+    Name = "ESP Toggle",
+    Default = false,
+    Callback = function(Value)
+        State.ESPEnabled = Value
+        for _, esp in pairs(State.ESPObjects) do
+            for _, object in pairs(esp) do
+                object.Visible = Value
+            end
+        end
+    end
+})
+
+ESPSection:AddToggle({
+    Name = "ESP Boxes",
+    Default = true,
+    Callback = function(Value)
+        Config.ESPBoxes = Value
+    end
+})
+
+ESPSection:AddToggle({
+    Name = "ESP Names",
+    Default = true,
+    Callback = function(Value)
+        Config.ESPNames = Value
+    end
+})
+
+ESPSection:AddToggle({
+    Name = "ESP Distance",
+    Default = false,
+    Callback = function(Value)
+        Config.ESPDistance = Value
+    end
+})
+
+ESPSection:AddToggle({
+    Name = "ESP Health",
+    Default = false,
+    Callback = function(Value)
+        Config.ESPHealth = Value
+    end
+})
+
+ESPSection:AddToggle({
+    Name = "ESP Tracer",
+    Default = false,
+    Callback = function(Value)
+        Config.ESPTracer = Value
+    end
+})
+
+ESPSection:AddSlider({
+    Name = "Max ESP Distance",
+    Min = 100,
+    Max = 2000,
+    Default = 1000,
+    Color = Color3.fromRGB(255, 255, 255),
+    Increment = 100,
+    ValueName = "studs",
+    Callback = function(Value)
+        Config.MaxESPDistance = Value
+    end
+})
+
+ESPSection:AddColorpicker({
+    Name = "Change ESP Color",
+    Default = Config.ESPColor,
+    Callback = function(Value)
+        Config.ESPColor = Value
+        for _, esp in pairs(State.ESPObjects) do
+            for _, object in pairs(esp) do
+                object.Color = Value
+            end
+        end
+    end
+})
+
+-- Mobile Aimbot Button
+if UserInputService.TouchEnabled then
+    Config.AimbotMobileButton = Instance.new("TextButton")
+    Config.AimbotMobileButton.Size = UDim2.new(0, 50, 0, 50)
+    Config.AimbotMobileButton.Position = UDim2.new(1, -60, 1, -60)
+    Config.AimbotMobileButton.AnchorPoint = Vector2.new(1, 1)
+    Config.AimbotMobileButton.Text = "Aim"
+    Config.AimbotMobileButton.TextColor3 = Color3.new(1, 1, 1)
+    Config.AimbotMobileButton.BackgroundColor3 = Color3.new(0, 0, 0)
+    Config.AimbotMobileButton.BackgroundTransparency = 0.5
+    Config.AimbotMobileButton.Parent = game.CoreGui
+    
+    Config.AimbotMobileButton.Activated:Connect(function()
+        State.AimbotActive = not State.AimbotActive
+        Config.AimbotMobileButton.BackgroundColor3 = State.AimbotActive and Color3.new(0, 1, 0) or Color3.new(1, 0, 0)
+        if not State.AimbotActive then
+            State.TargetPlayer = nil
+            TargetLabel:Set("No Target")
+        end
+    end)
+end
+
+-- Main Logic
+CreateFOVCircle()
+
+RunService.RenderStepped:Connect(function()
+    UpdateFOVCircle()
+    UpdateESP()
+    
+    if State.AimbotActive then
+        State.TargetPlayer = GetNearestPlayerInFOV()
+        if State.TargetPlayer then
+            TargetLabel:Set("Target: " .. State.TargetPlayer.Name)
+            
+            local targetPart = State.TargetPlayer.Character[Config.AimbotTargetPart]
+            local targetPos = targetPart.Position
+            local targetVel = targetPart.Velocity
+            
+            -- Simple prediction
+            local timeToHit = (targetPos - Camera.CFrame.Position).Magnitude / 1000
+            local predictedPos = targetPos + targetVel * timeToHit
+            
+            local cameraPosition = Camera.CFrame.Position
+            local lookVector = (predictedPos - cameraPosition).Unit
+            local targetCFrame = CFrame.new(cameraPosition, cameraPosition + lookVector)
+            Camera.CFrame = Camera.CFrame:Lerp(targetCFrame, Config.AimbotSmoothness)
+        else
+            TargetLabel:Set("No Target")
+        end
+    end
+end)
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed and input.KeyCode == Config.AimbotKey then
+        State.AimbotActive = not State.AimbotActive
+        if not State.AimbotActive then
+            State.TargetPlayer = nil
+            TargetLabel:Set("No Target")
+        end
+    end
+end)
+
+Players.PlayerAdded:Connect(function(player)
+    CreateESPObject(player)
+end)
+
+Players.PlayerRemoving:Connect(function(player)
+    RemoveESPObject(player)
+end)
+
+-- Initialize ESP objects for existing players
+for _, player in ipairs(Players:GetPlayers()) do
+    if player ~= LocalPlayer then
+        CreateESPObject(player)
+    end
+end
+
+OrionLib:Init()
