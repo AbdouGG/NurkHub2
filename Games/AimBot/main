@@ -416,7 +416,84 @@ AimbotSection:AddColorpicker({
 
 local ESPSection = VisualsTab:AddSection({Name = "ESP Settings"})
 
+ESPSection:AddToggle({
+    Name = "ESP Toggle",
+    Default = false,
+    Callback = function(Value)
+        State.ESPEnabled = Value
+        for _, esp in pairs(State.ESPObjects) do
+            for _, object in pairs(esp) do
+                object.Visible = Value
+            end
+        end
+    end
+})
 
+ESPSection:AddToggle({
+    Name = "ESP Boxes",
+    Default = true,
+    Callback = function(Value)
+        Config.ESPBoxes = Value
+    end
+})
+
+ESPSection:AddToggle({
+    Name = "ESP Names",
+    Default = true,
+    Callback = function(Value)
+        Config.ESPNames = Value
+    end
+})
+
+ESPSection:AddToggle({
+    Name = "ESP Distance",
+    Default = false,
+    Callback = function(Value)
+        Config.ESPDistance = Value
+    end
+})
+
+ESPSection:AddToggle({
+    Name = "ESP Health",
+    Default = false,
+    Callback = function(Value)
+        Config.ESPHealth = Value
+    end
+})
+
+ESPSection:AddToggle({
+    Name = "ESP Tracer",
+    Default = false,
+    Callback = function(Value)
+        Config.ESPTracer = Value
+    end
+})
+
+ESPSection:AddSlider({
+    Name = "Max ESP Distance",
+    Min = 100,
+    Max = 2000,
+    Default = 1000,
+    Color = Color3.fromRGB(255, 255, 255),
+    Increment = 100,
+    ValueName = "studs",
+    Callback = function(Value)
+        Config.MaxESPDistance = Value
+    end
+})
+
+ESPSection:AddColorpicker({
+    Name = "Change ESP Color",
+    Default = Config.ESPColor,
+    Callback = function(Value)
+        Config.ESPColor = Value
+        for _, esp in pairs(State.ESPObjects) do
+            for _, object in pairs(esp) do
+                object.Color = Value
+            end
+        end
+    end
+})
 
 -- Mobile Aimbot Button
 if UserInputService.TouchEnabled then
