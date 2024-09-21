@@ -109,16 +109,12 @@ local function IsVisible(targetPart)
     return raycastResult and raycastResult.Instance:IsDescendantOf(targetPart.Parent)
 end
 
-local function IsPlayerAlive(player)
-    return player.Character and player.Character:FindFirstChild("Humanoid") and player.Character.Humanoid.Health > 0
-end
-
 local function GetNearestPlayerInFOV()
     local nearestDistance, nearestPlayer = math.huge, nil
     local screenCenter = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
 
     for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and IsPlayerAlive(player) and player.Character:FindFirstChild(Config.AimbotTargetPart) then
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild(Config.AimbotTargetPart) then
             if not Config.TeamCheck or player.Team ~= LocalPlayer.Team then
                 local targetPart = player.Character[Config.AimbotTargetPart]
                 local screenPos, onScreen = Camera:WorldToScreenPoint(targetPart.Position)
@@ -420,84 +416,7 @@ AimbotSection:AddColorpicker({
 
 local ESPSection = VisualsTab:AddSection({Name = "ESP Settings"})
 
-ESPSection:AddToggle({
-    Name = "ESP Toggle",
-    Default = false,
-    Callback = function(Value)
-        State.ESPEnabled = Value
-        for _, esp in pairs(State.ESPObjects) do
-            for _, object in pairs(esp) do
-                object.Visible = Value
-            end
-        end
-    end
-})
 
-ESPSection:AddToggle({
-    Name = "ESP Boxes",
-    Default = true,
-    Callback = function(Value)
-        Config.ESPBoxes = Value
-    end
-})
-
-ESPSection:AddToggle({
-    Name = "ESP Names",
-    Default = true,
-    Callback = function(Value)
-        Config.ESPNames = Value
-    end
-})
-
-ESPSection:AddToggle({
-    Name = "ESP Distance",
-    Default = false,
-    Callback = function(Value)
-        Config.ESPDistance = Value
-    end
-})
-
-ESPSection:AddToggle({
-    Name = "ESP Health",
-    Default = false,
-    Callback = function(Value)
-        Config.ESPHealth = Value
-    end
-})
-
-ESPSection:AddToggle({
-    Name = "ESP Tracer",
-    Default = false,
-    Callback = function(Value)
-        Config.ESPTracer = Value
-    end
-})
-
-ESPSection:AddSlider({
-    Name = "Max ESP Distance",
-    Min = 100,
-    Max = 2000,
-    Default = 1000,
-    Color = Color3.fromRGB(255, 255, 255),
-    Increment = 100,
-    ValueName = "studs",
-    Callback = function(Value)
-        Config.MaxESPDistance = Value
-    end
-})
-
-ESPSection:AddColorpicker({
-    Name = "Change ESP Color",
-    Default = Config.ESPColor,
-    Callback = function(Value)
-        Config.ESPColor = Value
-        for _, esp in pairs(State.ESPObjects) do
-            for _, object in pairs(esp) do
-                object.Color = Value
-            end
-        end
-    end
-})
 
 -- Mobile Aimbot Button
 if UserInputService.TouchEnabled then
@@ -530,7 +449,7 @@ RunService.RenderStepped:Connect(function()
     
     if State.AimbotActive then
         State.TargetPlayer = GetNearestPlayerInFOV()
-        if State.TargetPlayer and IsPlayerAlive(State.TargetPlayer) then
+        if State.TargetPlayer then
             TargetLabel:Set("Target: " .. State.TargetPlayer.Name)
             
             local targetPart = State.TargetPlayer.Character[Config.AimbotTargetPart]
