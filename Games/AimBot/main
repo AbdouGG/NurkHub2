@@ -20,6 +20,7 @@ local Config = {
     FOVThickness = 1,
     FOVTransparency = 0.7,
     TeamCheck = false, -- New option for team checking
+    WallCheck = true,
     ESPBoxes = true,
     ESPNames = true,
     ESPDistance = false,
@@ -92,14 +93,32 @@ local function UpdateFOVCircle()
     end
 end
 
+
+
 -- Utility Functions
+
+
+local function IsVisible(targetPart)
+    local origin = Camera.CFrame.Position
+    local direction = (targetPart.Position - origin).Unit
+    local raycastParams = RaycastParams.new()
+    raycastParams.FilterDescendantsInstances = {LocalPlayer.Character}
+    raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
+
+    local raycastResult = workspace:Raycast(origin, direction * 1000, raycastParams)
+    return raycastResult and raycastResult.Instance:IsDescendantOf(targetPart.Parent)
+end
+
+local function IsPlayerAlive(player)
+    return player.Character and player.Character:FindFirstChild("Humanoid") and player.Character.Humanoid.Health > 0
+end
+
 local function GetNearestPlayerInFOV()
     local nearestDistance, nearestPlayer = math.huge, nil
     local screenCenter = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
 
     for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild(Config.AimbotTargetPart) then
-            -- Team check
+        if player ~= LocalPlayer and IsPlayerAlive(player) and player.Character:FindFirstChild(Config.AimbotTargetPart) then
             if not Config.TeamCheck or player.Team ~= LocalPlayer.Team then
                 local targetPart = player.Character[Config.AimbotTargetPart]
                 local screenPos, onScreen = Camera:WorldToScreenPoint(targetPart.Position)
@@ -110,7 +129,9 @@ local function GetNearestPlayerInFOV()
                     if distanceFromCenter <= Config.AimbotFOV then
                         local distance = (targetPart.Position - Camera.CFrame.Position).Magnitude
                         if distance < nearestDistance then
-                            nearestDistance, nearestPlayer = distance, player
+                            if not Config.WallCheck or IsVisible(targetPart) then
+                                nearestDistance, nearestPlayer = distance, player
+                            end
                         end
                     end
                 end
@@ -368,6 +389,15 @@ AimbotSection:AddSlider({
     end
 })
 
+
+AimbotSection:AddToggle({
+    Name = "Wall Check",
+    Default = true,
+    Callback = function(Value)
+        Config.WallCheck = Value
+    end
+})
+
 AimbotSection:AddDropdown({
     Name = "Target Part",
     Default = "Head",
@@ -500,7 +530,7 @@ RunService.RenderStepped:Connect(function()
     
     if State.AimbotActive then
         State.TargetPlayer = GetNearestPlayerInFOV()
-        if State.TargetPlayer then
+        if State.TargetPlayer and IsPlayerAlive(State.TargetPlayer) then
             TargetLabel:Set("Target: " .. State.TargetPlayer.Name)
             
             local targetPart = State.TargetPlayer.Character[Config.AimbotTargetPart]
