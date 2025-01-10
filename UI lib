@@ -378,8 +378,22 @@ function PandaAuth:CreateWindow(title)
         
         createHoverEffect(LabelFrame)
         
-        return LabelFrame
+        -- Add methods to modify the label
+        local labelMethods = {}
+        
+        function labelMethods:SetText(newText)
+            Label.Text = newText
+        end
+        
+        function labelMethods:GetText()
+            return Label.Text
+        end
+        
+        -- Return both the frame and the methods
+        return LabelFrame, labelMethods
     end
+    
+    
     
     -- Create sections
     function window:CreateSection(name)
@@ -437,8 +451,10 @@ function PandaAuth:CreateWindow(title)
         end
         
         function section:AddLabel(text)
-            return createLabel(SectionContent, text)
+            local labelFrame, labelMethods = createLabel(SectionContent, text)
+            return labelFrame, labelMethods
         end
+
 
 
         -- Add the new slider function to the section
