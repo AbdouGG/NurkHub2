@@ -439,10 +439,126 @@ function PandaAuth:CreateWindow(title)
         function section:AddLabel(text)
             return createLabel(SectionContent, text)
         end
+
+
+        -- Add the new slider function to the section
+        function section:AddSlider(text, min, max, default, callback)
+            local SliderFrame = Instance.new("Frame")
+            local UICorner = Instance.new("UICorner")
+            local Title = Instance.new("TextLabel")
+            local SliderBackground = Instance.new("Frame")
+            local UICorner_2 = Instance.new("UICorner")
+            local SliderFill = Instance.new("Frame")
+            local UICorner_3 = Instance.new("UICorner")
+            local SliderValue = Instance.new("TextLabel")
+            local SliderButton = Instance.new("TextButton")
+            
+            SliderFrame.Name = "SliderFrame"
+            SliderFrame.Size = UDim2.new(0.9, 0, 0, 45)
+            SliderFrame.BackgroundColor3 = COLORS.SECONDARY
+            SliderFrame.Parent = SectionContent
+            
+            UICorner.CornerRadius = UDim.new(0, 6)
+            UICorner.Parent = SliderFrame
+            
+            Title.Name = "Title"
+            Title.Size = UDim2.new(0.9, 0, 0, 20)
+            Title.Position = UDim2.new(0.05, 0, 0, 0)
+            Title.BackgroundTransparency = 1
+            Title.Text = text
+            Title.TextColor3 = COLORS.TEXT
+            Title.TextSize = 14
+            Title.Font = Enum.Font.GothamSemibold
+            Title.TextXAlignment = Enum.TextXAlignment.Left
+            Title.Parent = SliderFrame
+            
+            SliderBackground.Name = "SliderBackground"
+            SliderBackground.Size = UDim2.new(0.9, 0, 0, 6)
+            SliderBackground.Position = UDim2.new(0.05, 0, 0.65, 0)
+            SliderBackground.BackgroundColor3 = COLORS.BACKGROUND
+            SliderBackground.Parent = SliderFrame
+            
+            UICorner_2.CornerRadius = UDim.new(1, 0)
+            UICorner_2.Parent = SliderBackground
+            
+            SliderFill.Name = "SliderFill"
+            SliderFill.BackgroundColor3 = COLORS.ACCENT
+            SliderFill.Parent = SliderBackground
+            
+            UICorner_3.CornerRadius = UDim.new(1, 0)
+            UICorner_3.Parent = SliderFill
+            
+            SliderValue.Name = "SliderValue"
+            SliderValue.Size = UDim2.new(0.15, 0, 0, 20)
+            SliderValue.Position = UDim2.new(0.825, 0, 0, 0)
+            SliderValue.BackgroundTransparency = 1
+            SliderValue.Text = tostring(default)
+            SliderValue.TextColor3 = COLORS.TEXT
+            SliderValue.TextSize = 14
+            SliderValue.Font = Enum.Font.GothamSemibold
+            SliderValue.Parent = SliderFrame
+            
+            SliderButton.Name = "SliderButton"
+            SliderButton.Size = UDim2.new(1, 0, 1, 0)
+            SliderButton.BackgroundTransparency = 1
+            SliderButton.Text = ""
+            SliderButton.Parent = SliderBackground
+            
+            -- Slider functionality
+            local function updateSlider(input)
+                local pos = input.Position
+                local relativePos = (pos.X - SliderBackground.AbsolutePosition.X) / SliderBackground.AbsoluteSize.X
+                relativePos = math.clamp(relativePos, 0, 1)
+                
+                local value = min + (max - min) * relativePos
+                value = math.floor(value + 0.5) -- Round to nearest integer
+                
+                SliderValue.Text = tostring(value)
+                SliderFill.Size = UDim2.new(relativePos, 0, 1, 0)
+                
+                callback(value)
+            end
+            
+            -- Set default value
+            local defaultRelative = (default - min) / (max - min)
+            SliderFill.Size = UDim2.new(defaultRelative, 0, 1, 0)
+            
+            -- Handle slider interaction
+            local sliding = false
+            
+            SliderButton.InputBegan:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or
+                input.UserInputType == Enum.UserInputType.Touch then
+                    sliding = true
+                    updateSlider(input)
+                end
+            end)
+            
+            UserInputService.InputChanged:Connect(function(input)
+                if sliding and 
+                (input.UserInputType == Enum.UserInputType.MouseMovement or
+                    input.UserInputType == Enum.UserInputType.Touch) then
+                    updateSlider(input)
+                end
+            end)
+            
+            UserInputService.InputEnded:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or
+                input.UserInputType == Enum.UserInputType.Touch then
+                    sliding = false
+                end
+            end)
+            
+            createHoverEffect(SliderFrame)
+            return SliderFrame
+        end
+
         
         return section
     end
     
+
+
     -- Add mobile toggle button
     local ToggleButton = Instance.new("TextButton")
     ToggleButton.Name = "ToggleButton"
