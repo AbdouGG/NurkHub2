@@ -117,75 +117,8 @@ function PandaAuth:CreateWindow(title)
     UIListLayout.Padding = UDim.new(0, 8)
     UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
     
-    -- Add mobile toggle button
-    ToggleButton.Name = "ToggleButton"
-    ToggleButton.Size = UDim2.new(0, 40, 0, 40)
-    ToggleButton.Position = UDim2.new(0, 10, 0.5, -20)
-    ToggleButton.BackgroundColor3 = COLORS.ACCENT
-    ToggleButton.Text = "≡"
-    ToggleButton.TextColor3 = COLORS.TEXT
-    ToggleButton.TextSize = 24
-    ToggleButton.Font = Enum.Font.GothamBold
-    ToggleButton.Parent = ScreenGui
-    
-    local ToggleCorner = Instance.new("UICorner")
-    ToggleCorner.CornerRadius = UDim.new(0, 8)
-    ToggleCorner.Parent = ToggleButton
-    
-    -- Mobile-friendly dragging
-    local dragging = false
-    local dragStart
-    local startPos
-    
-    local function updateDrag(input)
-        if dragging then
-            local delta = input.Position - dragStart
-            MainFrame.Position = UDim2.new(
-                startPos.X.Scale,
-                startPos.X.Offset + delta.X,
-                startPos.Y.Scale,
-                startPos.Y.Offset + delta.Y
-            )
-        end
-    end
-    
-    TopBar.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or 
-           input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            dragStart = input.Position
-            startPos = MainFrame.Position
-        end
-    end)
-    
-    UserInputService.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement or
-           input.UserInputType == Enum.UserInputType.Touch then
-            updateDrag(input)
-        end
-    end)
-    
-    UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or
-           input.UserInputType == Enum.UserInputType.Touch then
-            dragging = false
-        end
-    end)
-    
-    -- Toggle UI visibility for mobile
-    local uiVisible = true
-    ToggleButton.MouseButton1Click:Connect(function()
-        uiVisible = not uiVisible
-        MainFrame.Visible = uiVisible
-        TweenService:Create(ToggleButton, TWEEN_INFO, {
-            Rotation = uiVisible and 0 or 90
-        }):Play()
-    end)
-    
-    local window = {}
-    
-    -- Enhanced Button
-    function window:AddButton(text, callback)
+    -- Function to create UI elements
+    local function createButton(parent, text, callback)
         local Button = Instance.new("TextButton")
         local UICorner = Instance.new("UICorner")
         local ButtonLabel = Instance.new("TextLabel")
@@ -195,7 +128,7 @@ function PandaAuth:CreateWindow(title)
         Button.BackgroundColor3 = COLORS.SECONDARY
         Button.Text = ""
         Button.AutoButtonColor = false
-        Button.Parent = ElementsHolder
+        Button.Parent = parent
         
         UICorner.CornerRadius = UDim.new(0, 6)
         UICorner.Parent = Button
@@ -223,8 +156,7 @@ function PandaAuth:CreateWindow(title)
         return Button
     end
     
-    -- Enhanced Toggle
-    function window:AddToggle(text, default, callback)
+    local function createToggle(parent, text, default, callback)
         local ToggleFrame = Instance.new("Frame")
         local UICorner = Instance.new("UICorner")
         local Title = Instance.new("TextLabel")
@@ -235,7 +167,7 @@ function PandaAuth:CreateWindow(title)
         ToggleFrame.Name = "ToggleFrame"
         ToggleFrame.Size = UDim2.new(0.9, 0, 0, 35)
         ToggleFrame.BackgroundColor3 = COLORS.SECONDARY
-        ToggleFrame.Parent = ElementsHolder
+        ToggleFrame.Parent = parent
         
         UICorner.CornerRadius = UDim.new(0, 6)
         UICorner.Parent = ToggleFrame
@@ -288,8 +220,7 @@ function PandaAuth:CreateWindow(title)
         return ToggleFrame
     end
     
-    -- Enhanced Dropdown
-    function window:AddDropdown(text, options, callback)
+    local function createDropdown(parent, text, options, callback)
         local DropdownFrame = Instance.new("Frame")
         local UICorner = Instance.new("UICorner")
         local Title = Instance.new("TextLabel")
@@ -302,7 +233,7 @@ function PandaAuth:CreateWindow(title)
         DropdownFrame.Name = "DropdownFrame"
         DropdownFrame.Size = UDim2.new(0.9, 0, 0, 35)
         DropdownFrame.BackgroundColor3 = COLORS.SECONDARY
-        DropdownFrame.Parent = ElementsHolder
+        DropdownFrame.Parent = parent
         
         UICorner.CornerRadius = UDim.new(0, 6)
         UICorner.Parent = DropdownFrame
@@ -327,7 +258,7 @@ function PandaAuth:CreateWindow(title)
         DropdownButton.TextSize = 14
         DropdownButton.Font = Enum.Font.GothamBold
         DropdownButton.Parent = DropdownFrame
-
+        
         UICorner_2.CornerRadius = UDim.new(0, 4)
         UICorner_2.Parent = DropdownButton
         
@@ -408,8 +339,7 @@ function PandaAuth:CreateWindow(title)
         return DropdownFrame
     end
     
-    -- Enhanced Label
-    function window:AddLabel(text)
+    local function createLabel(parent, text)
         local LabelFrame = Instance.new("Frame")
         local UICorner = Instance.new("UICorner")
         local Label = Instance.new("TextLabel")
@@ -418,7 +348,7 @@ function PandaAuth:CreateWindow(title)
         LabelFrame.Name = "LabelFrame"
         LabelFrame.Size = UDim2.new(0.9, 0, 0, 30)
         LabelFrame.BackgroundColor3 = COLORS.SECONDARY
-        LabelFrame.Parent = ElementsHolder
+        LabelFrame.Parent = parent
         
         UICorner.CornerRadius = UDim.new(0, 6)
         UICorner.Parent = LabelFrame
@@ -488,31 +418,98 @@ function PandaAuth:CreateWindow(title)
         
         UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
             SectionFrame.Size = UDim2.new(0.9, 0, 0, UIListLayout.AbsoluteContentSize.Y + 35)
+            SectionContent.Size = UDim2.new(1, 0, 0, UIListLayout.AbsoluteContentSize.Y)
         end)
         
         local section = {}
         
         -- Add elements to section
         function section:AddButton(text, callback)
-            return window:AddButton(text, callback)
+            return createButton(SectionContent, text, callback)
         end
         
         function section:AddToggle(text, default, callback)
-            return window:AddToggle(text, default, callback)
+            return createToggle(SectionContent, text, default, callback)
         end
         
         function section:AddDropdown(text, options, callback)
-            return window:AddDropdown(text, options, callback)
+            return createDropdown(SectionContent, text, options, callback)
         end
         
         function section:AddLabel(text)
-            return window:AddLabel(text)
+            return createLabel(SectionContent, text)
         end
         
         return section
     end
     
-    -- Add window fade in/out animations
+    -- Add mobile toggle button
+    local ToggleButton = Instance.new("TextButton")
+    ToggleButton.Name = "ToggleButton"
+    ToggleButton.Size = UDim2.new(0, 40, 0, 40)
+    ToggleButton.Position = UDim2.new(0, 10, 0.5, -20)
+    ToggleButton.BackgroundColor3 = COLORS.ACCENT
+    ToggleButton.Text = "≡"
+    ToggleButton.TextColor3 = COLORS.TEXT
+    ToggleButton.TextSize = 24
+    ToggleButton.Font = Enum.Font.GothamBold
+    ToggleButton.Parent = ScreenGui
+    
+    local ToggleCorner = Instance.new("UICorner")
+    ToggleCorner.CornerRadius = UDim.new(0, 8)
+    ToggleCorner.Parent = ToggleButton
+    
+    -- Mobile-friendly dragging
+    local dragging = false
+    local dragStart
+    local startPos
+    
+    local function updateDrag(input)
+        if dragging then
+            local delta = input.Position - dragStart
+            MainFrame.Position = UDim2.new(
+                startPos.X.Scale,
+                startPos.X.Offset + delta.X,
+                startPos.Y.Scale,
+                startPos.Y.Offset + delta.Y
+            )
+        end
+    end
+    
+    TopBar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+           input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = MainFrame.Position
+        end
+    end)
+    
+    UserInputService.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or
+           input.UserInputType == Enum.UserInputType.Touch then
+            updateDrag(input)
+        end
+    end)
+    
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or
+           input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
+        end
+    end)
+    
+    -- Toggle UI visibility for mobile
+    local uiVisible = true
+    ToggleButton.MouseButton1Click:Connect(function()
+        uiVisible = not uiVisible
+        MainFrame.Visible = uiVisible
+        TweenService:Create(ToggleButton, TWEEN_INFO, {
+            Rotation = uiVisible and 0 or 90
+        }):Play()
+    end)
+    
+    -- Add window fade in animation
     local function fadeIn()
         for _, obj in ipairs(MainFrame:GetDescendants()) do
             if obj:IsA("Frame") or obj:IsA("TextButton") or obj:IsA("TextLabel") then
