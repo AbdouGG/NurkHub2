@@ -31,6 +31,8 @@ local function createHoverEffect(button)
 end
 
 function PandaAuth:CreateWindow(title)
+    local window = {} -- Initialize window table
+    
     -- Create ScreenGui with proper protection
     local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = "PandaAuthUI"
@@ -61,7 +63,6 @@ function PandaAuth:CreateWindow(title)
     local ElementsHolder = Instance.new("ScrollingFrame")
     local UIListLayout = Instance.new("UIListLayout")
     local Shadow = Instance.new("ImageLabel")
-    local ToggleButton = Instance.new("TextButton")
     
     -- Configure MainFrame
     MainFrame.Name = "MainFrame"
@@ -423,7 +424,6 @@ function PandaAuth:CreateWindow(title)
         
         local section = {}
         
-        -- Add elements to section
         function section:AddButton(text, callback)
             return createButton(SectionContent, text, callback)
         end
