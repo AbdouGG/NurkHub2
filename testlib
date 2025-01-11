@@ -114,28 +114,12 @@ function PandaAuth:CreateWindow(title)
     TabHolder.Size = UDim2.new(1, 0, 0, 30)
     TabHolder.BackgroundColor3 = COLORS.SECONDARY
     TabHolder.Parent = MainFrame
-
-    -- Create ScrollingFrame for tabs
-    local TabScroller = Instance.new("ScrollingFrame")
-    TabScroller.Name = "TabScroller"
-    TabScroller.Size = UDim2.new(1, -10, 1, 0) -- Adjust width to account for padding
-    TabScroller.Position = UDim2.new(0, 5, 0, 0)
-    TabScroller.BackgroundTransparency = 1
-    TabScroller.ScrollBarThickness = 2
-    TabScroller.ScrollBarImageColor3 = COLORS.ACCENT
-    TabScroller.ScrollingDirection = Enum.ScrollingDirection.X
-    TabScroller.Parent = TabHolder
     
     TabList.Parent = TabHolder
     TabList.FillDirection = Enum.FillDirection.Horizontal
     TabList.HorizontalAlignment = Enum.HorizontalAlignment.Left
     TabList.SortOrder = Enum.SortOrder.LayoutOrder
     TabList.Padding = UDim.new(0, 5)
-    TabList.AutomaticSize = Enum.AutomaticSize.X  -- Add this line
-
-    TabList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        TabScroller.CanvasSize = UDim2.new(0, TabList.AbsoluteContentSize.X, 0, 0)
-    end)
     
     -- Configure ContentHolder
     ContentHolder.Name = "ContentHolder"
@@ -154,32 +138,28 @@ function PandaAuth:CreateWindow(title)
         -- Create Tab Button
         local TabButton = Instance.new("TextButton")
         TabButton.Name = name .. "Tab"
-        TabButton.Size = UDim2.new(0, 80, 0, 25) -- Adjusted height
-        TabButton.Position = UDim2.new(0, 5, 0, 2) -- Adjusted position
+        TabButton.Size = UDim2.new(0, 80, 1, -5)
+        TabButton.Position = UDim2.new(0, 5, 0, 0)
         TabButton.BackgroundColor3 = COLORS.TAB_UNSELECTED
         TabButton.Text = name
         TabButton.TextColor3 = COLORS.TEXT
         TabButton.TextSize = 14
         TabButton.Font = Enum.Font.GothamSemibold
-        TabButton.AutoButtonColor = false -- Add this line
-        TabButton.Parent = TabHolder -- Make sure it's parented to TabHolder
-        TabButton.ZIndex = 2 -- Ensure it's visible above other elements
+        TabButton.Parent = TabHolder
         
         local TabButtonCorner = Instance.new("UICorner")
         TabButtonCorner.CornerRadius = UDim.new(0, 6)
         TabButtonCorner.Parent = TabButton
-
-        -- Create Tab Content Frame
+        
+        -- Create Tab Content
         local TabContent = Instance.new("ScrollingFrame")
         TabContent.Name = name .. "Content"
         TabContent.Size = UDim2.new(1, 0, 1, 0)
-        TabContent.Position = UDim2.new(0, 0, 0, 0)
         TabContent.BackgroundTransparency = 1
         TabContent.ScrollBarThickness = 2
         TabContent.ScrollBarImageColor3 = COLORS.ACCENT
         TabContent.Visible = false
         TabContent.Parent = ContentHolder
-        TabContent.ZIndex = 1
         
         local UIListLayout = Instance.new("UIListLayout")
         UIListLayout.Parent = TabContent
