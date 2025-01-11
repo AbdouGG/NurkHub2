@@ -113,13 +113,29 @@ function PandaAuth:CreateWindow(title)
     TabHolder.Position = UDim2.new(0, 0, 0, 35)
     TabHolder.Size = UDim2.new(1, 0, 0, 30)
     TabHolder.BackgroundColor3 = COLORS.SECONDARY
-    TabHolder.Parent = MainFrame
+    TabHolder.ClipsDescendants = true -- Add this to prevent tabs from showing outside the holder
+
+    -- Create a container for the tabs that can scroll
+    local TabContainer = Instance.new("ScrollingFrame")
+    TabContainer.Name = "TabContainer"
+    TabContainer.Size = UDim2.new(1, -10, 1, 0) -- Slight padding on sides
+    TabContainer.Position = UDim2.new(0, 5, 0, 0)
+    TabContainer.BackgroundTransparency = 1
+    TabContainer.ScrollBarThickness = 2
+    TabContainer.ScrollBarImageColor3 = COLORS.ACCENT
+    TabContainer.ScrollingDirection = Enum.ScrollingDirection.X
+    TabContainer.Parent = TabHolder
     
-    TabList.Parent = TabHolder
+    TabList.Parent = TabContainer
     TabList.FillDirection = Enum.FillDirection.Horizontal
     TabList.HorizontalAlignment = Enum.HorizontalAlignment.Left
     TabList.SortOrder = Enum.SortOrder.LayoutOrder
     TabList.Padding = UDim.new(0, 5)
+
+    -- Add auto-size calculation for ScrollingFrame
+    TabList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        TabContainer.CanvasSize = UDim2.new(0, TabList.AbsoluteContentSize.X + 10, 0, 0)
+    end)
     
     -- Configure ContentHolder
     ContentHolder.Name = "ContentHolder"
@@ -138,14 +154,14 @@ function PandaAuth:CreateWindow(title)
         -- Create Tab Button
         local TabButton = Instance.new("TextButton")
         TabButton.Name = name .. "Tab"
-        TabButton.Size = UDim2.new(0, 80, 1, -5)
-        TabButton.Position = UDim2.new(0, 5, 0, 0)
+        TabButton.Size = UDim2.new(0, 80, 1, -5) -- Fixed width for consistency
+        TabButton.Position = UDim2.new(0, 0, 0, 0)
         TabButton.BackgroundColor3 = COLORS.TAB_UNSELECTED
         TabButton.Text = name
         TabButton.TextColor3 = COLORS.TEXT
         TabButton.TextSize = 14
         TabButton.Font = Enum.Font.GothamSemibold
-        TabButton.Parent = TabHolder
+        TabButton.Parent = TabContainer -- Changed from TabHolder to TabContainer
         
         local TabButtonCorner = Instance.new("UICorner")
         TabButtonCorner.CornerRadius = UDim.new(0, 6)
