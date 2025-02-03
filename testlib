@@ -249,7 +249,7 @@ function PandaAuth:CreateWindow(title)
                 SectionContent.Size = UDim2.new(1, 0, 0, UIListLayout_Section.AbsoluteContentSize.Y)
             end)
 
-            -- Add elements functions (Button, Toggle, Dropdown, etc.)
+            -- Add elements functions (Button, Toggle, Dropdown, Slider, Input, etc.)
             function section:AddButton(text, callback)
                 local Button = Instance.new("TextButton")
                 local UICorner_Button = Instance.new("UICorner")
@@ -561,6 +561,54 @@ function PandaAuth:CreateWindow(title)
 
                 createHoverEffect(SliderFrame)
                 return SliderFrame
+            end
+
+            -- New: Input Box functionality
+            function section:AddInput(text, placeholder, callback)
+                local InputFrame = Instance.new("Frame")
+                local UICorner_Input = Instance.new("UICorner")
+                local Title = Instance.new("TextLabel")
+                local InputBox = Instance.new("TextBox")
+                
+                InputFrame.Name = "InputFrame"
+                InputFrame.Size = UDim2.new(0.9, 0, 0, 35)
+                InputFrame.BackgroundColor3 = COLORS.SECONDARY
+                InputFrame.Parent = SectionContent
+
+                UICorner_Input.CornerRadius = UDim.new(0, 6)
+                UICorner_Input.Parent = InputFrame
+
+                Title.Name = "Title"
+                Title.Size = UDim2.new(0.4, 0, 1, 0)
+                Title.Position = UDim2.new(0.05, 0, 0, 0)
+                Title.BackgroundTransparency = 1
+                Title.Text = text
+                Title.TextColor3 = COLORS.TEXT
+                Title.TextSize = 14
+                Title.Font = Enum.Font.GothamSemibold
+                Title.TextXAlignment = Enum.TextXAlignment.Left
+                Title.Parent = InputFrame
+
+                InputBox.Name = "InputBox"
+                InputBox.Size = UDim2.new(0.5, 0, 0.8, 0)
+                InputBox.Position = UDim2.new(0.45, 0, 0.1, 0)
+                InputBox.BackgroundColor3 = COLORS.BACKGROUND
+                InputBox.Text = ""
+                InputBox.PlaceholderText = placeholder
+                InputBox.TextColor3 = COLORS.TEXT
+                InputBox.TextSize = 14
+                InputBox.Font = Enum.Font.Gotham
+                InputBox.Parent = InputFrame
+
+                createHoverEffect(InputFrame)
+
+                InputBox.FocusLost:Connect(function(enterPressed)
+                    if enterPressed then
+                        callback(InputBox.Text)
+                    end
+                end)
+
+                return InputFrame
             end
 
             return section
