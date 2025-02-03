@@ -1,18 +1,18 @@
--- PandaAuth Library - PRO Modern Theme
+-- PandaAuth Library - PRO Modern Theme with Notifications
 local PandaAuth = {}
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 
 -- PRO Theme Colors
 local COLORS = {
-    BACKGROUND   = Color3.fromRGB(32, 34, 37),   -- Dark, modern background
-    ACCENT       = Color3.fromRGB(80, 150, 255),  -- A bright blue accent
-    SECONDARY    = Color3.fromRGB(40, 42, 46),    -- Slightly lighter than BACKGROUND
-    TEXT         = Color3.fromRGB(230, 230, 230), -- Near white text
-    SUCCESS      = Color3.fromRGB(80, 250, 123),  -- Vibrant green for success
-    ERROR        = Color3.fromRGB(250, 80, 80),   -- Bold red for errors
-    HOVER        = Color3.fromRGB(50, 52, 57),    -- Subtle hover shade
-    TAB_SELECTED = Color3.fromRGB(80, 150, 255),  -- Use accent color for selected tab
+    BACKGROUND    = Color3.fromRGB(32, 34, 37),   -- Dark, modern background
+    ACCENT        = Color3.fromRGB(80, 150, 255),  -- A bright blue accent
+    SECONDARY     = Color3.fromRGB(40, 42, 46),    -- Slightly lighter than BACKGROUND
+    TEXT          = Color3.fromRGB(230, 230, 230), -- Near white text
+    SUCCESS       = Color3.fromRGB(80, 250, 123),  -- Vibrant green for success
+    ERROR         = Color3.fromRGB(250, 80, 80),   -- Bold red for errors
+    HOVER         = Color3.fromRGB(50, 52, 57),    -- Subtle hover shade
+    TAB_SELECTED  = Color3.fromRGB(80, 150, 255),  -- Use accent color for selected tab
     TAB_UNSELECTED = Color3.fromRGB(40, 42, 46)    -- Use secondary color for unselected
 }
 
@@ -30,13 +30,13 @@ local function createHoverEffect(button)
     end)
 end
 
+-- CreateWindow function builds the main UI
 function PandaAuth:CreateWindow(title)
     local window = {}
 
     -- Create ScreenGui with proper protection
     local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = "PandaAuthUI"
-
     local success, result = pcall(function()
         if syn then
             syn.protect_gui(ScreenGui)
@@ -58,7 +58,7 @@ function PandaAuth:CreateWindow(title)
     local UICorner = Instance.new("UICorner")
     local UIStroke = Instance.new("UIStroke")  -- For a modern border effect
     local TopBar = Instance.new("Frame")
-    local Title = Instance.new("TextLabel")
+    local TitleLabel = Instance.new("TextLabel")
     local TabHolder = Instance.new("ScrollingFrame")
     local TabList = Instance.new("UIListLayout")
     local ContentHolder = Instance.new("Frame")
@@ -102,14 +102,14 @@ function PandaAuth:CreateWindow(title)
     TopBarCorner.Parent = TopBar
 
     -- Configure Title
-    Title.Name = "Title"
-    Title.Size = UDim2.new(1, 0, 1, 0)
-    Title.BackgroundTransparency = 1
-    Title.Text = title
-    Title.TextColor3 = COLORS.TEXT
-    Title.TextSize = 20
-    Title.Font = Enum.Font.GothamBold
-    Title.Parent = TopBar
+    TitleLabel.Name = "Title"
+    TitleLabel.Size = UDim2.new(1, 0, 1, 0)
+    TitleLabel.BackgroundTransparency = 1
+    TitleLabel.Text = title
+    TitleLabel.TextColor3 = COLORS.TEXT
+    TitleLabel.TextSize = 20
+    TitleLabel.Font = Enum.Font.GothamBold
+    TitleLabel.Parent = TopBar
 
     -- Configure TabHolder as a scrolling frame
     TabHolder.Name = "TabHolder"
@@ -184,15 +184,11 @@ function PandaAuth:CreateWindow(title)
         TabButton.MouseButton1Click:Connect(function()
             if selectedTab then
                 selectedTab.Content.Visible = false
-                TweenService:Create(selectedTab.Button, TWEEN_INFO, {
-                    BackgroundColor3 = COLORS.TAB_UNSELECTED
-                }):Play()
+                TweenService:Create(selectedTab.Button, TWEEN_INFO, {BackgroundColor3 = COLORS.TAB_UNSELECTED}):Play()
             end
             selectedTab = {Button = TabButton, Content = TabContent}
             TabContent.Visible = true
-            TweenService:Create(TabButton, TWEEN_INFO, {
-                BackgroundColor3 = COLORS.TAB_SELECTED
-            }):Play()
+            TweenService:Create(TabButton, TWEEN_INFO, {BackgroundColor3 = COLORS.TAB_SELECTED}):Play()
         end)
 
         if #tabs == 0 then
@@ -604,9 +600,7 @@ function PandaAuth:CreateWindow(title)
     ToggleButton.MouseButton1Click:Connect(function()
         uiVisible = not uiVisible
         MainFrame.Visible = uiVisible
-        TweenService:Create(ToggleButton, TWEEN_INFO, {
-            Rotation = uiVisible and 0 or 90
-        }):Play()
+        TweenService:Create(ToggleButton, TWEEN_INFO, {Rotation = uiVisible and 0 or 90}):Play()
     end)
 
     -- Add window fade in animation
@@ -628,6 +622,61 @@ function PandaAuth:CreateWindow(title)
     fadeIn()
 
     return window
+end
+
+---------------------------------------------------------
+-- Notification Functionality
+-- Usage: PandaAuth:Notify("Title", "Description", durationInSeconds)
+function PandaAuth:Notify(title, description, duration)
+    duration = duration or 5
+    -- Create a ScreenGui for notifications (if one doesn't already exist)
+    local notifyScreen = game:GetService("CoreGui"):FindFirstChild("PandaAuthNotifyUI")
+    if not notifyScreen then
+        notifyScreen = Instance.new("ScreenGui")
+        notifyScreen.Name = "PandaAuthNotifyUI"
+        notifyScreen.Parent = game:GetService("CoreGui")
+    end
+
+    local notifyFrame = Instance.new("Frame")
+    notifyFrame.Size = UDim2.new(0, 300, 0, 80)
+    notifyFrame.BackgroundColor3 = COLORS.SECONDARY
+    notifyFrame.AnchorPoint = Vector2.new(0, 1)
+    -- Start off-screen (to the right)
+    notifyFrame.Position = UDim2.new(1, 320, 1, -100)
+    notifyFrame.Parent = notifyScreen
+
+    local notifyCorner = Instance.new("UICorner", notifyFrame)
+    notifyCorner.CornerRadius = UDim.new(0, 8)
+
+    local titleLabel = Instance.new("TextLabel", notifyFrame)
+    titleLabel.Size = UDim2.new(1, -20, 0, 30)
+    titleLabel.Position = UDim2.new(0, 10, 0, 10)
+    titleLabel.BackgroundTransparency = 1
+    titleLabel.Text = title
+    titleLabel.TextColor3 = COLORS.TEXT
+    titleLabel.Font = Enum.Font.GothamBold
+    titleLabel.TextSize = 18
+
+    local descLabel = Instance.new("TextLabel", notifyFrame)
+    descLabel.Size = UDim2.new(1, -20, 0, 30)
+    descLabel.Position = UDim2.new(0, 10, 0, 40)
+    descLabel.BackgroundTransparency = 1
+    descLabel.Text = description
+    descLabel.TextColor3 = COLORS.TEXT
+    descLabel.Font = Enum.Font.Gotham
+    descLabel.TextSize = 14
+
+    -- Slide in animation
+    local slideIn = TweenService:Create(notifyFrame, TWEEN_INFO, {Position = UDim2.new(1, -320, 1, -100)})
+    slideIn:Play()
+
+    delay(duration, function()
+        local slideOut = TweenService:Create(notifyFrame, TWEEN_INFO, {Position = UDim2.new(1, 320, 1, -100)})
+        slideOut:Play()
+        slideOut.Completed:Connect(function()
+            notifyFrame:Destroy()
+        end)
+    end)
 end
 
 return PandaAuth
