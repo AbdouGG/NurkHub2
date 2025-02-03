@@ -1,19 +1,19 @@
--- PandaAuth Library - PRO Modern Theme with Notifications
+-- PandaAuth Library - PRO Modern Theme with Notifications and Grid Layout for Sections
 local PandaAuth = {}
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 
 -- PRO Theme Colors
 local COLORS = {
-    BACKGROUND    = Color3.fromRGB(32, 34, 37),   -- Dark, modern background
-    ACCENT        = Color3.fromRGB(80, 150, 255),  -- A bright blue accent
-    SECONDARY     = Color3.fromRGB(40, 42, 46),    -- Slightly lighter than BACKGROUND
-    TEXT          = Color3.fromRGB(230, 230, 230), -- Near white text
-    SUCCESS       = Color3.fromRGB(80, 250, 123),  -- Vibrant green for success
-    ERROR         = Color3.fromRGB(250, 80, 80),   -- Bold red for errors
-    HOVER         = Color3.fromRGB(50, 52, 57),    -- Subtle hover shade
-    TAB_SELECTED  = Color3.fromRGB(80, 150, 255),  -- Use accent color for selected tab
-    TAB_UNSELECTED = Color3.fromRGB(40, 42, 46)    -- Use secondary color for unselected
+    BACKGROUND     = Color3.fromRGB(32, 34, 37),   -- Dark, modern background
+    ACCENT         = Color3.fromRGB(80, 150, 255),  -- A bright blue accent
+    SECONDARY      = Color3.fromRGB(40, 42, 46),    -- Slightly lighter than BACKGROUND
+    TEXT           = Color3.fromRGB(230, 230, 230), -- Near white text
+    SUCCESS        = Color3.fromRGB(80, 250, 123),  -- Vibrant green for success
+    ERROR          = Color3.fromRGB(250, 80, 80),   -- Bold red for errors
+    HOVER          = Color3.fromRGB(50, 52, 57),    -- Subtle hover shade
+    TAB_SELECTED   = Color3.fromRGB(80, 150, 255),  -- Use accent color for selected tab
+    TAB_UNSELECTED = Color3.fromRGB(40, 42, 46)     -- Use secondary color for unselected
 }
 
 -- Animation settings
@@ -30,7 +30,6 @@ local function createHoverEffect(button)
     end)
 end
 
--- CreateWindow function builds the main UI
 function PandaAuth:CreateWindow(title)
     local window = {}
 
@@ -54,6 +53,7 @@ function PandaAuth:CreateWindow(title)
         ScreenGui.Parent = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
     end
 
+    -- Make the main window bigger (600 x 500)
     local MainFrame = Instance.new("Frame")
     local UICorner = Instance.new("UICorner")
     local UIStroke = Instance.new("UIStroke")  -- For a modern border effect
@@ -66,8 +66,8 @@ function PandaAuth:CreateWindow(title)
 
     -- Configure MainFrame
     MainFrame.Name = "MainFrame"
-    MainFrame.Size = UDim2.new(0, 320, 0, 380)
-    MainFrame.Position = UDim2.new(0.5, -160, 0.5, -190)
+    MainFrame.Size = UDim2.new(0, 600, 0, 500)
+    MainFrame.Position = UDim2.new(0.5, -300, 0.5, -250)
     MainFrame.BackgroundColor3 = COLORS.BACKGROUND
     MainFrame.ClipsDescendants = true
     MainFrame.Parent = ScreenGui
@@ -111,7 +111,7 @@ function PandaAuth:CreateWindow(title)
     TitleLabel.Font = Enum.Font.GothamBold
     TitleLabel.Parent = TopBar
 
-    -- Configure TabHolder as a scrolling frame
+    -- Configure TabHolder as a scrolling frame (increased height)
     TabHolder.Name = "TabHolder"
     TabHolder.Position = UDim2.new(0, 0, 0, 45)
     TabHolder.Size = UDim2.new(1, 0, 0, 35)
@@ -131,7 +131,7 @@ function PandaAuth:CreateWindow(title)
         TabHolder.CanvasSize = UDim2.new(0, TabList.AbsoluteContentSize.X, 0, 0)
     end)
 
-    -- Configure ContentHolder
+    -- Configure ContentHolder (for tab contents)
     ContentHolder.Name = "ContentHolder"
     ContentHolder.Position = UDim2.new(0, 0, 0, 90)
     ContentHolder.Size = UDim2.new(1, 0, 1, -90)
@@ -171,13 +171,16 @@ function PandaAuth:CreateWindow(title)
         TabContent.Visible = false
         TabContent.Parent = ContentHolder
 
-        local UIListLayout = Instance.new("UIListLayout")
-        UIListLayout.Parent = TabContent
-        UIListLayout.Padding = UDim.new(0, 10)
-        UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-        UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-            TabContent.CanvasSize = UDim2.new(0, 0, 0, UIListLayout.AbsoluteContentSize.Y + 10)
+        -- Instead of a vertical list, use a grid layout so sections appear side by side.
+        local grid = Instance.new("UIGridLayout")
+        grid.CellSize = UDim2.new(0, 280, 0, 200)
+        grid.CellPadding = UDim2.new(0, 10, 0, 10)
+        grid.FillDirectionMaxCells = 2  -- Maximum two sections per row
+        grid.HorizontalAlignment = Enum.HorizontalAlignment.Left
+        grid.SortOrder = Enum.SortOrder.LayoutOrder
+        grid.Parent = TabContent
+        grid:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            TabContent.CanvasSize = UDim2.new(0, grid.AbsoluteContentSize.X, 0, grid.AbsoluteContentSize.Y)
         end)
 
         -- Tab Selection Logic
@@ -209,7 +212,8 @@ function PandaAuth:CreateWindow(title)
             local UIListLayout_Section = Instance.new("UIListLayout")
 
             SectionFrame.Name = "Section_" .. sectionName
-            SectionFrame.Size = UDim2.new(0.92, 0, 0, 40)
+            -- With grid layout, the size is now fixed to match the grid cell.
+            SectionFrame.Size = UDim2.new(0, 280, 0, 200)
             SectionFrame.BackgroundColor3 = COLORS.SECONDARY
             SectionFrame.BackgroundTransparency = 0.1
             self.SectionCount = self.SectionCount + 1
@@ -230,7 +234,7 @@ function PandaAuth:CreateWindow(title)
             SectionLabel.Parent = SectionFrame
 
             SectionContent.Name = "SectionContent"
-            SectionContent.Size = UDim2.new(1, 0, 0, 0)
+            SectionContent.Size = UDim2.new(1, 0, 1, -30)
             SectionContent.BackgroundTransparency = 1
             SectionContent.Position = UDim2.new(0, 0, 0, 30)
             SectionContent.Parent = SectionFrame
@@ -238,10 +242,9 @@ function PandaAuth:CreateWindow(title)
             UIListLayout_Section.Parent = SectionContent
             UIListLayout_Section.Padding = UDim.new(0, 6)
             UIListLayout_Section.HorizontalAlignment = Enum.HorizontalAlignment.Center
-
+            UIListLayout_Section.SortOrder = Enum.SortOrder.LayoutOrder
             UIListLayout_Section:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-                SectionFrame.Size = UDim2.new(0.92, 0, 0, UIListLayout_Section.AbsoluteContentSize.Y + 40)
-                SectionContent.Size = UDim2.new(1, 0, 0, UIListLayout_Section.AbsoluteContentSize.Y)
+                SectionContent.CanvasSize = UDim2.new(0, 0, 0, UIListLayout_Section.AbsoluteContentSize.Y)
             end)
 
             -- Add elements functions
