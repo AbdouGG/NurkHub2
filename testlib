@@ -142,6 +142,7 @@ function PandaAuth:CreateWindow(title)
 
     function window:CreateTab(name)
         local tab = {}
+        tab.SectionCount = 0 -- Initialize section counter
 
         -- Create Tab Button
         local TabButton = Instance.new("TextButton")
@@ -172,7 +173,7 @@ function PandaAuth:CreateWindow(title)
         UIListLayout.Parent = TabContent
         UIListLayout.Padding = UDim.new(0, 8)
         UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-
+        UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
         UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
             TabContent.CanvasSize = UDim2.new(0, 0, 0, UIListLayout.AbsoluteContentSize.Y + 10)
         end)
@@ -209,12 +210,15 @@ function PandaAuth:CreateWindow(title)
             local SectionFrame = Instance.new("Frame")
             local SectionLabel = Instance.new("TextLabel")
             local SectionContent = Instance.new("Frame")
-            local UIListLayout = Instance.new("UIListLayout")
+            local UIListLayout_Section = Instance.new("UIListLayout")
 
             SectionFrame.Name = "Section_" .. sectionName
             SectionFrame.Size = UDim2.new(0.9, 0, 0, 30)
             SectionFrame.BackgroundColor3 = COLORS.SECONDARY
             SectionFrame.BackgroundTransparency = 0.5
+            -- Set LayoutOrder based on creation order
+            self.SectionCount = self.SectionCount + 1
+            SectionFrame.LayoutOrder = self.SectionCount
             SectionFrame.Parent = TabContent
 
             local SectionCorner = Instance.new("UICorner")
@@ -236,19 +240,19 @@ function PandaAuth:CreateWindow(title)
             SectionContent.Position = UDim2.new(0, 0, 0, 30)
             SectionContent.Parent = SectionFrame
 
-            UIListLayout.Parent = SectionContent
-            UIListLayout.Padding = UDim.new(0, 5)
-            UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+            UIListLayout_Section.Parent = SectionContent
+            UIListLayout_Section.Padding = UDim.new(0, 5)
+            UIListLayout_Section.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
-            UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-                SectionFrame.Size = UDim2.new(0.9, 0, 0, UIListLayout.AbsoluteContentSize.Y + 35)
-                SectionContent.Size = UDim2.new(1, 0, 0, UIListLayout.AbsoluteContentSize.Y)
+            UIListLayout_Section:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+                SectionFrame.Size = UDim2.new(0.9, 0, 0, UIListLayout_Section.AbsoluteContentSize.Y + 35)
+                SectionContent.Size = UDim2.new(1, 0, 0, UIListLayout_Section.AbsoluteContentSize.Y)
             end)
 
             -- Add elements functions (Button, Toggle, Dropdown, etc.)
             function section:AddButton(text, callback)
                 local Button = Instance.new("TextButton")
-                local UICorner = Instance.new("UICorner")
+                local UICorner_Button = Instance.new("UICorner")
 
                 Button.Name = "Button"
                 Button.Size = UDim2.new(0.9, 0, 0, 35)
@@ -260,8 +264,8 @@ function PandaAuth:CreateWindow(title)
                 Button.Parent = SectionContent
                 Button.AutoButtonColor = false
 
-                UICorner.CornerRadius = UDim.new(0, 6)
-                UICorner.Parent = Button
+                UICorner_Button.CornerRadius = UDim.new(0, 6)
+                UICorner_Button.Parent = Button
 
                 createHoverEffect(Button)
 
@@ -272,7 +276,7 @@ function PandaAuth:CreateWindow(title)
 
             function section:AddToggle(text, default, callback)
                 local ToggleFrame = Instance.new("Frame")
-                local UICorner = Instance.new("UICorner")
+                local UICorner_Toggle = Instance.new("UICorner")
                 local Title = Instance.new("TextLabel")
                 local ToggleButton = Instance.new("TextButton")
                 local ToggleInner = Instance.new("Frame")
@@ -282,8 +286,8 @@ function PandaAuth:CreateWindow(title)
                 ToggleFrame.BackgroundColor3 = COLORS.SECONDARY
                 ToggleFrame.Parent = SectionContent
 
-                UICorner.CornerRadius = UDim.new(0, 6)
-                UICorner.Parent = ToggleFrame
+                UICorner_Toggle.CornerRadius = UDim.new(0, 6)
+                UICorner_Toggle.Parent = ToggleFrame
 
                 Title.Name = "Title"
                 Title.Size = UDim2.new(0.7, 0, 1, 0)
@@ -336,21 +340,21 @@ function PandaAuth:CreateWindow(title)
 
             function section:AddDropdown(text, options, callback)
                 local DropdownFrame = Instance.new("Frame")
-                local UICorner = Instance.new("UICorner")
+                local UICorner_Dropdown = Instance.new("UICorner")
                 local Title = Instance.new("TextLabel")
                 local DropdownButton = Instance.new("TextButton")
                 local UICorner_2 = Instance.new("UICorner")
                 local OptionsFrame = Instance.new("Frame")
                 local UICorner_3 = Instance.new("UICorner")
-                local UIListLayout = Instance.new("UIListLayout")
+                local UIListLayout_Dropdown = Instance.new("UIListLayout")
 
                 DropdownFrame.Name = "DropdownFrame"
                 DropdownFrame.Size = UDim2.new(0.9, 0, 0, 35)
                 DropdownFrame.BackgroundColor3 = COLORS.SECONDARY
                 DropdownFrame.Parent = SectionContent
 
-                UICorner.CornerRadius = UDim.new(0, 6)
-                UICorner.Parent = DropdownFrame
+                UICorner_Dropdown.CornerRadius = UDim.new(0, 6)
+                UICorner_Dropdown.Parent = DropdownFrame
 
                 Title.Name = "Title"
                 Title.Size = UDim2.new(0.7, 0, 1, 0)
@@ -388,9 +392,9 @@ function PandaAuth:CreateWindow(title)
                 UICorner_3.CornerRadius = UDim.new(0, 6)
                 UICorner_3.Parent = OptionsFrame
 
-                UIListLayout.Parent = OptionsFrame
-                UIListLayout.Padding = UDim.new(0, 2)
-                UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+                UIListLayout_Dropdown.Parent = OptionsFrame
+                UIListLayout_Dropdown.Padding = UDim.new(0, 2)
+                UIListLayout_Dropdown.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
                 local open = false
                 DropdownButton.MouseButton1Click:Connect(function()
@@ -453,7 +457,7 @@ function PandaAuth:CreateWindow(title)
 
             function section:AddSlider(text, min, max, default, callback)
                 local SliderFrame = Instance.new("Frame")
-                local UICorner = Instance.new("UICorner")
+                local UICorner_Slider = Instance.new("UICorner")
                 local Title = Instance.new("TextLabel")
                 local SliderBackground = Instance.new("Frame")
                 local UICorner_2 = Instance.new("UICorner")
@@ -467,8 +471,8 @@ function PandaAuth:CreateWindow(title)
                 SliderFrame.BackgroundColor3 = COLORS.SECONDARY
                 SliderFrame.Parent = SectionContent
 
-                UICorner.CornerRadius = UDim.new(0, 6)
-                UICorner.Parent = SliderFrame
+                UICorner_Slider.CornerRadius = UDim.new(0, 6)
+                UICorner_Slider.Parent = SliderFrame
 
                 Title.Name = "Title"
                 Title.Size = UDim2.new(0.9, 0, 0, 20)
