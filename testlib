@@ -1,4 +1,4 @@
--- PandaAuth Library - PRO Modern Theme with Notifications and Grid Layout for Sections
+-- PandaAuth Library - PRO Modern Theme with Notifications, Grid Layout, and Section ScrollBars
 local PandaAuth = {}
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
@@ -171,7 +171,7 @@ function PandaAuth:CreateWindow(title)
         TabContent.Visible = false
         TabContent.Parent = ContentHolder
 
-        -- Instead of a vertical list, use a grid layout so sections appear side by side.
+        -- Use a grid layout so sections appear side by side.
         local grid = Instance.new("UIGridLayout")
         grid.CellSize = UDim2.new(0, 280, 0, 200)
         grid.CellPadding = UDim2.new(0, 10, 0, 10)
@@ -208,7 +208,8 @@ function PandaAuth:CreateWindow(title)
 
             local SectionFrame = Instance.new("Frame")
             local SectionLabel = Instance.new("TextLabel")
-            local SectionContent = Instance.new("Frame")
+            -- Instead of a plain Frame, we use a ScrollingFrame for SectionContent
+            local SectionContent = Instance.new("ScrollingFrame")
             local UIListLayout_Section = Instance.new("UIListLayout")
 
             SectionFrame.Name = "Section_" .. sectionName
@@ -233,10 +234,14 @@ function PandaAuth:CreateWindow(title)
             SectionLabel.Font = Enum.Font.GothamBold
             SectionLabel.Parent = SectionFrame
 
+            -- Configure SectionContent as a scrolling frame to hold many elements.
             SectionContent.Name = "SectionContent"
             SectionContent.Size = UDim2.new(1, 0, 1, -30)
             SectionContent.BackgroundTransparency = 1
             SectionContent.Position = UDim2.new(0, 0, 0, 30)
+            SectionContent.CanvasSize = UDim2.new(0, 0, 0, 0)
+            SectionContent.ScrollBarThickness = 4
+            SectionContent.ScrollBarImageColor3 = COLORS.ACCENT
             SectionContent.Parent = SectionFrame
 
             UIListLayout_Section.Parent = SectionContent
