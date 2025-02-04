@@ -34,7 +34,7 @@ local function createHoverEffect(button)
 end
 
 ----------------------------------------------------------------
--- CreateWindow: Builds the main UI
+-- CreateWindow: Builds the main UI with a left sidebar for tabs
 ----------------------------------------------------------------
 function PandaAuth:CreateWindow(title)
     local window = {}
@@ -59,7 +59,7 @@ function PandaAuth:CreateWindow(title)
         ScreenGui.Parent = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
     end
 
-    -- Main window (bigger: 600x500)
+    -- Main window (600 x 500)
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "MainFrame"
     MainFrame.Size = UDim2.new(0, 600, 0, 500)
@@ -129,7 +129,7 @@ function PandaAuth:CreateWindow(title)
     ContentHolder.BackgroundTransparency = 1
 
     ----------------------------------------------------------------
-    -- Tabs System (Vertical Sidebar)
+    -- Tabs System (Left Sidebar)
     ----------------------------------------------------------------
     local tabs = {}
     local selectedTab = nil
@@ -150,7 +150,10 @@ function PandaAuth:CreateWindow(title)
         TabButton.TextXAlignment = Enum.TextXAlignment.Left
         TabButton.AutoButtonColor = false
         TabButton.LayoutOrder = #tabs + 1
-        TabButton.PaddingLeft = UDim.new(0, 8)
+        -- Use UIPadding for left padding
+        local padding = Instance.new("UIPadding", TabButton)
+        padding.PaddingLeft = UDim.new(0, 8)
+
         local TabButtonCorner = Instance.new("UICorner", TabButton)
         TabButtonCorner.CornerRadius = UDim.new(0, 8)
 
