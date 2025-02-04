@@ -242,11 +242,16 @@ function PandaAuth:CreateWindow(title)
             Divider.BackgroundColor3 = COLORS.ACCENT
             Divider.BackgroundTransparency = 0.3
 
-            local SectionContent = Instance.new("Frame", SectionFrame)
+            -- Change made here: use a ScrollingFrame for SectionContent so you can scroll through elements if they exceed the viewable area.
+            local SectionContent = Instance.new("ScrollingFrame", SectionFrame)
             SectionContent.Name = "SectionContent"
             SectionContent.Position = UDim2.new(0, 0, 0, 35)
             SectionContent.Size = UDim2.new(1, 0, 1, -35)
             SectionContent.BackgroundTransparency = 1
+            SectionContent.ScrollBarThickness = 4
+            SectionContent.ScrollBarImageColor3 = COLORS.ACCENT
+            SectionContent.CanvasSize = UDim2.new(0, 0, 0, 0)
+            SectionContent.VerticalScrollBarInset = Enum.ScrollBarInset.Always
 
             local UIListLayout_Section = Instance.new("UIListLayout", SectionContent)
             UIListLayout_Section.Padding = UDim.new(0, 6)
