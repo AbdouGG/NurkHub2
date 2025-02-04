@@ -65,7 +65,7 @@ function PandaAuth:CreateWindow(title)
     ----------------------------------------------------------------
     -- Wait until the camera is available
     local camera = Workspace.CurrentCamera or game:GetService("Workspace").CurrentCamera
-    local viewportSize = camera and camera.ViewportSize or Vector2.new(1920,1080)
+    local viewportSize = camera and camera.ViewportSize or Vector2.new(1920, 1080)
     local scale = 1
     -- If the viewport width is less than 1200, scale proportionally.
     if viewportSize.X < 1200 then
@@ -536,6 +536,20 @@ function PandaAuth:CreateWindow(title)
                     end
                 end)
                 return InputFrame
+            end
+
+            -- NEW: AddLabel functionality.
+            function section:AddLabel(text)
+                local Label = Instance.new("TextLabel", SectionContent)
+                Label.Name = "Label"
+                Label.Size = UDim2.new(0.92, 0, 0, 30)
+                Label.BackgroundTransparency = 1
+                Label.Text = text or ""
+                Label.TextColor3 = COLORS.TEXT
+                Label.TextSize = 15
+                Label.Font = Enum.Font.GothamSemibold
+                Label.TextXAlignment = Enum.TextXAlignment.Left
+                return Label
             end
 
             return section
