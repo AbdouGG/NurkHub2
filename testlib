@@ -200,7 +200,7 @@ function PandaAuth:CreateWindow(title)
         TabContent.Visible = false
 
         local grid = Instance.new("UIGridLayout", TabContent)
-        grid.CellSize = UDim2.new(0, 280, 0, 200)  -- Changed grid cell size to 280×200
+        grid.CellSize = UDim2.new(0, 260, 0, 180)  -- Smaller grid cell so that 2 fit per row
         grid.CellPadding = UDim2.new(0, 10, 0, 10)
         grid.FillDirectionMaxCells = 2  -- 2 per row
         grid.HorizontalAlignment = Enum.HorizontalAlignment.Left
@@ -233,7 +233,7 @@ function PandaAuth:CreateWindow(title)
             local section = {}
             local SectionFrame = Instance.new("Frame", TabContent)
             SectionFrame.Name = "Section_" .. sectionName
-            SectionFrame.Size = UDim2.new(0, 280, 0, 200)  -- Changed SectionFrame size to 280×200
+            SectionFrame.Size = UDim2.new(0, 260, 0, 180)  -- Matching grid cell size
             SectionFrame.BackgroundColor3 = COLORS.SECONDARY
             SectionFrame.BackgroundTransparency = 0.1
             tab.SectionCount = tab.SectionCount + 1
@@ -427,8 +427,8 @@ function PandaAuth:CreateWindow(title)
             function section:AddSlider(text, min, max, default, callback)
                 local SliderFrame = Instance.new("Frame", SectionContent)
                 SliderFrame.Name = "SliderFrame"
-                -- Adjust slider width to be 92% of 280px (grid cell width)
-                SliderFrame.Size = UDim2.new(0, math.floor(0.92 * 280), 0, 48)
+                -- Adjust slider width to be 92% of 260px (grid cell width)
+                SliderFrame.Size = UDim2.new(0, math.floor(0.92 * 260), 0, 48)
                 SliderFrame.BackgroundColor3 = COLORS.SECONDARY
                 local UICorner_Slider = Instance.new("UICorner", SliderFrame)
                 UICorner_Slider.CornerRadius = UDim.new(0, 8)
@@ -457,8 +457,8 @@ function PandaAuth:CreateWindow(title)
                 UICorner_3.CornerRadius = UDim.new(1, 0)
                 local SliderValue = Instance.new("TextLabel", SliderFrame)
                 SliderValue.Name = "SliderValue"
-                SliderValue.Size = UDim2.new(0, math.floor(0.15 * 280), 0, 20)
-                SliderValue.Position = UDim2.new(1, -math.floor(0.15 * 280), 0, 0)
+                SliderValue.Size = UDim2.new(0, math.floor(0.15 * 260), 0, 20)
+                SliderValue.Position = UDim2.new(1, -math.floor(0.15 * 260), 0, 0)
                 SliderValue.BackgroundTransparency = 1
                 SliderValue.Text = tostring(default)
                 SliderValue.TextColor3 = COLORS.TEXT
@@ -505,13 +505,13 @@ function PandaAuth:CreateWindow(title)
             function section:AddInput(text, placeholder, callback)
                 local InputFrame = Instance.new("Frame", SectionContent)
                 InputFrame.Name = "InputFrame"
-                InputFrame.Size = UDim2.new(0, math.floor(0.92 * 280), 0, 38)
+                InputFrame.Size = UDim2.new(0, math.floor(0.92 * 260), 0, 38)
                 InputFrame.BackgroundColor3 = COLORS.SECONDARY
                 local UICorner_Input = Instance.new("UICorner", InputFrame)
                 UICorner_Input.CornerRadius = UDim.new(0, 8)
                 local Title = Instance.new("TextLabel", InputFrame)
                 Title.Name = "Title"
-                Title.Size = UDim2.new(0, math.floor(0.4 * 280), 0, 38)
+                Title.Size = UDim2.new(0, math.floor(0.4 * 260), 0, 38)
                 Title.Position = UDim2.new(0, 0, 0, 0)
                 Title.BackgroundTransparency = 1
                 Title.Text = text
@@ -521,8 +521,8 @@ function PandaAuth:CreateWindow(title)
                 Title.TextXAlignment = Enum.TextXAlignment.Left
                 local InputBox = Instance.new("TextBox", InputFrame)
                 InputBox.Name = "InputBox"
-                InputBox.Size = UDim2.new(0, math.floor(0.5 * 280), 0, 30)
-                InputBox.Position = UDim2.new(0, math.floor(0.45 * 280), 0, 4)
+                InputBox.Size = UDim2.new(0, math.floor(0.5 * 260), 0, 30)
+                InputBox.Position = UDim2.new(0, math.floor(0.45 * 260), 0, 4)
                 InputBox.BackgroundColor3 = COLORS.BACKGROUND
                 InputBox.Text = ""
                 InputBox.PlaceholderText = placeholder
