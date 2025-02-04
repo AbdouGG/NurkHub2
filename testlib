@@ -121,14 +121,14 @@ function PandaAuth:CreateWindow(title)
         TabHolder.CanvasSize = UDim2.new(0, 0, 0, TabList.AbsoluteContentSize.Y)
     end)
 
-    -- Vertical Separator between the left sidebar and content area:
+    -- Vertical Separator between the TabHolder and ContentHolder
     local Separator = Instance.new("Frame", MainFrame)
     Separator.Name = "Separator"
-    -- It spans the full height of the content area (500 - 40 = 460) and is placed directly to the right of the sidebar
+    -- It spans the full height of the content area (500 - 40 = 460)
     Separator.Size = UDim2.new(0, 1, 0, 460)
     Separator.Position = UDim2.new(0, 150, 0, 40)
-    Separator.BackgroundColor3 = COLORS.ACCENT
-    Separator.BackgroundTransparency = 0.3
+    Separator.BackgroundColor3 = Color3.fromRGB(255,255,255)
+    Separator.BackgroundTransparency = 0.5
 
     -- Content Holder on the right side
     local ContentHolder = Instance.new("Frame", MainFrame)
@@ -398,7 +398,7 @@ function PandaAuth:CreateWindow(title)
             function section:AddSlider(text, min, max, default, callback)
                 local SliderFrame = Instance.new("Frame", SectionContent)
                 SliderFrame.Name = "SliderFrame"
-                -- Adjust slider width to 92% of 280px (grid cell width)
+                -- Adjust slider width to be 92% of 280px (grid cell width)
                 SliderFrame.Size = UDim2.new(0, math.floor(0.92 * 280), 0, 48)
                 SliderFrame.BackgroundColor3 = COLORS.SECONDARY
                 local UICorner_Slider = Instance.new("UICorner", SliderFrame)
@@ -415,7 +415,6 @@ function PandaAuth:CreateWindow(title)
                 Title.TextXAlignment = Enum.TextXAlignment.Left
                 local SliderBackground = Instance.new("Frame", SliderFrame)
                 SliderBackground.Name = "SliderBackground"
-                -- Adjust slider background width to match SliderFrame
                 SliderBackground.Size = UDim2.new(1, 0, 0, 6)
                 SliderBackground.Position = UDim2.new(0, 0, 0.65, 0)
                 SliderBackground.BackgroundColor3 = COLORS.BACKGROUND
