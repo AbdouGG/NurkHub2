@@ -1,4 +1,4 @@
--- PandaAuth Library - PRO Modern Theme with Enhanced Layout, Left Sidebar Tabs, Notifications, and All Functions
+-- PandaAuth Library - PRO Modern Theme with Enhanced Layout, Left Sidebar Tabs (with Optional Icons), Notifications, and All Functions
 local PandaAuth = {}
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
@@ -164,7 +164,8 @@ function PandaAuth:CreateWindow(title)
     local tabs = {}
     local selectedTab = nil
 
-    function window:CreateTab(name)
+    -- Updated: You can now optionally pass an icon asset ID (as a string) as the second parameter when creating a tab.
+    function window:CreateTab(name, iconAsset)
         local tab = {}
         tab.SectionCount = 0
 
@@ -173,15 +174,32 @@ function PandaAuth:CreateWindow(title)
         TabButton.Name = name .. "Tab"
         TabButton.Size = UDim2.new(1, -16, 0, 40)
         TabButton.BackgroundColor3 = COLORS.TAB_UNSELECTED
-        TabButton.Text = name
+        -- If an icon asset is provided, add some padding to the text.
+        if iconAsset then
+            TabButton.Text = "   " .. name
+        else
+            TabButton.Text = name
+        end
         TabButton.TextColor3 = COLORS.TEXT
         TabButton.TextSize = 16
         TabButton.Font = Enum.Font.GothamSemibold
         TabButton.TextXAlignment = Enum.TextXAlignment.Left
         TabButton.AutoButtonColor = false
         TabButton.LayoutOrder = #tabs + 1
+
+        -- Add left padding using UIPadding for the text (if no icon is provided, still add a small padding)
         local padding = Instance.new("UIPadding", TabButton)
         padding.PaddingLeft = UDim.new(0, 8)
+
+        -- If an icon asset was provided, add an ImageLabel inside the TabButton.
+        if iconAsset then
+            local Icon = Instance.new("ImageLabel", TabButton)
+            Icon.Name = "Icon"
+            Icon.Size = UDim2.new(0, 24, 0, 24)
+            Icon.Position = UDim2.new(0, 8, 0.5, -12)
+            Icon.BackgroundTransparency = 1
+            Icon.Image = iconAsset
+        end
 
         local TabButtonCorner = Instance.new("UICorner", TabButton)
         TabButtonCorner.CornerRadius = UDim.new(0, 8)
@@ -262,14 +280,12 @@ function PandaAuth:CreateWindow(title)
             SectionContent.ScrollBarThickness = 4
             SectionContent.ScrollBarImageColor3 = COLORS.ACCENT
             SectionContent.VerticalScrollBarInset = Enum.ScrollBarInset.Always
-            -- Enable automatic canvas sizing on Y axis for proper scrolling:
             SectionContent.AutomaticCanvasSize = Enum.AutomaticSize.Y
 
             local UIListLayout_Section = Instance.new("UIListLayout", SectionContent)
             UIListLayout_Section.Padding = UDim.new(0, 6)
             UIListLayout_Section.HorizontalAlignment = Enum.HorizontalAlignment.Center
             UIListLayout_Section.SortOrder = Enum.SortOrder.LayoutOrder
-            -- (AutomaticCanvasSize now handles updating the canvas size, so no extra connection is required.)
 
             -- Add elements functions
             function section:AddButton(text, callback)
@@ -530,7 +546,6 @@ function PandaAuth:CreateWindow(title)
                 return InputFrame
             end
 
-            -- New: AddLabel functionality that returns a label (which you can update later)
             function section:AddLabel(text)
                 local Label = Instance.new("TextLabel", SectionContent)
                 Label.Name = "Label"
