@@ -59,10 +59,10 @@ function PandaAuth:CreateWindow(title)
         ScreenGui.Parent = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
     end
 
-    -- Main window (enlarged to 800x600)
+    -- Main window (enlarged to 600x500)
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "MainFrame"
-    MainFrame.Size = UDim2.new(0, 800, 0, 600)
+    MainFrame.Size = UDim2.new(0, 600, 0, 500)
     MainFrame.Position = UDim2.new(0.5, -400, 0.5, -300)
     MainFrame.BackgroundColor3 = COLORS.BACKGROUND
     MainFrame.ClipsDescendants = true
