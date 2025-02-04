@@ -2,6 +2,7 @@
 local PandaAuth = {}
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
+local Workspace = game:GetService("Workspace")
 
 ----------------------------------------------------------------
 -- Theme Colors & Settings
@@ -59,12 +60,20 @@ function PandaAuth:CreateWindow(title)
         ScreenGui.Parent = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
     end
 
-    -- Detect mobile devices and add UIScale to scale the UI down
-    local isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
-    if isMobile then
-        local uiScale = Instance.new("UIScale", ScreenGui)
-        uiScale.Scale = 0.4
+    ----------------------------------------------------------------
+    -- Detect Screen Size and Apply UIScale if necessary
+    ----------------------------------------------------------------
+    -- Wait until the camera is available
+    local camera = Workspace.CurrentCamera or game:GetService("Workspace").CurrentCamera
+    local viewportSize = camera and camera.ViewportSize or Vector2.new(1920,1080)
+    local scale = 1
+    -- If the viewport width is less than 1200, scale proportionally.
+    if viewportSize.X < 1200 then
+        scale = viewportSize.X / 1200
     end
+    local uiScale = Instance.new("UIScale")
+    uiScale.Scale = scale
+    uiScale.Parent = ScreenGui
 
     -- Main window (800 x 500)
     local MainFrame = Instance.new("Frame")
