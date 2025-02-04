@@ -1,5 +1,4 @@
--- PandaAuth Library - PRO Modern Theme with Enhanced Layout, Left Sidebar Tabs (with Optional Icons), 
--- Notifications, and All Functions
+-- PandaAuth Library - PRO Modern Theme with Enhanced Layout, Left Sidebar Tabs (with Optional Icons), Notifications, and All Functions
 local PandaAuth = {}
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
@@ -74,11 +73,11 @@ function PandaAuth:CreateWindow(title)
     uiScale.Scale = scale
     uiScale.Parent = ScreenGui
 
-    -- Main window (800 x 500)
+    -- Main window (850 x 500)
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "MainFrame"
-    MainFrame.Size = UDim2.new(0, 800, 0, 500)
-    MainFrame.Position = UDim2.new(0.5, -400, 0.5, -250)
+    MainFrame.Size = UDim2.new(0, 850, 0, 500)
+    MainFrame.Position = UDim2.new(0.5, -425, 0.5, -250)
     MainFrame.BackgroundColor3 = COLORS.BACKGROUND
     MainFrame.ClipsDescendants = true
     MainFrame.Parent = ScreenGui
@@ -156,7 +155,7 @@ function PandaAuth:CreateWindow(title)
     local ContentHolder = Instance.new("Frame", MainFrame)
     ContentHolder.Name = "ContentHolder"
     ContentHolder.Position = UDim2.new(0, 151, 0, 40)
-    -- With a 150-px sidebar in an 800-px window, the content area is about 650-px wide.
+    -- With a 150-px sidebar from an 850-px window, the content area is 700-px wide.
     ContentHolder.Size = UDim2.new(1, -151, 1, -40)
     ContentHolder.BackgroundTransparency = 1
 
@@ -203,7 +202,7 @@ function PandaAuth:CreateWindow(title)
         local TabButtonCorner = Instance.new("UICorner", TabButton)
         TabButtonCorner.CornerRadius = UDim.new(0, 8)
 
-        -- Create Tab Content container on the right using a grid layout.
+        -- Create Tab Content container on the right (uses a grid layout)
         local TabContent = Instance.new("ScrollingFrame", ContentHolder)
         TabContent.Name = name .. "Content"
         TabContent.Size = UDim2.new(1, 0, 1, 0)
@@ -212,10 +211,11 @@ function PandaAuth:CreateWindow(title)
         TabContent.ScrollBarImageColor3 = COLORS.ACCENT
         TabContent.Visible = false
 
+        -- Updated grid: each cell is 320px wide and 180px tall.
         local grid = Instance.new("UIGridLayout", TabContent)
-        grid.CellSize = UDim2.new(0, 320, 0, 180)  -- Each section cell is 320px by 180px.
+        grid.CellSize = UDim2.new(0, 320, 0, 180)
         grid.CellPadding = UDim2.new(0, 10, 0, 10)
-        grid.FillDirectionMaxCells = 2  -- This ensures two cells per row.
+        grid.FillDirectionMaxCells = 2
         grid.HorizontalAlignment = Enum.HorizontalAlignment.Left
         grid.SortOrder = Enum.SortOrder.LayoutOrder
         grid:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
@@ -246,7 +246,7 @@ function PandaAuth:CreateWindow(title)
             local section = {}
             local SectionFrame = Instance.new("Frame", TabContent)
             SectionFrame.Name = "Section_" .. sectionName
-            SectionFrame.Size = UDim2.new(0, 320, 0, 180)  -- Matches grid cell size.
+            SectionFrame.Size = UDim2.new(0, 320, 0, 180)
             SectionFrame.BackgroundColor3 = COLORS.SECONDARY
             SectionFrame.BackgroundTransparency = 0.1
             tab.SectionCount = tab.SectionCount + 1
@@ -270,7 +270,7 @@ function PandaAuth:CreateWindow(title)
             Divider.BackgroundColor3 = COLORS.ACCENT
             Divider.BackgroundTransparency = 0.3
 
-            -- Use a ScrollingFrame for SectionContent so extra elements can be scrolled.
+            -- Use a ScrollingFrame for SectionContent so extra elements can be scrolled
             local SectionContent = Instance.new("ScrollingFrame", SectionFrame)
             SectionContent.Name = "SectionContent"
             SectionContent.Position = UDim2.new(0, 0, 0, 35)
