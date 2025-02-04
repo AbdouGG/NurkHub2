@@ -1,4 +1,4 @@
--- PandaAuth Library - PRO Modern Theme with Left Sidebar Tabs, Notifications, and Enhanced Section Dividers
+-- PandaAuth Library - PRO Modern Theme with Left Sidebar Tabs, Notifications, and All Functions
 local PandaAuth = {}
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
@@ -59,11 +59,11 @@ function PandaAuth:CreateWindow(title)
         ScreenGui.Parent = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
     end
 
-    -- Main window (enlarged to 600x500)
+    -- Main window (600 x 500)
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "MainFrame"
     MainFrame.Size = UDim2.new(0, 600, 0, 500)
-    MainFrame.Position = UDim2.new(0.5, -400, 0.5, -300)
+    MainFrame.Position = UDim2.new(0.5, -300, 0.5, -250)
     MainFrame.BackgroundColor3 = COLORS.BACKGROUND
     MainFrame.ClipsDescendants = true
     MainFrame.Parent = ScreenGui
@@ -153,6 +153,13 @@ function PandaAuth:CreateWindow(title)
         -- Use UIPadding to add left padding
         local padding = Instance.new("UIPadding", TabButton)
         padding.PaddingLeft = UDim.new(0, 8)
+        -- Add a divider line at the bottom of the tab button
+        local Divider = Instance.new("Frame", TabButton)
+        Divider.Name = "Divider"
+        Divider.Size = UDim2.new(1, -16, 0, 1)
+        Divider.Position = UDim2.new(0, 8, 1, -1)
+        Divider.BackgroundColor3 = COLORS.ACCENT
+        Divider.BackgroundTransparency = 0.5
 
         local TabButtonCorner = Instance.new("UICorner", TabButton)
         TabButtonCorner.CornerRadius = UDim.new(0, 8)
@@ -167,7 +174,7 @@ function PandaAuth:CreateWindow(title)
         TabContent.Visible = false
 
         local grid = Instance.new("UIGridLayout", TabContent)
-        grid.CellSize = UDim2.new(0, 360, 0, 240)  -- Adjusted cell size for the larger window
+        grid.CellSize = UDim2.new(0, 280, 0, 200)
         grid.CellPadding = UDim2.new(0, 10, 0, 10)
         grid.FillDirectionMaxCells = 2  -- 2 per row
         grid.HorizontalAlignment = Enum.HorizontalAlignment.Left
@@ -200,7 +207,7 @@ function PandaAuth:CreateWindow(title)
             local section = {}
             local SectionFrame = Instance.new("Frame", TabContent)
             SectionFrame.Name = "Section_" .. sectionName
-            SectionFrame.Size = UDim2.new(0, 360, 0, 240)
+            SectionFrame.Size = UDim2.new(0, 280, 0, 200)
             SectionFrame.BackgroundColor3 = COLORS.SECONDARY
             SectionFrame.BackgroundTransparency = 0.1
             tab.SectionCount = tab.SectionCount + 1
@@ -217,7 +224,7 @@ function PandaAuth:CreateWindow(title)
             SectionLabel.TextSize = 16
             SectionLabel.Font = Enum.Font.GothamBold
 
-            -- Divider line (subtle line below the header)
+            -- Divider line below the section header for better separation
             local Divider = Instance.new("Frame", SectionFrame)
             Divider.Name = "Divider"
             Divider.Size = UDim2.new(1, -20, 0, 1)
@@ -389,7 +396,7 @@ function PandaAuth:CreateWindow(title)
             function section:AddSlider(text, min, max, default, callback)
                 local SliderFrame = Instance.new("Frame", SectionContent)
                 SliderFrame.Name = "SliderFrame"
-                SliderFrame.Size = UDim2.new(0, 0.92 * 360, 0, 48)
+                SliderFrame.Size = UDim2.new(0, 0.92 * 280, 0, 48)
                 SliderFrame.BackgroundColor3 = COLORS.SECONDARY
                 local UICorner_Slider = Instance.new("UICorner", SliderFrame)
                 UICorner_Slider.CornerRadius = UDim.new(0, 8)
@@ -465,7 +472,7 @@ function PandaAuth:CreateWindow(title)
             function section:AddInput(text, placeholder, callback)
                 local InputFrame = Instance.new("Frame", SectionContent)
                 InputFrame.Name = "InputFrame"
-                InputFrame.Size = UDim2.new(0.92, 0, 0, 38)
+                InputFrame.Size = UDim2.new(0, 0.92 * 280, 0, 38)
                 InputFrame.BackgroundColor3 = COLORS.SECONDARY
                 local UICorner_Input = Instance.new("UICorner", InputFrame)
                 UICorner_Input.CornerRadius = UDim.new(0, 8)
