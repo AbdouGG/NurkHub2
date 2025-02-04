@@ -1,4 +1,4 @@
--- PandaAuth Library - PRO Modern Theme with Enhanced Layout, Left Sidebar Tabs, Notifications, and All Functions
+-- PandaAuth Library - PRO Modern Theme with Enhanced Layout, Left Sidebar Tabs (with Optional Icons), Notifications, and All Functions
 local PandaAuth = {}
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
@@ -155,6 +155,7 @@ function PandaAuth:CreateWindow(title)
     local ContentHolder = Instance.new("Frame", MainFrame)
     ContentHolder.Name = "ContentHolder"
     ContentHolder.Position = UDim2.new(0, 151, 0, 40)
+    -- With a 150-px sidebar from an 800-px window, the content area is 650-px wide.
     ContentHolder.Size = UDim2.new(1, -151, 1, -40)
     ContentHolder.BackgroundTransparency = 1
 
@@ -164,7 +165,8 @@ function PandaAuth:CreateWindow(title)
     local tabs = {}
     local selectedTab = nil
 
-    function window:CreateTab(name)
+    -- Updated: Optionally pass an icon asset ID as a second parameter when creating a tab.
+    function window:CreateTab(name, iconAsset)
         local tab = {}
         tab.SectionCount = 0
 
@@ -173,15 +175,29 @@ function PandaAuth:CreateWindow(title)
         TabButton.Name = name .. "Tab"
         TabButton.Size = UDim2.new(1, -16, 0, 40)
         TabButton.BackgroundColor3 = COLORS.TAB_UNSELECTED
-        TabButton.Text = name
+        if iconAsset then
+            TabButton.Text = "   " .. name
+        else
+            TabButton.Text = name
+        end
         TabButton.TextColor3 = COLORS.TEXT
         TabButton.TextSize = 16
         TabButton.Font = Enum.Font.GothamSemibold
         TabButton.TextXAlignment = Enum.TextXAlignment.Left
         TabButton.AutoButtonColor = false
         TabButton.LayoutOrder = #tabs + 1
+
         local padding = Instance.new("UIPadding", TabButton)
         padding.PaddingLeft = UDim.new(0, 8)
+
+        if iconAsset then
+            local Icon = Instance.new("ImageLabel", TabButton)
+            Icon.Name = "Icon"
+            Icon.Size = UDim2.new(0, 24, 0, 24)
+            Icon.Position = UDim2.new(0, 8, 0.5, -12)
+            Icon.BackgroundTransparency = 1
+            Icon.Image = iconAsset
+        end
 
         local TabButtonCorner = Instance.new("UICorner", TabButton)
         TabButtonCorner.CornerRadius = UDim.new(0, 8)
@@ -195,8 +211,9 @@ function PandaAuth:CreateWindow(title)
         TabContent.ScrollBarImageColor3 = COLORS.ACCENT
         TabContent.Visible = false
 
+        -- Updated grid: each cell now is 320px wide and 180px tall so two columns fill the 650px area.
         local grid = Instance.new("UIGridLayout", TabContent)
-        grid.CellSize = UDim2.new(0, 260, 0, 180)
+        grid.CellSize = UDim2.new(0, 320, 0, 180)
         grid.CellPadding = UDim2.new(0, 10, 0, 10)
         grid.FillDirectionMaxCells = 2
         grid.HorizontalAlignment = Enum.HorizontalAlignment.Left
@@ -229,7 +246,8 @@ function PandaAuth:CreateWindow(title)
             local section = {}
             local SectionFrame = Instance.new("Frame", TabContent)
             SectionFrame.Name = "Section_" .. sectionName
-            SectionFrame.Size = UDim2.new(0, 260, 0, 180)
+            -- Updated section width to match the grid cell size (320px wide by 180px tall)
+            SectionFrame.Size = UDim2.new(0, 320, 0, 180)
             SectionFrame.BackgroundColor3 = COLORS.SECONDARY
             SectionFrame.BackgroundTransparency = 0.1
             tab.SectionCount = tab.SectionCount + 1
@@ -262,16 +280,13 @@ function PandaAuth:CreateWindow(title)
             SectionContent.ScrollBarThickness = 4
             SectionContent.ScrollBarImageColor3 = COLORS.ACCENT
             SectionContent.VerticalScrollBarInset = Enum.ScrollBarInset.Always
-            -- Enable automatic canvas sizing on Y axis for proper scrolling:
             SectionContent.AutomaticCanvasSize = Enum.AutomaticSize.Y
 
             local UIListLayout_Section = Instance.new("UIListLayout", SectionContent)
             UIListLayout_Section.Padding = UDim.new(0, 6)
             UIListLayout_Section.HorizontalAlignment = Enum.HorizontalAlignment.Center
             UIListLayout_Section.SortOrder = Enum.SortOrder.LayoutOrder
-            -- (AutomaticCanvasSize now handles updating the canvas size, so no extra connection is required.)
 
-            -- Add elements functions
             function section:AddButton(text, callback)
                 local Button = Instance.new("TextButton", SectionContent)
                 Button.Name = "Button"
@@ -421,7 +436,7 @@ function PandaAuth:CreateWindow(title)
             function section:AddSlider(text, min, max, default, callback)
                 local SliderFrame = Instance.new("Frame", SectionContent)
                 SliderFrame.Name = "SliderFrame"
-                SliderFrame.Size = UDim2.new(0, math.floor(0.92 * 260), 0, 48)
+                SliderFrame.Size = UDim2.new(0, math.floor(0.92 * 320), 0, 48)
                 SliderFrame.BackgroundColor3 = COLORS.SECONDARY
                 local UICorner_Slider = Instance.new("UICorner", SliderFrame)
                 UICorner_Slider.CornerRadius = UDim.new(0, 8)
@@ -449,8 +464,8 @@ function PandaAuth:CreateWindow(title)
                 UICorner_3.CornerRadius = UDim.new(1, 0)
                 local SliderValue = Instance.new("TextLabel", SliderFrame)
                 SliderValue.Name = "SliderValue"
-                SliderValue.Size = UDim2.new(0, math.floor(0.15 * 260), 0, 20)
-                SliderValue.Position = UDim2.new(1, -math.floor(0.15 * 260), 0, 0)
+                SliderValue.Size = UDim2.new(0, math.floor(0.15 * 320), 0, 20)
+                SliderValue.Position = UDim2.new(1, -math.floor(0.15 * 320), 0, 0)
                 SliderValue.BackgroundTransparency = 1
                 SliderValue.Text = tostring(default)
                 SliderValue.TextColor3 = COLORS.TEXT
@@ -497,13 +512,13 @@ function PandaAuth:CreateWindow(title)
             function section:AddInput(text, placeholder, callback)
                 local InputFrame = Instance.new("Frame", SectionContent)
                 InputFrame.Name = "InputFrame"
-                InputFrame.Size = UDim2.new(0, math.floor(0.92 * 260), 0, 38)
+                InputFrame.Size = UDim2.new(0, math.floor(0.92 * 320), 0, 38)
                 InputFrame.BackgroundColor3 = COLORS.SECONDARY
                 local UICorner_Input = Instance.new("UICorner", InputFrame)
                 UICorner_Input.CornerRadius = UDim.new(0, 8)
                 local Title = Instance.new("TextLabel", InputFrame)
                 Title.Name = "Title"
-                Title.Size = UDim2.new(0, math.floor(0.4 * 260), 0, 38)
+                Title.Size = UDim2.new(0, math.floor(0.4 * 320), 0, 38)
                 Title.Position = UDim2.new(0, 0, 0, 0)
                 Title.BackgroundTransparency = 1
                 Title.Text = text
@@ -513,8 +528,8 @@ function PandaAuth:CreateWindow(title)
                 Title.TextXAlignment = Enum.TextXAlignment.Left
                 local InputBox = Instance.new("TextBox", InputFrame)
                 InputBox.Name = "InputBox"
-                InputBox.Size = UDim2.new(0, math.floor(0.5 * 260), 0, 30)
-                InputBox.Position = UDim2.new(0, math.floor(0.45 * 260), 0, 4)
+                InputBox.Size = UDim2.new(0, math.floor(0.5 * 320), 0, 30)
+                InputBox.Position = UDim2.new(0, math.floor(0.45 * 320), 0, 4)
                 InputBox.BackgroundColor3 = COLORS.BACKGROUND
                 InputBox.Text = ""
                 InputBox.PlaceholderText = placeholder
@@ -530,7 +545,6 @@ function PandaAuth:CreateWindow(title)
                 return InputFrame
             end
 
-            -- New: AddLabel functionality that returns a label (which you can update later)
             function section:AddLabel(text)
                 local Label = Instance.new("TextLabel", SectionContent)
                 Label.Name = "Label"
