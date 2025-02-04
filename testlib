@@ -124,7 +124,7 @@ function PandaAuth:CreateWindow(title)
     -- Vertical Separator between TabHolder and ContentHolder
     local Separator = Instance.new("Frame", MainFrame)
     Separator.Name = "Separator"
-    Separator.Size = UDim2.new(0, 1, 1, -40)
+    Separator.Size = UDim2.new(0, 1, 0, 460)  -- Height = 500 - 40 = 460
     Separator.Position = UDim2.new(0, 150, 0, 40)
     Separator.BackgroundColor3 = COLORS.ACCENT
     Separator.BackgroundTransparency = 0.3
@@ -397,14 +397,15 @@ function PandaAuth:CreateWindow(title)
             function section:AddSlider(text, min, max, default, callback)
                 local SliderFrame = Instance.new("Frame", SectionContent)
                 SliderFrame.Name = "SliderFrame"
-                SliderFrame.Size = UDim2.new(0, 0.92 * 360, 0, 48)
+                -- Adjust the slider width to be 92% of the grid cell (grid cell is 280px wide)
+                SliderFrame.Size = UDim2.new(0, math.floor(0.92 * 280), 0, 48)
                 SliderFrame.BackgroundColor3 = COLORS.SECONDARY
                 local UICorner_Slider = Instance.new("UICorner", SliderFrame)
                 UICorner_Slider.CornerRadius = UDim.new(0, 8)
                 local Title = Instance.new("TextLabel", SliderFrame)
                 Title.Name = "Title"
-                Title.Size = UDim2.new(0.92, 0, 0, 20)
-                Title.Position = UDim2.new(0.05, 0, 0, 0)
+                Title.Size = UDim2.new(1, 0, 0, 20)
+                Title.Position = UDim2.new(0, 0, 0, 0)
                 Title.BackgroundTransparency = 1
                 Title.Text = text
                 Title.TextColor3 = COLORS.TEXT
@@ -413,8 +414,8 @@ function PandaAuth:CreateWindow(title)
                 Title.TextXAlignment = Enum.TextXAlignment.Left
                 local SliderBackground = Instance.new("Frame", SliderFrame)
                 SliderBackground.Name = "SliderBackground"
-                SliderBackground.Size = UDim2.new(0.92, 0, 0, 6)
-                SliderBackground.Position = UDim2.new(0.05, 0, 0.65, 0)
+                SliderBackground.Size = UDim2.new(0, math.floor(0.92 * 280), 0, 6)
+                SliderBackground.Position = UDim2.new(0, 0, 0.65, 0)
                 SliderBackground.BackgroundColor3 = COLORS.BACKGROUND
                 local UICorner_2 = Instance.new("UICorner", SliderBackground)
                 UICorner_2.CornerRadius = UDim.new(1, 0)
@@ -425,8 +426,8 @@ function PandaAuth:CreateWindow(title)
                 UICorner_3.CornerRadius = UDim.new(1, 0)
                 local SliderValue = Instance.new("TextLabel", SliderFrame)
                 SliderValue.Name = "SliderValue"
-                SliderValue.Size = UDim2.new(0.15, 0, 0, 20)
-                SliderValue.Position = UDim2.new(0.825, 0, 0, 0)
+                SliderValue.Size = UDim2.new(0, math.floor(0.15 * 280), 0, 20)
+                SliderValue.Position = UDim2.new(1, -math.floor(0.15 * 280), 0, 0)
                 SliderValue.BackgroundTransparency = 1
                 SliderValue.Text = tostring(default)
                 SliderValue.TextColor3 = COLORS.TEXT
@@ -473,14 +474,14 @@ function PandaAuth:CreateWindow(title)
             function section:AddInput(text, placeholder, callback)
                 local InputFrame = Instance.new("Frame", SectionContent)
                 InputFrame.Name = "InputFrame"
-                InputFrame.Size = UDim2.new(0.92, 0, 0, 38)
+                InputFrame.Size = UDim2.new(0, math.floor(0.92 * 280), 0, 38)
                 InputFrame.BackgroundColor3 = COLORS.SECONDARY
                 local UICorner_Input = Instance.new("UICorner", InputFrame)
                 UICorner_Input.CornerRadius = UDim.new(0, 8)
                 local Title = Instance.new("TextLabel", InputFrame)
                 Title.Name = "Title"
-                Title.Size = UDim2.new(0.4, 0, 1, 0)
-                Title.Position = UDim2.new(0.05, 0, 0, 0)
+                Title.Size = UDim2.new(0, math.floor(0.4 * 280), 0, 38)
+                Title.Position = UDim2.new(0, 0, 0, 0)
                 Title.BackgroundTransparency = 1
                 Title.Text = text
                 Title.TextColor3 = COLORS.TEXT
@@ -489,8 +490,8 @@ function PandaAuth:CreateWindow(title)
                 Title.TextXAlignment = Enum.TextXAlignment.Left
                 local InputBox = Instance.new("TextBox", InputFrame)
                 InputBox.Name = "InputBox"
-                InputBox.Size = UDim2.new(0.5, 0, 0.8, 0)
-                InputBox.Position = UDim2.new(0.45, 0, 0.1, 0)
+                InputBox.Size = UDim2.new(0, math.floor(0.5 * 280), 0, 30)
+                InputBox.Position = UDim2.new(0, math.floor(0.45 * 280), 0, 4)
                 InputBox.BackgroundColor3 = COLORS.BACKGROUND
                 InputBox.Text = ""
                 InputBox.PlaceholderText = placeholder
