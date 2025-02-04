@@ -1,4 +1,4 @@
--- PandaAuth Library - PRO Modern Theme with Left Sidebar Tabs, Notifications, and All Functions
+-- PandaAuth Library - PRO Modern Theme with Enhanced Separators, Left Sidebar Tabs, Notifications, and All Functions
 local PandaAuth = {}
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
@@ -102,6 +102,14 @@ function PandaAuth:CreateWindow(title)
     TitleLabel.TextSize = 20
     TitleLabel.Font = Enum.Font.GothamBold
     TitleLabel.TextXAlignment = Enum.TextXAlignment.Center
+
+    -- Horizontal Separator below Top Bar for a cleaner look
+    local HorizontalSeparator = Instance.new("Frame", MainFrame)
+    HorizontalSeparator.Name = "HorizontalSeparator"
+    HorizontalSeparator.Size = UDim2.new(1, 0, 0, 1)
+    HorizontalSeparator.Position = UDim2.new(0, 0, 0, 40)
+    HorizontalSeparator.BackgroundColor3 = COLORS.ACCENT
+    HorizontalSeparator.BackgroundTransparency = 0.3
 
     -- Left Sidebar for Tabs
     local TabHolder = Instance.new("Frame", MainFrame)
@@ -415,6 +423,7 @@ function PandaAuth:CreateWindow(title)
                 Title.TextXAlignment = Enum.TextXAlignment.Left
                 local SliderBackground = Instance.new("Frame", SliderFrame)
                 SliderBackground.Name = "SliderBackground"
+                -- Adjust slider background width to match SliderFrame
                 SliderBackground.Size = UDim2.new(1, 0, 0, 6)
                 SliderBackground.Position = UDim2.new(0, 0, 0.65, 0)
                 SliderBackground.BackgroundColor3 = COLORS.BACKGROUND
