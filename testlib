@@ -63,11 +63,9 @@ function PandaAuth:CreateWindow(title)
     ----------------------------------------------------------------
     -- Detect Screen Size and Apply UIScale if necessary
     ----------------------------------------------------------------
-    -- Wait until the camera is available
     local camera = Workspace.CurrentCamera or game:GetService("Workspace").CurrentCamera
     local viewportSize = camera and camera.ViewportSize or Vector2.new(1920, 1080)
     local scale = 1
-    -- If the viewport width is less than 1200, scale proportionally.
     if viewportSize.X < 1200 then
         scale = viewportSize.X / 1200
     end
@@ -148,7 +146,6 @@ function PandaAuth:CreateWindow(title)
     -- Vertical Separator between the TabHolder and ContentHolder
     local Separator = Instance.new("Frame", MainFrame)
     Separator.Name = "Separator"
-    -- It spans the full height of the content area (500 - 40 = 460)
     Separator.Size = UDim2.new(0, 1, 0, 460)
     Separator.Position = UDim2.new(0, 150, 0, 40)
     Separator.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -157,7 +154,7 @@ function PandaAuth:CreateWindow(title)
     -- Content Holder on the right side
     local ContentHolder = Instance.new("Frame", MainFrame)
     ContentHolder.Name = "ContentHolder"
-    ContentHolder.Position = UDim2.new(0, 151, 0, 40)  -- starts just after the separator
+    ContentHolder.Position = UDim2.new(0, 151, 0, 40)
     ContentHolder.Size = UDim2.new(1, -151, 1, -40)
     ContentHolder.BackgroundTransparency = 1
 
@@ -183,7 +180,6 @@ function PandaAuth:CreateWindow(title)
         TabButton.TextXAlignment = Enum.TextXAlignment.Left
         TabButton.AutoButtonColor = false
         TabButton.LayoutOrder = #tabs + 1
-        -- Add left padding using UIPadding
         local padding = Instance.new("UIPadding", TabButton)
         padding.PaddingLeft = UDim.new(0, 8)
 
@@ -200,9 +196,9 @@ function PandaAuth:CreateWindow(title)
         TabContent.Visible = false
 
         local grid = Instance.new("UIGridLayout", TabContent)
-        grid.CellSize = UDim2.new(0, 260, 0, 180)  -- Smaller grid cell so that 2 fit per row
+        grid.CellSize = UDim2.new(0, 260, 0, 180)
         grid.CellPadding = UDim2.new(0, 10, 0, 10)
-        grid.FillDirectionMaxCells = 2  -- 2 per row
+        grid.FillDirectionMaxCells = 2
         grid.HorizontalAlignment = Enum.HorizontalAlignment.Left
         grid.SortOrder = Enum.SortOrder.LayoutOrder
         grid:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
@@ -233,7 +229,7 @@ function PandaAuth:CreateWindow(title)
             local section = {}
             local SectionFrame = Instance.new("Frame", TabContent)
             SectionFrame.Name = "Section_" .. sectionName
-            SectionFrame.Size = UDim2.new(0, 260, 0, 180)  -- Matching grid cell size
+            SectionFrame.Size = UDim2.new(0, 260, 0, 180)
             SectionFrame.BackgroundColor3 = COLORS.SECONDARY
             SectionFrame.BackgroundTransparency = 0.1
             tab.SectionCount = tab.SectionCount + 1
@@ -250,7 +246,6 @@ function PandaAuth:CreateWindow(title)
             SectionLabel.TextSize = 16
             SectionLabel.Font = Enum.Font.GothamBold
 
-            -- Divider line (subtle line below the header)
             local Divider = Instance.new("Frame", SectionFrame)
             Divider.Name = "Divider"
             Divider.Size = UDim2.new(1, -20, 0, 1)
@@ -266,16 +261,15 @@ function PandaAuth:CreateWindow(title)
             SectionContent.BackgroundTransparency = 1
             SectionContent.ScrollBarThickness = 4
             SectionContent.ScrollBarImageColor3 = COLORS.ACCENT
-            SectionContent.CanvasSize = UDim2.new(0, 0, 0, 0)
             SectionContent.VerticalScrollBarInset = Enum.ScrollBarInset.Always
+            -- Enable automatic canvas sizing on Y axis for proper scrolling:
+            SectionContent.AutomaticCanvasSize = Enum.AutomaticSize.Y
 
             local UIListLayout_Section = Instance.new("UIListLayout", SectionContent)
             UIListLayout_Section.Padding = UDim.new(0, 6)
             UIListLayout_Section.HorizontalAlignment = Enum.HorizontalAlignment.Center
             UIListLayout_Section.SortOrder = Enum.SortOrder.LayoutOrder
-            UIListLayout_Section:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-                SectionContent.CanvasSize = UDim2.new(0, 0, 0, UIListLayout_Section.AbsoluteContentSize.Y)
-            end)
+            -- (AutomaticCanvasSize now handles updating the canvas size, so no extra connection is required.)
 
             -- Add elements functions
             function section:AddButton(text, callback)
@@ -427,7 +421,6 @@ function PandaAuth:CreateWindow(title)
             function section:AddSlider(text, min, max, default, callback)
                 local SliderFrame = Instance.new("Frame", SectionContent)
                 SliderFrame.Name = "SliderFrame"
-                -- Adjust slider width to be 92% of 260px (grid cell width)
                 SliderFrame.Size = UDim2.new(0, math.floor(0.92 * 260), 0, 48)
                 SliderFrame.BackgroundColor3 = COLORS.SECONDARY
                 local UICorner_Slider = Instance.new("UICorner", SliderFrame)
@@ -444,7 +437,6 @@ function PandaAuth:CreateWindow(title)
                 Title.TextXAlignment = Enum.TextXAlignment.Left
                 local SliderBackground = Instance.new("Frame", SliderFrame)
                 SliderBackground.Name = "SliderBackground"
-                -- Adjust slider background width to match SliderFrame
                 SliderBackground.Size = UDim2.new(1, 0, 0, 6)
                 SliderBackground.Position = UDim2.new(0, 0, 0.65, 0)
                 SliderBackground.BackgroundColor3 = COLORS.BACKGROUND
@@ -538,7 +530,7 @@ function PandaAuth:CreateWindow(title)
                 return InputFrame
             end
 
-            -- NEW: AddLabel functionality.
+            -- New: AddLabel functionality that returns a label (which you can update later)
             function section:AddLabel(text)
                 local Label = Instance.new("TextLabel", SectionContent)
                 Label.Name = "Label"
