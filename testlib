@@ -59,6 +59,13 @@ function PandaAuth:CreateWindow(title)
         ScreenGui.Parent = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
     end
 
+    -- Detect mobile devices and add UIScale to scale the UI down
+    local isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+    if isMobile then
+        local uiScale = Instance.new("UIScale", ScreenGui)
+        uiScale.Scale = 0.4
+    end
+
     -- Main window (800 x 500)
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "MainFrame"
@@ -242,7 +249,7 @@ function PandaAuth:CreateWindow(title)
             Divider.BackgroundColor3 = COLORS.ACCENT
             Divider.BackgroundTransparency = 0.3
 
-            -- Change made here: use a ScrollingFrame for SectionContent so you can scroll through elements if they exceed the viewable area.
+            -- Use a ScrollingFrame for SectionContent so extra elements can be scrolled
             local SectionContent = Instance.new("ScrollingFrame", SectionFrame)
             SectionContent.Name = "SectionContent"
             SectionContent.Position = UDim2.new(0, 0, 0, 35)
