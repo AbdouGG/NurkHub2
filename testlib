@@ -131,7 +131,9 @@ function PandaAuth:CreateWindow(title)
     TabHolder.Name = "TabHolder"
     TabHolder.Size = UDim2.new(0, 150, 1, -40)
     TabHolder.Position = UDim2.new(0, 0, 0, 40)
-    TabHolder.BackgroundColor3 = COLORS.SECONDARY
+    -- Set the left sidebar background to cyan with 70% transparency
+    TabHolder.BackgroundColor3 = COLORS.ACCENT
+    TabHolder.BackgroundTransparency = 0.7
     local TabHolderCorner = Instance.new("UICorner", TabHolder)
     TabHolderCorner.CornerRadius = UDim.new(0, 10)
 
