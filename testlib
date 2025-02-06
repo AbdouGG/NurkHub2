@@ -1,5 +1,6 @@
--- PandaAuth Library - PRO Modern Theme with Enhanced Layout, Left Sidebar Navigation,
--- Modern Toggle Buttons, and All Functions
+-- PandaAuth Library - PRO Modern Theme with Enhanced Creative Design,
+-- Left Sidebar Navigation (with Optional Icons), Modern Toggle Buttons,
+-- and All Functions
 local PandaAuth = {}
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
@@ -9,13 +10,13 @@ local Workspace = game:GetService("Workspace")
 -- Theme Colors & Settings
 ----------------------------------------------------------------
 local COLORS = {
-    BACKGROUND     = Color3.fromRGB(15, 15, 15),    -- Very dark (almost black) background
+    BACKGROUND     = Color3.fromRGB(15, 15, 15),    -- Very dark background (almost black)
     ACCENT         = Color3.fromRGB(0, 191, 255),     -- Cyan/blue accent for interactive elements
-    SECONDARY      = Color3.fromRGB(20, 20, 20),      -- Slightly lighter than BACKGROUND for panels
+    SECONDARY      = Color3.fromRGB(20, 20, 20),      -- Slightly lighter than BACKGROUND (for panels)
     TEXT           = Color3.fromRGB(255, 255, 255),   -- White text
     SUCCESS        = Color3.fromRGB(80, 250, 123),    -- Vibrant green for success
     ERROR          = Color3.fromRGB(250, 80, 80),     -- Bold red for errors
-    HOVER          = Color3.fromRGB(35, 35, 35),      -- A subtle lighter shade for hover effects
+    HOVER          = Color3.fromRGB(35, 35, 35),      -- Subtle lighter shade for hover effects
     TAB_SELECTED   = Color3.fromRGB(0, 191, 255),     -- Accent color for selected tabs
     TAB_UNSELECTED = Color3.fromRGB(20, 20, 20)        -- Matches SECONDARY for unselected tabs
 }
@@ -23,7 +24,7 @@ local COLORS = {
 local TWEEN_INFO = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 
 ----------------------------------------------------------------
--- Utility: Hover Effect
+-- Utility: Hover Effect with Gradient (Optional)
 ----------------------------------------------------------------
 local function createHoverEffect(button)
     local originalColor = button.BackgroundColor3
@@ -36,7 +37,7 @@ local function createHoverEffect(button)
 end
 
 ----------------------------------------------------------------
--- CreateWindow: Builds the main UI with a left sidebar for navigation tabs
+-- CreateWindow: Builds the main UI with enhanced creative design
 ----------------------------------------------------------------
 function PandaAuth:CreateWindow(title)
     local window = {}
@@ -83,13 +84,12 @@ function PandaAuth:CreateWindow(title)
     MainFrame.ClipsDescendants = true
     MainFrame.Parent = ScreenGui
 
-    local UICorner = Instance.new("UICorner", MainFrame)
-    UICorner.CornerRadius = UDim.new(0, 10)
+    local MainCorner = Instance.new("UICorner", MainFrame)
+    MainCorner.CornerRadius = UDim.new(0, 10)
 
-    local UIStroke = Instance.new("UIStroke", MainFrame)
-    UIStroke.Color = Color3.fromRGB(20, 20, 20)
-    UIStroke.Thickness = 2
-    UIStroke.Transparency = 0
+    local MainStroke = Instance.new("UIStroke", MainFrame)
+    MainStroke.Color = Color3.fromRGB(20, 20, 20)
+    MainStroke.Thickness = 2
 
     local Shadow = Instance.new("ImageLabel", MainFrame)
     Shadow.Name = "Shadow"
@@ -100,13 +100,18 @@ function PandaAuth:CreateWindow(title)
     Shadow.ImageColor3 = COLORS.BACKGROUND
     Shadow.ImageTransparency = 0.6
 
-    -- Top Bar (full width)
+    -- Top Bar with Gradient
     local TopBar = Instance.new("Frame", MainFrame)
     TopBar.Name = "TopBar"
     TopBar.Size = UDim2.new(1, 0, 0, 40)
     TopBar.BackgroundColor3 = COLORS.ACCENT
     local TopBarCorner = Instance.new("UICorner", TopBar)
     TopBarCorner.CornerRadius = UDim.new(0, 10)
+    local TopBarGradient = Instance.new("UIGradient", TopBar)
+    TopBarGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, COLORS.ACCENT),
+        ColorSequenceKeypoint.new(1, Color3.new(0, 0.6, 0.8))
+    })
 
     local TitleLabel = Instance.new("TextLabel", TopBar)
     TitleLabel.Name = "Title"
@@ -131,9 +136,7 @@ function PandaAuth:CreateWindow(title)
     TabHolder.Name = "TabHolder"
     TabHolder.Size = UDim2.new(0, 150, 1, -40)
     TabHolder.Position = UDim2.new(0, 0, 0, 40)
-    -- Set the left sidebar background to cyan with 70% transparency
-    TabHolder.BackgroundColor3 = COLORS.ACCENT
-    TabHolder.BackgroundTransparency = 0.7
+    TabHolder.BackgroundColor3 = COLORS.SECONDARY
     local TabHolderCorner = Instance.new("UICorner", TabHolder)
     TabHolderCorner.CornerRadius = UDim.new(0, 10)
 
@@ -158,7 +161,7 @@ function PandaAuth:CreateWindow(title)
     local ContentHolder = Instance.new("Frame", MainFrame)
     ContentHolder.Name = "ContentHolder"
     ContentHolder.Position = UDim2.new(0, 151, 0, 40)
-    -- With a 150-px sidebar from an 850-px window, the content area is 700-px wide.
+    -- With a 150-px sidebar from an 850-px window, the content area is 700px wide.
     ContentHolder.Size = UDim2.new(1, -151, 1, -40)
     ContentHolder.BackgroundTransparency = 1
 
@@ -168,7 +171,7 @@ function PandaAuth:CreateWindow(title)
     local tabs = {}
     local selectedTab = nil
 
-    -- Optionally pass an icon asset ID (as a string) as a second parameter when creating a tab.
+    -- When creating a tab, you may pass an optional icon asset ID (as a string)
     function window:CreateTab(name, iconAsset)
         local tab = {}
         tab.SectionCount = 0
@@ -295,6 +298,12 @@ function PandaAuth:CreateWindow(title)
                 Button.AutoButtonColor = false
                 local UICorner_Button = Instance.new("UICorner", Button)
                 UICorner_Button.CornerRadius = UDim.new(0, 8)
+                -- Add a subtle gradient for creative effect
+                local ButtonGradient = Instance.new("UIGradient", Button)
+                ButtonGradient.Color = ColorSequence.new({
+                    ColorSequenceKeypoint.new(0, COLORS.SECONDARY),
+                    ColorSequenceKeypoint.new(1, Color3.fromRGB(30, 30, 30))
+                })
                 createHoverEffect(Button)
                 Button.MouseButton1Click:Connect(callback)
                 return Button
