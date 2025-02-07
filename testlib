@@ -1,73 +1,48 @@
--- PandaAuth Library - PRO Modern Theme with Enhanced Layout, Left Sidebar Navigation,
--- Modern Toggle Buttons, and All Functions
--- Inspired by the provided UI screenshot
-
+-- PandaAuth Library - PRO Modern Theme with Enhanced Layout, Left Sidebar Tabs (with Optional Icons), Notifications, and All Functions
 local PandaAuth = {}
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local Workspace = game:GetService("Workspace")
-local RunService = game:GetService("RunService") --For checking render step
-
 
 ----------------------------------------------------------------
--- Theme Colors & Settings (Modified for image-like appearance)
+-- Theme Colors & Settings
 ----------------------------------------------------------------
 local COLORS = {
-    BACKGROUND     = Color3.fromRGB(20, 25, 30),  -- Darker background
-    ACCENT         = Color3.fromRGB(0, 150, 255), -- Brighter, more saturated blue
-    SECONDARY      = Color3.fromRGB(30, 35, 40),  -- Slightly lighter, for panels
-    TEXT           = Color3.fromRGB(230, 230, 230), -- Lighter text for better contrast
-    SUCCESS        = Color3.fromRGB(50, 205, 50),  -- Lime Green for success
-    ERROR          = Color3.fromRGB(255, 69, 0),  -- Orange-Red for errors
-    HOVER          = Color3.fromRGB(45, 50, 55),   -- Darker hover
-    TAB_SELECTED   = Color3.fromRGB(0, 150, 255), -- Same as ACCENT
-    TAB_UNSELECTED = Color3.fromRGB(30, 35, 40),   -- Matches SECONDARY
-    SLIDER_THUMB   = Color3.fromRGB(255, 255, 255), -- White slider thumb
-	SEPARATOR      = Color3.fromRGB(255,255,255)
+    BACKGROUND     = Color3.fromRGB(26, 28, 32),    -- Deep navy/black background (#1A1C20)
+    ACCENT         = Color3.fromRGB(0, 191, 255),     -- Light blue/cyan accent
+    SECONDARY      = Color3.fromRGB(35, 38, 42),      -- Slightly lighter than BACKGROUND
+    TEXT           = Color3.fromRGB(255, 255, 255),   -- White text
+    SUCCESS        = Color3.fromRGB(80, 250, 123),    -- Vibrant green for success
+    ERROR          = Color3.fromRGB(250, 80, 80),     -- Bold red for errors
+    HOVER          = Color3.fromRGB(45, 48, 52),      -- A subtle lighter shade for hover effects
+    TAB_SELECTED   = Color3.fromRGB(0, 191, 255),     -- Same as ACCENT
+    TAB_UNSELECTED = Color3.fromRGB(35, 38, 42)        -- Same as SECONDARY
 }
 
 local TWEEN_INFO = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 
 ----------------------------------------------------------------
--- Utility:  Better Hover Effect (with support for ImageLabels)
+-- Utility: Hover Effect
 ----------------------------------------------------------------
 local function createHoverEffect(button)
-    local originalColor
-
-    -- Check if it's an ImageLabel or a TextButton/Frame
-    if button:IsA("ImageLabel") then
-        originalColor = button.ImageColor3
-    else  -- Assume TextButton or Frame
-        originalColor = button.BackgroundColor3
-    end
-
+    local originalColor = button.BackgroundColor3
     button.MouseEnter:Connect(function()
-        if button:IsA("ImageLabel") then
-             TweenService:Create(button, TWEEN_INFO, {ImageColor3 = COLORS.HOVER}):Play()
-        else
-            TweenService:Create(button, TWEEN_INFO, {BackgroundColor3 = COLORS.HOVER}):Play()
-        end
+        TweenService:Create(button, TWEEN_INFO, {BackgroundColor3 = COLORS.HOVER}):Play()
     end)
-
     button.MouseLeave:Connect(function()
-        if button:IsA("ImageLabel") then
-            TweenService:Create(button, TWEEN_INFO, {ImageColor3 = originalColor}):Play()
-        else
-             TweenService:Create(button, TWEEN_INFO, {BackgroundColor3 = originalColor}):Play()
-        end
+        TweenService:Create(button, TWEEN_INFO, {BackgroundColor3 = originalColor}):Play()
     end)
 end
 
 ----------------------------------------------------------------
--- CreateWindow: Builds the main UI with a left sidebar
+-- CreateWindow: Builds the main UI with a left sidebar for tabs
 ----------------------------------------------------------------
 function PandaAuth:CreateWindow(title)
     local window = {}
 
-    -- Create ScreenGui with protection (same as before)
+    -- Create ScreenGui with protection
     local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = "PandaAuthUI"
-    ScreenGui.ResetOnSpawn = false -- Add this.  Prevents the UI from disappearing when the player respawns.
     local success, result = pcall(function()
         if syn then
             syn.protect_gui(ScreenGui)
@@ -85,9 +60,8 @@ function PandaAuth:CreateWindow(title)
         ScreenGui.Parent = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
     end
 
-
     ----------------------------------------------------------------
-    -- Detect Screen Size and Apply UIScale (same as before)
+    -- Detect Screen Size and Apply UIScale if necessary
     ----------------------------------------------------------------
     local camera = Workspace.CurrentCamera or game:GetService("Workspace").CurrentCamera
     local viewportSize = camera and camera.ViewportSize or Vector2.new(1920, 1080)
@@ -105,19 +79,25 @@ function PandaAuth:CreateWindow(title)
     MainFrame.Size = UDim2.new(0, 850, 0, 500)
     MainFrame.Position = UDim2.new(0.5, -425, 0.5, -250)
     MainFrame.BackgroundColor3 = COLORS.BACKGROUND
-    MainFrame.ClipsDescendants = true  -- Important for rounded corners on children
+    MainFrame.ClipsDescendants = true
     MainFrame.Parent = ScreenGui
-	MainFrame.Active = true -- Needed for dragging to work correctly.
 
     local UICorner = Instance.new("UICorner", MainFrame)
     UICorner.CornerRadius = UDim.new(0, 10)
 
     local UIStroke = Instance.new("UIStroke", MainFrame)
-    UIStroke.Color = Color3.fromRGB(40, 45, 50) -- Slightly darker stroke
+    UIStroke.Color = Color3.fromRGB(20, 20, 20)
     UIStroke.Thickness = 2
     UIStroke.Transparency = 0
 
-    -- Removed Shadow (can add back if desired, but it doesn't match the reference image)
+    local Shadow = Instance.new("ImageLabel", MainFrame)
+    Shadow.Name = "Shadow"
+    Shadow.BackgroundTransparency = 1
+    Shadow.Position = UDim2.new(0, -15, 0, -15)
+    Shadow.Size = UDim2.new(1, 30, 1, 30)
+    Shadow.Image = "rbxassetid://5028857084"
+    Shadow.ImageColor3 = COLORS.BACKGROUND
+    Shadow.ImageTransparency = 0.6
 
     -- Top Bar (full width)
     local TopBar = Instance.new("Frame", MainFrame)
@@ -126,7 +106,6 @@ function PandaAuth:CreateWindow(title)
     TopBar.BackgroundColor3 = COLORS.ACCENT
     local TopBarCorner = Instance.new("UICorner", TopBar)
     TopBarCorner.CornerRadius = UDim.new(0, 10)
-	TopBar.Active = true
 
     local TitleLabel = Instance.new("TextLabel", TopBar)
     TitleLabel.Name = "Title"
@@ -135,18 +114,18 @@ function PandaAuth:CreateWindow(title)
     TitleLabel.Text = title or "PandaAuth"
     TitleLabel.TextColor3 = COLORS.TEXT
     TitleLabel.TextSize = 20
-    TitleLabel.Font = Enum.Font.GothamBold  -- Keep GothamBold
+    TitleLabel.Font = Enum.Font.GothamBold
     TitleLabel.TextXAlignment = Enum.TextXAlignment.Center
 
-    -- Horizontal Separator below Top Bar (Thinner and slightly darker)
+    -- Horizontal Separator below Top Bar for a cleaner look
     local HorizontalSeparator = Instance.new("Frame", MainFrame)
     HorizontalSeparator.Name = "HorizontalSeparator"
     HorizontalSeparator.Size = UDim2.new(1, 0, 0, 1)
     HorizontalSeparator.Position = UDim2.new(0, 0, 0, 40)
-    HorizontalSeparator.BackgroundColor3 = COLORS.SEPARATOR
-    HorizontalSeparator.BackgroundTransparency = 0.7 -- More transparent
+    HorizontalSeparator.BackgroundColor3 = COLORS.ACCENT
+    HorizontalSeparator.BackgroundTransparency = 0.3
 
-    -- Left Sidebar for Navigation Tabs
+    -- Left Sidebar for Tabs
     local TabHolder = Instance.new("Frame", MainFrame)
     TabHolder.Name = "TabHolder"
     TabHolder.Size = UDim2.new(0, 150, 1, -40)
@@ -159,45 +138,45 @@ function PandaAuth:CreateWindow(title)
     TabList.FillDirection = Enum.FillDirection.Vertical
     TabList.HorizontalAlignment = Enum.HorizontalAlignment.Left
     TabList.SortOrder = Enum.SortOrder.LayoutOrder
-    TabList.Padding = UDim.new(0, 6)
-    -- Removed CanvasSize connection, using ScrollingFrame instead
+    TabList.Padding = UDim.new(0, 8)
+    TabList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        TabHolder.CanvasSize = UDim2.new(0, 0, 0, TabList.AbsoluteContentSize.Y)
+    end)
 
-    -- Vertical Separator between Sidebar and Content
+    -- Vertical Separator between the TabHolder and ContentHolder
     local Separator = Instance.new("Frame", MainFrame)
     Separator.Name = "Separator"
     Separator.Size = UDim2.new(0, 1, 0, 460)
     Separator.Position = UDim2.new(0, 150, 0, 40)
-    Separator.BackgroundColor3 = COLORS.SEPARATOR
-    Separator.BackgroundTransparency = 0.8
+    Separator.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    Separator.BackgroundTransparency = 0.5
 
-    -- Content Holder on the right side (now a ScrollingFrame)
-    local ContentHolder = Instance.new("ScrollingFrame", MainFrame)  -- Changed to ScrollingFrame
+    -- Content Holder on the right side
+    local ContentHolder = Instance.new("Frame", MainFrame)
     ContentHolder.Name = "ContentHolder"
     ContentHolder.Position = UDim2.new(0, 151, 0, 40)
+    -- With a 150-px sidebar from an 850-px window, the content area is 700-px wide.
     ContentHolder.Size = UDim2.new(1, -151, 1, -40)
     ContentHolder.BackgroundTransparency = 1
-    ContentHolder.ScrollBarThickness = 4
-    ContentHolder.ScrollBarImageColor3 = COLORS.ACCENT
-    ContentHolder.CanvasSize = UDim2.new(0,0,0,0) -- VERY IMPORTANT:  Start with a 0,0 canvas size.
-    ContentHolder.AutomaticCanvasSize = Enum.AutomaticSize.Y  -- Automatically adjust height.
-
 
     ----------------------------------------------------------------
-    -- Tabs System (Left Sidebar Navigation)
+    -- Tabs System (Left Sidebar)
     ----------------------------------------------------------------
     local tabs = {}
     local selectedTab = nil
 
+    -- Optionally pass an icon asset ID as a second parameter when creating a tab.
     function window:CreateTab(name, iconAsset)
         local tab = {}
         tab.SectionCount = 0
 
+        -- Create Tab Button for the left sidebar
         local TabButton = Instance.new("TextButton", TabHolder)
         TabButton.Name = name .. "Tab"
         TabButton.Size = UDim2.new(1, -16, 0, 40)
         TabButton.BackgroundColor3 = COLORS.TAB_UNSELECTED
         if iconAsset then
-            TabButton.Text = "   " .. name  -- Add space for the icon
+            TabButton.Text = "   " .. name
         else
             TabButton.Text = name
         end
@@ -209,35 +188,41 @@ function PandaAuth:CreateWindow(title)
         TabButton.LayoutOrder = #tabs + 1
 
         local padding = Instance.new("UIPadding", TabButton)
-        padding.PaddingLeft = UDim.new(0, 6)
+        padding.PaddingLeft = UDim.new(0, 8)
 
-       if iconAsset then
+        if iconAsset then
             local Icon = Instance.new("ImageLabel", TabButton)
             Icon.Name = "Icon"
             Icon.Size = UDim2.new(0, 24, 0, 24)
-            Icon.Position = UDim2.new(0, 6, 0.5, -12)  -- Center vertically
+            Icon.Position = UDim2.new(0, 8, 0.5, -12)
             Icon.BackgroundTransparency = 1
             Icon.Image = iconAsset
-            Icon.ScaleType = Enum.ScaleType.Fit -- Ensure icon fits within bounds
         end
 
         local TabButtonCorner = Instance.new("UICorner", TabButton)
         TabButtonCorner.CornerRadius = UDim.new(0, 8)
 
-        local TabContent = Instance.new("Frame", ContentHolder) -- Changed back to Frame (more control)
+        -- Create Tab Content container on the right (uses a grid layout)
+        local TabContent = Instance.new("ScrollingFrame", ContentHolder)
         TabContent.Name = name .. "Content"
-        TabContent.Size = UDim2.new(1, 0, 1, 0) -- Take up full width and height of ContentHolder
+        TabContent.Size = UDim2.new(1, 0, 1, 0)
         TabContent.BackgroundTransparency = 1
+        TabContent.ScrollBarThickness = 4
+        TabContent.ScrollBarImageColor3 = COLORS.ACCENT
         TabContent.Visible = false
 
+        -- Updated grid: each cell is 320px wide and 180px tall.
         local grid = Instance.new("UIGridLayout", TabContent)
-        grid.CellSize = UDim2.new(0, 320, 0, 180)  -- Consistent section sizes
+        grid.CellSize = UDim2.new(0, 320, 0, 180)
         grid.CellPadding = UDim2.new(0, 10, 0, 10)
-        grid.FillDirectionMaxCells = 2       -- Two columns
+        grid.FillDirectionMaxCells = 2
         grid.HorizontalAlignment = Enum.HorizontalAlignment.Left
         grid.SortOrder = Enum.SortOrder.LayoutOrder
-        -- No CanvasSize connection needed, as ContentHolder is a ScrollingFrame.
+        grid:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            TabContent.CanvasSize = UDim2.new(0, grid.AbsoluteContentSize.X, 0, grid.AbsoluteContentSize.Y)
+        end)
 
+        -- Tab Selection Logic
         TabButton.MouseButton1Click:Connect(function()
             if selectedTab then
                 selectedTab.Content.Visible = false
@@ -256,11 +241,12 @@ function PandaAuth:CreateWindow(title)
 
         table.insert(tabs, {Button = TabButton, Content = TabContent})
 
+        -- Create sections within tab (each section appears as a grid cell)
         function tab:CreateSection(sectionName)
             local section = {}
             local SectionFrame = Instance.new("Frame", TabContent)
             SectionFrame.Name = "Section_" .. sectionName
-            SectionFrame.Size = UDim2.new(0, 320, 0, 180)  -- Consistent section sizes
+            SectionFrame.Size = UDim2.new(0, 320, 0, 180)
             SectionFrame.BackgroundColor3 = COLORS.SECONDARY
             SectionFrame.BackgroundTransparency = 0.1
             tab.SectionCount = tab.SectionCount + 1
@@ -284,19 +270,21 @@ function PandaAuth:CreateWindow(title)
             Divider.BackgroundColor3 = COLORS.ACCENT
             Divider.BackgroundTransparency = 0.3
 
-            local SectionContent = Instance.new("Frame", SectionFrame)  -- Changed back to Frame
+            -- Use a ScrollingFrame for SectionContent so extra elements can be scrolled
+            local SectionContent = Instance.new("ScrollingFrame", SectionFrame)
             SectionContent.Name = "SectionContent"
             SectionContent.Position = UDim2.new(0, 0, 0, 35)
             SectionContent.Size = UDim2.new(1, 0, 1, -35)
             SectionContent.BackgroundTransparency = 1
-            -- Removed ScrollBar properties (handled by ContentHolder)
-
+            SectionContent.ScrollBarThickness = 4
+            SectionContent.ScrollBarImageColor3 = COLORS.ACCENT
+            SectionContent.VerticalScrollBarInset = Enum.ScrollBarInset.Always
+            SectionContent.AutomaticCanvasSize = Enum.AutomaticSize.Y
 
             local UIListLayout_Section = Instance.new("UIListLayout", SectionContent)
             UIListLayout_Section.Padding = UDim.new(0, 6)
             UIListLayout_Section.HorizontalAlignment = Enum.HorizontalAlignment.Center
             UIListLayout_Section.SortOrder = Enum.SortOrder.LayoutOrder
-			UIListLayout_Section.FillDirection = Enum.FillDirection.Vertical -- Ensure vertical layout
 
             function section:AddButton(text, callback)
                 local Button = Instance.new("TextButton", SectionContent)
@@ -318,11 +306,10 @@ function PandaAuth:CreateWindow(title)
             function section:AddToggle(text, default, callback)
                 local ToggleFrame = Instance.new("Frame", SectionContent)
                 ToggleFrame.Name = "ToggleFrame"
-                ToggleFrame.Size = UDim2.new(0.92, 0, 0, 38)  -- Adjusted height slightly
+                ToggleFrame.Size = UDim2.new(0.92, 0, 0, 38)
                 ToggleFrame.BackgroundColor3 = COLORS.SECONDARY
                 local UICorner_Toggle = Instance.new("UICorner", ToggleFrame)
                 UICorner_Toggle.CornerRadius = UDim.new(0, 8)
-
                 local Title = Instance.new("TextLabel", ToggleFrame)
                 Title.Name = "Title"
                 Title.Size = UDim2.new(0.65, 0, 1, 0)
@@ -333,37 +320,42 @@ function PandaAuth:CreateWindow(title)
                 Title.TextSize = 15
                 Title.Font = Enum.Font.GothamSemibold
                 Title.TextXAlignment = Enum.TextXAlignment.Left
-
-                local ToggleButton = Instance.new("ImageButton", ToggleFrame) -- Changed to ImageButton
+                local ToggleButton = Instance.new("TextButton", ToggleFrame)
                 ToggleButton.Name = "ToggleButton"
-                ToggleButton.Size = UDim2.new(0, 40, 0, 20)  -- Fixed size for the toggle
-                ToggleButton.Position = UDim2.new(0.78, 0, 0.5, -10)  -- Centered vertically
-                ToggleButton.BackgroundTransparency = 1  -- Make the button itself transparent
-                ToggleButton.Image = "rbxassetid://263542827"  --  Use a default Roblox toggle image
-                ToggleButton.ImageColor3 = default and COLORS.SUCCESS or COLORS.ERROR
-                ToggleButton.ScaleType = Enum.ScaleType.Fit
+                ToggleButton.Size = UDim2.new(0.17, 0, 0.6, 0)
+                ToggleButton.Position = UDim2.new(0.78, 0, 0.2, 0)
+                ToggleButton.BackgroundColor3 = default and COLORS.SUCCESS or COLORS.ERROR
+                ToggleButton.Text = ""
                 ToggleButton.AutoButtonColor = false
-
+                local ToggleButtonCorner = Instance.new("UICorner", ToggleButton)
+                ToggleButtonCorner.CornerRadius = UDim.new(1, 0)
+                local ToggleInner = Instance.new("Frame", ToggleButton)
+                ToggleInner.Name = "ToggleInner"
+                ToggleInner.Size = UDim2.new(0.4, 0, 0.8, 0)
+                ToggleInner.Position = default and UDim2.new(0.55, 0, 0.1, 0) or UDim2.new(0.05, 0, 0.1, 0)
+                ToggleInner.BackgroundColor3 = COLORS.TEXT
+                local ToggleInnerCorner = Instance.new("UICorner", ToggleInner)
+                ToggleInnerCorner.CornerRadius = UDim.new(1, 0)
                 local toggled = default
-
                 ToggleButton.MouseButton1Click:Connect(function()
                     toggled = not toggled
                     local targetColor = toggled and COLORS.SUCCESS or COLORS.ERROR
-                    TweenService:Create(ToggleButton, TWEEN_INFO, {ImageColor3 = targetColor}):Play()
+                    local targetPosition = toggled and UDim2.new(0.55, 0, 0.1, 0) or UDim2.new(0.05, 0, 0.1, 0)
+                    TweenService:Create(ToggleButton, TWEEN_INFO, {BackgroundColor3 = targetColor}):Play()
+                    TweenService:Create(ToggleInner, TWEEN_INFO, {Position = targetPosition}):Play()
                     callback(toggled)
                 end)
-                createHoverEffect(ToggleFrame) -- Apply hover to the entire frame
+                createHoverEffect(ToggleFrame)
                 return ToggleFrame
             end
 
-             function section:AddDropdown(text, options, callback)
+            function section:AddDropdown(text, options, callback)
                 local DropdownFrame = Instance.new("Frame", SectionContent)
                 DropdownFrame.Name = "DropdownFrame"
                 DropdownFrame.Size = UDim2.new(0.92, 0, 0, 38)
                 DropdownFrame.BackgroundColor3 = COLORS.SECONDARY
                 local UICorner_Dropdown = Instance.new("UICorner", DropdownFrame)
                 UICorner_Dropdown.CornerRadius = UDim.new(0, 8)
-
                 local Title = Instance.new("TextLabel", DropdownFrame)
                 Title.Name = "Title"
                 Title.Size = UDim2.new(0.65, 0, 1, 0)
@@ -374,63 +366,48 @@ function PandaAuth:CreateWindow(title)
                 Title.TextSize = 15
                 Title.Font = Enum.Font.GothamSemibold
                 Title.TextXAlignment = Enum.TextXAlignment.Left
-
                 local DropdownButton = Instance.new("TextButton", DropdownFrame)
                 DropdownButton.Name = "DropdownButton"
                 DropdownButton.Size = UDim2.new(0.17, 0, 0.6, 0)
                 DropdownButton.Position = UDim2.new(0.78, 0, 0.2, 0)
                 DropdownButton.BackgroundColor3 = COLORS.ACCENT
-                DropdownButton.Text = "▼"  -- Downward arrow
+                DropdownButton.Text = "▼"
                 DropdownButton.TextColor3 = COLORS.TEXT
                 DropdownButton.TextSize = 15
                 DropdownButton.Font = Enum.Font.GothamBold
                 local UICorner_2 = Instance.new("UICorner", DropdownButton)
                 UICorner_2.CornerRadius = UDim.new(0, 6)
-
-                local OptionsFrame = Instance.new("Frame", DropdownFrame) -- Changed to Frame
+                local OptionsFrame = Instance.new("Frame", DropdownFrame)
                 OptionsFrame.Name = "OptionsFrame"
-                OptionsFrame.Size = UDim2.new(1, 0, 0, 0) -- Start with 0 height
-                OptionsFrame.Position = UDim2.new(0, 0, 1, 2)  -- Position below the dropdown button
+                OptionsFrame.Size = UDim2.new(1, 0, 0, 0)
+                OptionsFrame.Position = UDim2.new(0, 0, 1, 6)
                 OptionsFrame.BackgroundColor3 = COLORS.SECONDARY
                 OptionsFrame.ClipsDescendants = true
                 OptionsFrame.Visible = false
-                OptionsFrame.ZIndex = 2  -- Ensure options are above other elements
+                OptionsFrame.ZIndex = 2
                 local UICorner_3 = Instance.new("UICorner", OptionsFrame)
                 UICorner_3.CornerRadius = UDim.new(0, 8)
-
                 local UIListLayout_Dropdown = Instance.new("UIListLayout", OptionsFrame)
                 UIListLayout_Dropdown.Padding = UDim.new(0, 4)
                 UIListLayout_Dropdown.HorizontalAlignment = Enum.HorizontalAlignment.Center
-                UIListLayout_Dropdown.FillDirection = Enum.FillDirection.Vertical
-
-
                 local open = false
-
                 DropdownButton.MouseButton1Click:Connect(function()
                     open = not open
                     local targetRotation = open and 180 or 0
                     TweenService:Create(DropdownButton, TWEEN_INFO, {Rotation = targetRotation}):Play()
-
-                    OptionsFrame.Visible = true  -- Always set visible before tweening size
-
+                    OptionsFrame.Visible = true
                     if open then
-                        -- Calculate the height needed based on the number of options * item height
-                        local optionsHeight = #options * 38  -- 38 is the height of each option button + padding
-                        TweenService:Create(OptionsFrame, TWEEN_INFO, {Size = UDim2.new(1, 0, 0, optionsHeight)}):Play()
+                        TweenService:Create(OptionsFrame, TWEEN_INFO, {Size = UDim2.new(1, 0, 0, #options * 38)}):Play()
                     else
                         TweenService:Create(OptionsFrame, TWEEN_INFO, {Size = UDim2.new(1, 0, 0, 0)}):Play()
-                        task.wait(0.3)  -- Wait for the tween to finish
-                        OptionsFrame.Visible = false -- Hide after closing
+                        task.wait(0.3)
+                        OptionsFrame.Visible = false
                     end
                 end)
-				
-				local selectedValue = options[1] -- Keep track of selected value
-				Title.Text = text .. " - " .. selectedValue -- Initial display
-
                 for _, option in ipairs(options) do
                     local OptionButton = Instance.new("TextButton", OptionsFrame)
                     OptionButton.Name = "OptionButton"
-                    OptionButton.Size = UDim2.new(0.92, 0, 0, 32) -- Slightly smaller height
+                    OptionButton.Size = UDim2.new(0.92, 0, 0, 32)
                     OptionButton.BackgroundColor3 = COLORS.BACKGROUND
                     OptionButton.BackgroundTransparency = 0.2
                     OptionButton.Text = option
@@ -441,12 +418,9 @@ function PandaAuth:CreateWindow(title)
                     local OptionUICorner = Instance.new("UICorner", OptionButton)
                     OptionUICorner.CornerRadius = UDim.new(0, 6)
                     createHoverEffect(OptionButton)
-
                     OptionButton.MouseButton1Click:Connect(function()
                         callback(option)
-                        --Title.Text = text .. " - " .. option  -- Update the title text
-                        selectedValue = option -- Update the stored value
-						Title.Text = text .. " - " .. selectedValue
+                        Title.Text = text .. " - " .. option
                         open = false
                         TweenService:Create(DropdownButton, TWEEN_INFO, {Rotation = 0}):Play()
                         TweenService:Create(OptionsFrame, TWEEN_INFO, {Size = UDim2.new(1, 0, 0, 0)}):Play()
@@ -455,18 +429,16 @@ function PandaAuth:CreateWindow(title)
                     end)
                 end
                 createHoverEffect(DropdownFrame)
-                return DropdownFrame, selectedValue -- Return selected Value.
+                return DropdownFrame
             end
-
 
             function section:AddSlider(text, min, max, default, callback)
                 local SliderFrame = Instance.new("Frame", SectionContent)
                 SliderFrame.Name = "SliderFrame"
-                SliderFrame.Size = UDim2.new(0, math.floor(0.92 * 320), 0, 48)  -- Slightly taller
+                SliderFrame.Size = UDim2.new(0, math.floor(0.92 * 320), 0, 48)
                 SliderFrame.BackgroundColor3 = COLORS.SECONDARY
                 local UICorner_Slider = Instance.new("UICorner", SliderFrame)
                 UICorner_Slider.CornerRadius = UDim.new(0, 8)
-
                 local Title = Instance.new("TextLabel", SliderFrame)
                 Title.Name = "Title"
                 Title.Size = UDim2.new(1, 0, 0, 20)
@@ -477,58 +449,44 @@ function PandaAuth:CreateWindow(title)
                 Title.TextSize = 15
                 Title.Font = Enum.Font.GothamSemibold
                 Title.TextXAlignment = Enum.TextXAlignment.Left
-
                 local SliderBackground = Instance.new("Frame", SliderFrame)
                 SliderBackground.Name = "SliderBackground"
-                SliderBackground.Size = UDim2.new(0.8, 0, 0, 6)  -- 80% width
-                SliderBackground.Position = UDim2.new(0.05, 0, 0.75, -3)  -- Centered
+                SliderBackground.Size = UDim2.new(1, 0, 0, 6)
+                SliderBackground.Position = UDim2.new(0, 0, 0.65, 0)
                 SliderBackground.BackgroundColor3 = COLORS.BACKGROUND
                 local UICorner_2 = Instance.new("UICorner", SliderBackground)
-                UICorner_2.CornerRadius = UDim.new(1, 0)  -- Fully rounded corners
-
+                UICorner_2.CornerRadius = UDim.new(1, 0)
                 local SliderFill = Instance.new("Frame", SliderBackground)
                 SliderFill.Name = "SliderFill"
                 SliderFill.BackgroundColor3 = COLORS.ACCENT
                 local UICorner_3 = Instance.new("UICorner", SliderFill)
-                UICorner_3.CornerRadius = UDim.new(1, 0) -- Fully rounded
-
+                UICorner_3.CornerRadius = UDim.new(1, 0)
                 local SliderValue = Instance.new("TextLabel", SliderFrame)
                 SliderValue.Name = "SliderValue"
-                SliderValue.Size = UDim2.new(0, math.floor(0.15 * 320), 0, 20)  -- For value display
+                SliderValue.Size = UDim2.new(0, math.floor(0.15 * 320), 0, 20)
                 SliderValue.Position = UDim2.new(1, -math.floor(0.15 * 320), 0, 0)
                 SliderValue.BackgroundTransparency = 1
                 SliderValue.Text = tostring(default)
                 SliderValue.TextColor3 = COLORS.TEXT
                 SliderValue.TextSize = 15
                 SliderValue.Font = Enum.Font.GothamSemibold
-
-                local SliderButton = Instance.new("ImageButton", SliderBackground) -- Use ImageButton
+                local SliderButton = Instance.new("TextButton", SliderBackground)
                 SliderButton.Name = "SliderButton"
-                SliderButton.Size = UDim2.new(0, 12, 0, 12)  -- Small, circular thumb
+                SliderButton.Size = UDim2.new(1, 0, 1, 0)
                 SliderButton.BackgroundTransparency = 1
-                SliderButton.Image = "rbxassetid://1353326629"   -- Circle image
-                SliderButton.ImageColor3 = COLORS.SLIDER_THUMB
-                SliderButton.ZIndex = 2  -- Ensure thumb is above the fill
-
+                SliderButton.Text = ""
                 local function updateSlider(input)
                     local pos = input.Position
                     local relativePos = (pos.X - SliderBackground.AbsolutePosition.X) / SliderBackground.AbsoluteSize.X
                     relativePos = math.clamp(relativePos, 0, 1)
                     local value = min + (max - min) * relativePos
-                    value = math.floor(value + 0.5)  -- Round to nearest integer
+                    value = math.floor(value + 0.5)
                     SliderValue.Text = tostring(value)
                     SliderFill.Size = UDim2.new(relativePos, 0, 1, 0)
-					local ThumbPos = (relativePos * SliderBackground.AbsoluteSize.X) - (SliderButton.AbsoluteSize.X/2)
-                    SliderButton.Position = UDim2.new(0,ThumbPos,0.5,-6)
                     callback(value)
                 end
-
-                -- Set initial position of fill and thumb
                 local defaultRelative = (default - min) / (max - min)
                 SliderFill.Size = UDim2.new(defaultRelative, 0, 1, 0)
-				local ThumbPos = (defaultRelative * SliderBackground.AbsoluteSize.X) - (SliderButton.AbsoluteSize.X/2)
-                SliderButton.Position = UDim2.new(0,ThumbPos,0.5,-6)
-                
                 local sliding = false
                 SliderButton.InputBegan:Connect(function(input)
                     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -550,15 +508,13 @@ function PandaAuth:CreateWindow(title)
                 return SliderFrame
             end
 
-
             function section:AddInput(text, placeholder, callback)
                 local InputFrame = Instance.new("Frame", SectionContent)
                 InputFrame.Name = "InputFrame"
-                InputFrame.Size = UDim2.new(0, math.floor(0.92 * 320), 0, 38)  -- Consistent size
+                InputFrame.Size = UDim2.new(0, math.floor(0.92 * 320), 0, 38)
                 InputFrame.BackgroundColor3 = COLORS.SECONDARY
                 local UICorner_Input = Instance.new("UICorner", InputFrame)
                 UICorner_Input.CornerRadius = UDim.new(0, 8)
-
                 local Title = Instance.new("TextLabel", InputFrame)
                 Title.Name = "Title"
                 Title.Size = UDim2.new(0, math.floor(0.4 * 320), 0, 38)
@@ -569,10 +525,9 @@ function PandaAuth:CreateWindow(title)
                 Title.TextSize = 15
                 Title.Font = Enum.Font.GothamSemibold
                 Title.TextXAlignment = Enum.TextXAlignment.Left
-
                 local InputBox = Instance.new("TextBox", InputFrame)
                 InputBox.Name = "InputBox"
-                InputBox.Size = UDim2.new(0, math.floor(0.5 * 320), 0, 30)  -- Slightly smaller
+                InputBox.Size = UDim2.new(0, math.floor(0.5 * 320), 0, 30)
                 InputBox.Position = UDim2.new(0, math.floor(0.45 * 320), 0, 4)
                 InputBox.BackgroundColor3 = COLORS.BACKGROUND
                 InputBox.Text = ""
@@ -580,23 +535,19 @@ function PandaAuth:CreateWindow(title)
                 InputBox.TextColor3 = COLORS.TEXT
                 InputBox.TextSize = 15
                 InputBox.Font = Enum.Font.Gotham
-                InputBox.ClearTextOnFocus = false -- Add this
-
                 createHoverEffect(InputFrame)
-
                 InputBox.FocusLost:Connect(function(enterPressed)
                     if enterPressed then
                         callback(InputBox.Text)
                     end
                 end)
-
                 return InputFrame
             end
 
             function section:AddLabel(text)
                 local Label = Instance.new("TextLabel", SectionContent)
                 Label.Name = "Label"
-                Label.Size = UDim2.new(0.92, 0, 0, 30)  -- Adjusted size
+                Label.Size = UDim2.new(0.92, 0, 0, 30)
                 Label.BackgroundTransparency = 1
                 Label.Text = text or ""
                 Label.TextColor3 = COLORS.TEXT
@@ -613,14 +564,14 @@ function PandaAuth:CreateWindow(title)
     end
 
     ----------------------------------------------------------------
-    -- Mobile Toggle Button & Dragging (Improved)
+    -- Mobile Toggle Button & Dragging
     ----------------------------------------------------------------
     local ToggleButton = Instance.new("TextButton", ScreenGui)
     ToggleButton.Name = "ToggleButton"
     ToggleButton.Size = UDim2.new(0, 45, 0, 45)
     ToggleButton.Position = UDim2.new(0, 15, 0.5, -22)
     ToggleButton.BackgroundColor3 = COLORS.ACCENT
-    ToggleButton.Text = "≡"  -- Hamburger menu icon
+    ToggleButton.Text = "≡"
     ToggleButton.TextColor3 = COLORS.TEXT
     ToggleButton.TextSize = 26
     ToggleButton.Font = Enum.Font.GothamBold
@@ -631,153 +582,115 @@ function PandaAuth:CreateWindow(title)
     local dragStart, startPos
 
     local function updateDrag(input)
-        local delta = input.Position - dragStart
-        MainFrame.Position = UDim2.new(
-            startPos.X.Scale,
-            startPos.X.Offset + delta.X,
-            startPos.Y.Scale,
-            startPos.Y.Offset + delta.Y
-        )
+        if dragging then
+            local delta = input.Position - dragStart
+            MainFrame.Position = UDim2.new(
+                startPos.X.Scale,
+                startPos.X.Offset + delta.X,
+                startPos.Y.Scale,
+                startPos.Y.Offset + delta.Y
+            )
+        end
     end
 
-   TopBar.InputBegan:Connect(function(input)
-		if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
-			dragging = true
-			dragStart = input.Position
-			startPos = MainFrame.Position
-		end
-	end)
+    TopBar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = MainFrame.Position
+        end
+    end)
 
-	TopBar.InputEnded:Connect(function(input)
-		if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
-			dragging = false
-		end
-	end)
+    UserInputService.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            updateDrag(input)
+        end
+    end)
 
-		-- Use RenderStepped for smoother dragging
-        RunService.RenderStepped:Connect(function()
-            if dragging and UserInputService:GetMouseLocation() then
-                updateDrag({Position = UserInputService:GetMouseLocation()})
-            end
-        end)
-    
-    
-        ToggleButton.MouseButton1Click:Connect(function()
-            local uiVisible = MainFrame.Visible
-            MainFrame.Visible = not uiVisible
-            TweenService:Create(ToggleButton, TWEEN_INFO, {Rotation = (not uiVisible) and 0 or 90}):Play()
-        end)
-    
-    
-        ----------------------------------------------------------------
-        -- Fade-In Animation for the Window (Improved)
-        ----------------------------------------------------------------
-        local function fadeIn()
-            MainFrame.Visible = false -- Hide initially for a cleaner fade-in
-    
-            -- Use a single loop to handle both BackgroundTransparency and TextTransparency
-            for _, obj in ipairs(MainFrame:GetDescendants()) do
-                if obj:IsA("GuiObject") then  -- More general check for UI elements
-                    if obj:IsA("Frame") or obj:IsA("TextButton") or obj:IsA("TextLabel") or obj:IsA("ImageLabel") or obj:IsA("ImageButton") then --include imagelabels
-                        if obj.BackgroundTransparency < 1 and not obj:IsA("ImageLabel") and not obj:IsA("ImageButton") then -- Exclude image labels from background fade
-                            obj.BackgroundTransparency = 1
-                            TweenService:Create(obj, TWEEN_INFO, {BackgroundTransparency = 0}).Completed:Wait() -- Removed :Play(), use .Completed:Wait()
-    
-                        end
-                        if obj:IsA("TextButton") or obj:IsA("TextLabel") then
-                            obj.TextTransparency = 1
-                            TweenService:Create(obj, TWEEN_INFO, {TextTransparency = 0}).Completed:Wait()
-                        end
-                        if obj:IsA("ImageLabel") or obj:IsA("ImageButton") then
-                            if obj.ImageTransparency < 1 then -- Check if the image *has* transparency
-                                obj.ImageTransparency = 1
-                                TweenService:Create(obj,TWEEN_INFO,{ImageTransparency = 0}).Completed:Wait()
-                            end
-                        end
-                    end
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
+        end
+    end)
+
+    ToggleButton.MouseButton1Click:Connect(function()
+        local uiVisible = MainFrame.Visible
+        MainFrame.Visible = not uiVisible
+        TweenService:Create(ToggleButton, TWEEN_INFO, {Rotation = (not uiVisible) and 0 or 90}):Play()
+    end)
+
+    ----------------------------------------------------------------
+    -- Fade-In Animation for the Window
+    ----------------------------------------------------------------
+    local function fadeIn()
+        for _, obj in ipairs(MainFrame:GetDescendants()) do
+            if obj:IsA("Frame") or obj:IsA("TextButton") or obj:IsA("TextLabel") then
+                if obj.BackgroundTransparency < 1 then
+                    obj.BackgroundTransparency = 1
+                    TweenService:Create(obj, TWEEN_INFO, {BackgroundTransparency = 0}):Play()
+                end
+                if obj:IsA("TextButton") or obj:IsA("TextLabel") then
+                    obj.TextTransparency = 1
+                    TweenService:Create(obj, TWEEN_INFO, {TextTransparency = 0}):Play()
                 end
             end
-            MainFrame.Visible = true -- Make visible after all tweens
         end
-        
-        -- Wrap fadeIn() call to ensure the UI thread is ready.
-        task.defer(fadeIn)  -- Use task.defer() instead of spawn().
-        
-    
-        return window
     end
+    fadeIn()
+
+    return window
+end
+
+----------------------------------------------------------------
+-- Notification Functionality
+-- Usage: PandaAuth:Notify("Title", "Description", durationInSeconds)
+----------------------------------------------------------------
+function PandaAuth:Notify(title, description, duration)
+    duration = duration or 5
+    local notifyScreen = game:GetService("CoreGui"):FindFirstChild("PandaAuthNotifyUI")
+    if not notifyScreen then
+        notifyScreen = Instance.new("ScreenGui")
+        notifyScreen.Name = "PandaAuthNotifyUI"
+        notifyScreen.Parent = game:GetService("CoreGui")
+    end
+
+    local notifyFrame = Instance.new("Frame", notifyScreen)
+    notifyFrame.Size = UDim2.new(0, 300, 0, 80)
+    notifyFrame.BackgroundColor3 = COLORS.SECONDARY
+    notifyFrame.AnchorPoint = Vector2.new(0, 1)
+    notifyFrame.Position = UDim2.new(1, 320, 1, -100)
     
-    ----------------------------------------------------------------
-    -- Notification Functionality (Improved)
-    ----------------------------------------------------------------
-    function PandaAuth:Notify(title, description, duration)
-        duration = duration or 5
-        local notifyScreen = game:GetService("CoreGui"):FindFirstChild("PandaAuthNotifyUI")
-        if not notifyScreen then
-            notifyScreen = Instance.new("ScreenGui")
-            notifyScreen.Name = "PandaAuthNotifyUI"
-            notifyScreen.Parent = game:GetService("CoreGui")
-            notifyScreen.DisplayOrder = 9999 -- High DisplayOrder, ensures notifications are on top.
-        end
-    
-        -- Notification Container (manages stacking)
-        local notifyContainer = notifyScreen:FindFirstChild("NotifyContainer")
-        if not notifyContainer then
-            notifyContainer = Instance.new("Frame", notifyScreen)
-            notifyContainer.Name = "NotifyContainer"
-            notifyContainer.Size = UDim2.new(0, 320, 1, 0) -- Fixed width, expand vertically
-            notifyContainer.Position = UDim2.new(1, -340, 1, -20) -- Start off-screen to the right
-            notifyContainer.AnchorPoint = Vector2.new(1, 1) -- Anchor to bottom-right
-            notifyContainer.BackgroundTransparency = 1
-            local containerLayout = Instance.new("UIListLayout", notifyContainer)
-            containerLayout.SortOrder = Enum.SortOrder.LayoutOrder
-            containerLayout.FillDirection = Enum.FillDirection.Vertical
-            containerLayout.VerticalAlignment = Enum.VerticalAlignment.Bottom  -- New notifications at the bottom
-            containerLayout.Padding = UDim.new(0, 10)
-        end
-        
-    
-    
-        local notifyFrame = Instance.new("Frame", notifyContainer) -- Parent to container
-        notifyFrame.Size = UDim2.new(1, 0, 0, 80) -- Full width of container, fixed height
-        notifyFrame.BackgroundColor3 = COLORS.SECONDARY
-        notifyFrame.LayoutOrder = #notifyContainer:GetChildren() -- Use LayoutOrder
-        --Removed Anchoring
-        --notifyFrame.Position = UDim2.new(1, 320, 1, -100) -- Off-screen to the right for sliding
-    
-        local notifyCorner = Instance.new("UICorner", notifyFrame)
-        notifyCorner.CornerRadius = UDim.new(0, 8)
-    
-        local titleLabel = Instance.new("TextLabel", notifyFrame)
-        titleLabel.Size = UDim2.new(1, -20, 0, 30)
-        titleLabel.Position = UDim2.new(0, 10, 0, 10)
-        titleLabel.BackgroundTransparency = 1
-        titleLabel.Text = title
-        titleLabel.TextColor3 = COLORS.TEXT
-        titleLabel.Font = Enum.Font.GothamBold
-        titleLabel.TextSize = 18
-    
-        local descLabel = Instance.new("TextLabel", notifyFrame)
-        descLabel.Size = UDim2.new(1, -20, 0, 30)
-        descLabel.Position = UDim2.new(0, 10, 0, 40)
-        descLabel.BackgroundTransparency = 1
-        descLabel.Text = description
-        descLabel.TextColor3 = COLORS.TEXT
-        descLabel.Font = Enum.Font.Gotham
-        descLabel.TextSize = 14
-    
-        -- Slide in from the right
-        local slideIn = TweenService:Create(notifyFrame, TWEEN_INFO, {Position = UDim2.new(0, 0, 0, 0)}) -- Move to origin
-        slideIn:Play()
-    
-        delay(duration, function()
-             -- Slide out to the right
-            local slideOut = TweenService:Create(notifyFrame, TWEEN_INFO, {Position = UDim2.new(1, 0, 0, 0)}) -- Slide out of view
-            slideOut:Play()
-            slideOut.Completed:Connect(function()
-                notifyFrame:Destroy()
-            end)
+    local notifyCorner = Instance.new("UICorner", notifyFrame)
+    notifyCorner.CornerRadius = UDim.new(0, 8)
+
+    local titleLabel = Instance.new("TextLabel", notifyFrame)
+    titleLabel.Size = UDim2.new(1, -20, 0, 30)
+    titleLabel.Position = UDim2.new(0, 10, 0, 10)
+    titleLabel.BackgroundTransparency = 1
+    titleLabel.Text = title
+    titleLabel.TextColor3 = COLORS.TEXT
+    titleLabel.Font = Enum.Font.GothamBold
+    titleLabel.TextSize = 18
+
+    local descLabel = Instance.new("TextLabel", notifyFrame)
+    descLabel.Size = UDim2.new(1, -20, 0, 30)
+    descLabel.Position = UDim2.new(0, 10, 0, 40)
+    descLabel.BackgroundTransparency = 1
+    descLabel.Text = description
+    descLabel.TextColor3 = COLORS.TEXT
+    descLabel.Font = Enum.Font.Gotham
+    descLabel.TextSize = 14
+
+    local slideIn = TweenService:Create(notifyFrame, TWEEN_INFO, {Position = UDim2.new(1, -320, 1, -100)})
+    slideIn:Play()
+
+    delay(duration, function()
+        local slideOut = TweenService:Create(notifyFrame, TWEEN_INFO, {Position = UDim2.new(1, 320, 1, -100)})
+        slideOut:Play()
+        slideOut.Completed:Connect(function()
+            notifyFrame:Destroy()
         end)
-    end
-    
-    return PandaAuth
+    end)
+end
+
+return PandaAuth
