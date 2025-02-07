@@ -554,15 +554,14 @@ function PandaAuth:CreateWindow(title)
                 local ParagraphFrame = Instance.new("Frame", SectionContent)
                 ParagraphFrame.Name = "ParagraphFrame"
                 ParagraphFrame.BackgroundTransparency = 1
-                ParagraphFrame.Size = UDim2.new(0.92, 0, 0, 50)  -- Initial height
+                -- Set AutomaticSize for the container so it resizes vertically to fit its content.
+                ParagraphFrame.AutomaticSize = Enum.AutomaticSize.Y
+                ParagraphFrame.Size = UDim2.new(0.92, 0, 0, 50)  -- Initial height; will auto-adjust
                 local paragraphLayout = Instance.new("UIListLayout", ParagraphFrame)
                 paragraphLayout.FillDirection = Enum.FillDirection.Vertical
                 paragraphLayout.SortOrder = Enum.SortOrder.LayoutOrder
                 paragraphLayout.Padding = UDim.new(0, 4)
-                -- Update ParagraphFrame's size when the layout's content size changes
-                paragraphLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-                    ParagraphFrame.Size = UDim2.new(0.92, 0, 0, paragraphLayout.AbsoluteContentSize.Y)
-                end)
+                -- (No need to set AutomaticSize on the UIListLayout)
 
                 local TitleLabel = Instance.new("TextLabel", ParagraphFrame)
                 TitleLabel.Name = "ParagraphTitle"
