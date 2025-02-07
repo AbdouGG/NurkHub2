@@ -549,18 +549,16 @@ function PandaAuth:CreateWindow(title)
             end
 
             -- New Paragraph Functionality:
-            -- Creates a paragraph container with a title and multi–line text label that expands vertically.
+            -- Creates a paragraph container with a title and multi–line text label.
             function section:AddParagraph(paragraphTitle, paragraphContent)
                 local ParagraphFrame = Instance.new("Frame", SectionContent)
                 ParagraphFrame.Name = "ParagraphFrame"
                 ParagraphFrame.BackgroundTransparency = 1
-                ParagraphFrame.Size = UDim2.new(0.92, 0, 0, 50)  -- Initial height; will update based on text
-                -- We use a UIListLayout to stack the title and content
+                ParagraphFrame.Size = UDim2.new(0.92, 0, 0, 50)  -- Initial height; will be updated
                 local paragraphLayout = Instance.new("UIListLayout", ParagraphFrame)
                 paragraphLayout.FillDirection = Enum.FillDirection.Vertical
                 paragraphLayout.SortOrder = Enum.SortOrder.LayoutOrder
-                paragraphLayout.Padding = UDim.new(0, 4)
-                -- Update the ParagraphFrame size when the layout's content size changes
+                paragraphLayout.Padding = UDim.new(0,4)
                 paragraphLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
                     ParagraphFrame.Size = UDim2.new(0.92, 0, 0, paragraphLayout.AbsoluteContentSize.Y)
                 end)
@@ -577,7 +575,7 @@ function PandaAuth:CreateWindow(title)
 
                 local ContentLabel = Instance.new("TextLabel", ParagraphFrame)
                 ContentLabel.Name = "ParagraphContent"
-                ContentLabel.Size = UDim2.new(1,0,0,0)  -- Height will auto-update via AutomaticSize
+                ContentLabel.Size = UDim2.new(1,0,0,0)  -- Initial height; AutomaticSize will update this label’s height
                 ContentLabel.BackgroundTransparency = 1
                 ContentLabel.Text = paragraphContent or ""
                 ContentLabel.TextColor3 = COLORS.TEXT
@@ -586,6 +584,11 @@ function PandaAuth:CreateWindow(title)
                 ContentLabel.TextWrapped = true
                 ContentLabel.TextXAlignment = Enum.TextXAlignment.Left
                 ContentLabel.AutomaticSize = Enum.AutomaticSize.Y
+
+                -- Also update ParagraphFrame when the content text changes.
+                ContentLabel:GetPropertyChangedSignal("TextBounds"):Connect(function()
+                    ParagraphFrame.Size = UDim2.new(ParagraphFrame.Size.X.Scale, ParagraphFrame.Size.X.Offset, 0, paragraphLayout.AbsoluteContentSize.Y)
+                end)
 
                 return {Container = ParagraphFrame, Title = TitleLabel, Content = ContentLabel}
             end
