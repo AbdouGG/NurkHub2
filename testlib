@@ -131,6 +131,7 @@ function PandaAuth:CreateWindow(title)
     HorizontalSeparator.Position = UDim2.new(0, 0, 0, 40)
     HorizontalSeparator.BackgroundColor3 = COLORS.ACCENT
     HorizontalSeparator.BackgroundTransparency = 0.3
+    HorizontalSeparator.ZIndex = 9999
 
     -- Left Sidebar for Navigation Tabs
     local TabHolder = Instance.new("Frame", MainFrame)
