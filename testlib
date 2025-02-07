@@ -549,19 +549,20 @@ function PandaAuth:CreateWindow(title)
             end
 
             -- New Paragraph Functionality:
-            -- Creates a paragraph container with a title and multi–line text label.
+            -- Creates a paragraph container with a title and multi–line text label that expands vertically.
             function section:AddParagraph(paragraphTitle, paragraphContent)
                 local ParagraphFrame = Instance.new("Frame", SectionContent)
                 ParagraphFrame.Name = "ParagraphFrame"
                 ParagraphFrame.BackgroundTransparency = 1
-                -- Set AutomaticSize for the container so it resizes vertically to fit its content.
-                ParagraphFrame.AutomaticSize = Enum.AutomaticSize.Y
-                ParagraphFrame.Size = UDim2.new(0.92, 0, 0, 50)  -- Initial height; will auto-adjust
+                -- Set an initial size (width fixed, height will update)
+                ParagraphFrame.Size = UDim2.new(0.92, 0, 0, 50)
                 local paragraphLayout = Instance.new("UIListLayout", ParagraphFrame)
                 paragraphLayout.FillDirection = Enum.FillDirection.Vertical
                 paragraphLayout.SortOrder = Enum.SortOrder.LayoutOrder
                 paragraphLayout.Padding = UDim.new(0, 4)
-                -- (No need to set AutomaticSize on the UIListLayout)
+                paragraphLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+                    ParagraphFrame.Size = UDim2.new(0.92, 0, 0, paragraphLayout.AbsoluteContentSize.Y)
+                end)
 
                 local TitleLabel = Instance.new("TextLabel", ParagraphFrame)
                 TitleLabel.Name = "ParagraphTitle"
@@ -575,7 +576,8 @@ function PandaAuth:CreateWindow(title)
 
                 local ContentLabel = Instance.new("TextLabel", ParagraphFrame)
                 ContentLabel.Name = "ParagraphContent"
-                ContentLabel.Size = UDim2.new(1, 0, 0, 20)
+                -- Start with a height of 0; it will expand automatically.
+                ContentLabel.Size = UDim2.new(1, 0, 0, 0)
                 ContentLabel.BackgroundTransparency = 1
                 ContentLabel.Text = paragraphContent or ""
                 ContentLabel.TextColor3 = COLORS.TEXT
