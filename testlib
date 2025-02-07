@@ -8,7 +8,7 @@ local Workspace = game:GetService("Workspace")
 ----------------------------------------------------------------
 -- Configuration for Grid Cells in Content Area
 ----------------------------------------------------------------
-local cellWidth = 335   -- New grid cell width 345
+local cellWidth = 340   -- New grid cell width 345
 local cellHeight = 180  -- Grid cell height remains the same
 
 ----------------------------------------------------------------
