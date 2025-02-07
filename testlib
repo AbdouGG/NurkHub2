@@ -71,7 +71,7 @@ function PandaAuth:CreateWindow(title)
     -- Detect Screen Size and Apply UIScale if necessary
     ----------------------------------------------------------------
     local camera = Workspace.CurrentCamera or game:GetService("Workspace").CurrentCamera
-    local viewportSize = camera and camera.ViewportSize or Vector2.new(1920,1080)
+    local viewportSize = camera and camera.ViewportSize or Vector2.new(1920, 1080)
     local scale = 1
     if viewportSize.X < 1200 then
         scale = viewportSize.X / 1200
@@ -220,7 +220,7 @@ function PandaAuth:CreateWindow(title)
 
         local grid = Instance.new("UIGridLayout", TabContent)
         grid.CellSize = UDim2.new(0, cellWidth, 0, cellHeight)
-        grid.CellPadding = UDim2.new(0, 10, 0, 10)
+        grid.CellPadding = UDim2.new(0,10,0,10)
         grid.FillDirectionMaxCells = 2
         grid.HorizontalAlignment = Enum.HorizontalAlignment.Left
         grid.SortOrder = Enum.SortOrder.LayoutOrder
@@ -549,19 +549,12 @@ function PandaAuth:CreateWindow(title)
             end
 
             -- New Paragraph Functionality:
-            -- Creates a paragraph container with a title and multi–line text label.
+            -- Creates a paragraph container with a title and multi–line text label that expands vertically.
             function section:AddParagraph(paragraphTitle, paragraphContent)
                 local ParagraphFrame = Instance.new("Frame", SectionContent)
                 ParagraphFrame.Name = "ParagraphFrame"
                 ParagraphFrame.BackgroundTransparency = 1
-                ParagraphFrame.Size = UDim2.new(0.92, 0, 0, 50)  -- Initial height; will be updated
-                local paragraphLayout = Instance.new("UIListLayout", ParagraphFrame)
-                paragraphLayout.FillDirection = Enum.FillDirection.Vertical
-                paragraphLayout.SortOrder = Enum.SortOrder.LayoutOrder
-                paragraphLayout.Padding = UDim.new(0,4)
-                paragraphLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-                    ParagraphFrame.Size = UDim2.new(0.92, 0, 0, paragraphLayout.AbsoluteContentSize.Y)
-                end)
+                ParagraphFrame.Size = UDim2.new(0.92, 0, 0, 50)  -- Initial height; will be updated below
 
                 local TitleLabel = Instance.new("TextLabel", ParagraphFrame)
                 TitleLabel.Name = "ParagraphTitle"
@@ -575,7 +568,7 @@ function PandaAuth:CreateWindow(title)
 
                 local ContentLabel = Instance.new("TextLabel", ParagraphFrame)
                 ContentLabel.Name = "ParagraphContent"
-                ContentLabel.Size = UDim2.new(1,0,0,0)  -- Initial height; AutomaticSize will update this label’s height
+                ContentLabel.Size = UDim2.new(1,0,0,0)  -- Height will be determined by text bounds
                 ContentLabel.BackgroundTransparency = 1
                 ContentLabel.Text = paragraphContent or ""
                 ContentLabel.TextColor3 = COLORS.TEXT
@@ -585,10 +578,18 @@ function PandaAuth:CreateWindow(title)
                 ContentLabel.TextXAlignment = Enum.TextXAlignment.Left
                 ContentLabel.AutomaticSize = Enum.AutomaticSize.Y
 
-                -- Also update ParagraphFrame when the content text changes.
-                ContentLabel:GetPropertyChangedSignal("TextBounds"):Connect(function()
-                    ParagraphFrame.Size = UDim2.new(ParagraphFrame.Size.X.Scale, ParagraphFrame.Size.X.Offset, 0, paragraphLayout.AbsoluteContentSize.Y)
-                end)
+                -- Function to update ParagraphFrame's height based on TitleLabel and ContentLabel
+                local function updateParagraphSize()
+                    local totalHeight = TitleLabel.AbsoluteSize.Y + ContentLabel.AbsoluteSize.Y + 4
+                    ParagraphFrame.Size = UDim2.new(ParagraphFrame.Size.X.Scale, ParagraphFrame.Size.X.Offset, 0, totalHeight)
+                end
+
+                -- Connect to changes in TextBounds
+                TitleLabel:GetPropertyChangedSignal("TextBounds"):Connect(updateParagraphSize)
+                ContentLabel:GetPropertyChangedSignal("TextBounds"):Connect(updateParagraphSize)
+                -- Call once to set the initial size (using Heartbeat to ensure layout has updated)
+                game:GetService("RunService").Heartbeat:Wait()
+                updateParagraphSize()
 
                 return {Container = ParagraphFrame, Title = TitleLabel, Content = ContentLabel}
             end
