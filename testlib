@@ -8,7 +8,7 @@ local Workspace = game:GetService("Workspace")
 ----------------------------------------------------------------
 -- Configuration for Grid Cells in Content Area
 ----------------------------------------------------------------
-local cellWidth = 345   -- Grid cell width (ensures two cells per row in ~700px content area)
+local cellWidth = 344   -- Grid cell width (ensures two cells per row in ~700px content area)
 local cellHeight = 180  -- Grid cell height
 
 ----------------------------------------------------------------
@@ -131,6 +131,7 @@ function PandaAuth:CreateWindow(title)
     HorizontalSeparator.Position = UDim2.new(0, 0, 0, 40)
     HorizontalSeparator.BackgroundColor3 = COLORS.ACCENT
     HorizontalSeparator.BackgroundTransparency = 0.3
+    HorizontalSeparator.ZIndex = 9999
 
     -- Left Sidebar for Navigation Tabs
     local TabHolder = Instance.new("Frame", MainFrame)
