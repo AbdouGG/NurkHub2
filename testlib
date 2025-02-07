@@ -8,7 +8,7 @@ local Workspace = game:GetService("Workspace")
 ----------------------------------------------------------------
 -- Configuration for Grid Cells in Content Area
 ----------------------------------------------------------------
-local cellWidth = 344   -- Grid cell width (ensures two cells per row in ~700px content area)
+local cellWidth = 344   -- New grid cell width
 local cellHeight = 180  -- Grid cell height
 
 ----------------------------------------------------------------
@@ -173,7 +173,7 @@ function PandaAuth:CreateWindow(title)
     local tabs = {}
     local selectedTab = nil
 
-    -- Optionally pass an icon asset ID (as a string) as a second parameter when creating a tab.
+    -- Optionally pass an icon asset ID as a second parameter when creating a tab.
     function window:CreateTab(name, iconAsset)
         local tab = {}
         tab.SectionCount = 0
@@ -215,10 +215,9 @@ function PandaAuth:CreateWindow(title)
         TabContent.BackgroundTransparency = 1
         TabContent.ScrollBarThickness = 4
         TabContent.ScrollBarImageColor3 = COLORS.ACCENT
-        -- Set vertical scrolling properties
-        TabContent.ScrollingDirection = Enum.ScrollingDirection.Y
-        TabContent.MomentumScrollingEnabled = true
         TabContent.Visible = false
+        -- Enable automatic canvas sizing vertically so a scrollbar appears when needed:
+        TabContent.AutomaticCanvasSize = Enum.AutomaticSize.Y
 
         local grid = Instance.new("UIGridLayout", TabContent)
         grid.CellSize = UDim2.new(0, cellWidth, 0, cellHeight)
