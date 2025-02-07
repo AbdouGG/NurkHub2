@@ -1,5 +1,5 @@
 -- PandaAuth Library - PRO Modern Theme with Enhanced Layout, Left Sidebar Navigation,
--- Modern Toggle Buttons, and All Functions
+-- Modern Toggle Buttons, Scrollable Content, Paragraph Functionality, and All Functions
 local PandaAuth = {}
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
@@ -216,7 +216,6 @@ function PandaAuth:CreateWindow(title)
         TabContent.ScrollBarThickness = 4
         TabContent.ScrollBarImageColor3 = COLORS.ACCENT
         TabContent.Visible = false
-        -- Enable automatic canvas sizing vertically so a scrollbar appears when needed:
         TabContent.AutomaticCanvasSize = Enum.AutomaticSize.Y
 
         local grid = Instance.new("UIGridLayout", TabContent)
@@ -547,6 +546,44 @@ function PandaAuth:CreateWindow(title)
                     end
                 end)
                 return InputFrame
+            end
+
+            -- New Paragraph Functionality:
+            -- Creates a paragraph container with a title and a multi–line text label.
+            function section:AddParagraph(paragraphTitle, paragraphContent)
+                local ParagraphFrame = Instance.new("Frame", SectionContent)
+                ParagraphFrame.Name = "ParagraphFrame"
+                ParagraphFrame.BackgroundTransparency = 1
+                ParagraphFrame.Size = UDim2.new(0.92, 0, 0, 50)  -- Initial height; will auto-adjust via UIListLayout
+                local paragraphLayout = Instance.new("UIListLayout", ParagraphFrame)
+                paragraphLayout.FillDirection = Enum.FillDirection.Vertical
+                paragraphLayout.SortOrder = Enum.SortOrder.LayoutOrder
+                paragraphLayout.Padding = UDim.new(0, 4)
+                paragraphLayout.AutomaticSize = Enum.AutomaticSize.Y
+
+                local TitleLabel = Instance.new("TextLabel", ParagraphFrame)
+                TitleLabel.Name = "ParagraphTitle"
+                TitleLabel.Size = UDim2.new(1, 0, 0, 20)
+                TitleLabel.BackgroundTransparency = 1
+                TitleLabel.Text = paragraphTitle or ""
+                TitleLabel.TextColor3 = COLORS.TEXT
+                TitleLabel.Font = Enum.Font.GothamBold
+                TitleLabel.TextSize = 16
+                TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+                local ContentLabel = Instance.new("TextLabel", ParagraphFrame)
+                ContentLabel.Name = "ParagraphContent"
+                ContentLabel.Size = UDim2.new(1, 0, 0, 20)
+                ContentLabel.BackgroundTransparency = 1
+                ContentLabel.Text = paragraphContent or ""
+                ContentLabel.TextColor3 = COLORS.TEXT
+                ContentLabel.Font = Enum.Font.Gotham
+                ContentLabel.TextSize = 15
+                ContentLabel.TextWrapped = true
+                ContentLabel.TextXAlignment = Enum.TextXAlignment.Left
+                ContentLabel.AutomaticSize = Enum.AutomaticSize.Y
+
+                return {Container = ParagraphFrame, Title = TitleLabel, Content = ContentLabel}
             end
 
             function section:AddLabel(text)
