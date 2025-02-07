@@ -549,17 +549,20 @@ function PandaAuth:CreateWindow(title)
             end
 
             -- New Paragraph Functionality:
-            -- Creates a paragraph container with a title and a multi–line text label.
+            -- Creates a paragraph container with a title and multi–line text label.
             function section:AddParagraph(paragraphTitle, paragraphContent)
                 local ParagraphFrame = Instance.new("Frame", SectionContent)
                 ParagraphFrame.Name = "ParagraphFrame"
                 ParagraphFrame.BackgroundTransparency = 1
-                ParagraphFrame.Size = UDim2.new(0.92, 0, 0, 50)  -- Initial height; will auto-adjust via UIListLayout
+                ParagraphFrame.Size = UDim2.new(0.92, 0, 0, 50)  -- Initial height
                 local paragraphLayout = Instance.new("UIListLayout", ParagraphFrame)
                 paragraphLayout.FillDirection = Enum.FillDirection.Vertical
                 paragraphLayout.SortOrder = Enum.SortOrder.LayoutOrder
                 paragraphLayout.Padding = UDim.new(0, 4)
-                paragraphLayout.AutomaticSize = Enum.AutomaticSize.Y
+                -- Update ParagraphFrame's size when the layout's content size changes
+                paragraphLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+                    ParagraphFrame.Size = UDim2.new(0.92, 0, 0, paragraphLayout.AbsoluteContentSize.Y)
+                end)
 
                 local TitleLabel = Instance.new("TextLabel", ParagraphFrame)
                 TitleLabel.Name = "ParagraphTitle"
