@@ -134,7 +134,7 @@ function PandaAuth:CreateWindow(centerTitleText)
     CenterTopLabel.Position = UDim2.new(0.5, 0, 0.5, 0)
     CenterTopLabel.Size = UDim2.new(0, 300, 1, 0)
     CenterTopLabel.BackgroundTransparency = 1
-    CenterTopLabel.Text = centerTitleText or "Fisch - v0.3.9"
+    CenterTopLabel.Text = centerTitleText or "Nurk Hub"
     CenterTopLabel.TextColor3 = COLORS.TEXT
     CenterTopLabel.TextSize = 20
     CenterTopLabel.Font = Enum.Font.GothamBold
@@ -147,7 +147,7 @@ function PandaAuth:CreateWindow(centerTitleText)
     RightTopLabel.Position = UDim2.new(1, -10, 0.5, 0)
     RightTopLabel.Size = UDim2.new(0, 150, 1, 0)
     RightTopLabel.BackgroundTransparency = 1
-    RightTopLabel.Text = "discord.gg/ronix"  -- <--- Change to your link or anything you want
+    RightTopLabel.Text = "discord.gg/nurk"  -- <--- Change to your link or anything you want
     RightTopLabel.TextColor3 = COLORS.TEXT
     RightTopLabel.TextSize = 16
     RightTopLabel.Font = Enum.Font.Gotham
@@ -160,6 +160,7 @@ function PandaAuth:CreateWindow(centerTitleText)
     HorizontalSeparator.Position = UDim2.new(0,0,0,40)
     HorizontalSeparator.BackgroundColor3 = COLORS.ACCENT
     HorizontalSeparator.BackgroundTransparency = 0.3
+    HorizontalSeparator.ZIndex = 9999
 
     -- Left Sidebar for Tabs
     local TabHolder = Instance.new("Frame", MainFrame)
