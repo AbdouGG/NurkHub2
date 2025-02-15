@@ -121,7 +121,7 @@ function PandaAuth:CreateWindow(centerTitleText)
     LeftTopLabel.Size = UDim2.new(0, 200, 1, 0)
     LeftTopLabel.Position = UDim2.new(0, 10, 0, 0)
     LeftTopLabel.BackgroundTransparency = 1
-    LeftTopLabel.Text = "Ronix Hub"   -- <--- Change to your Hub name
+    LeftTopLabel.Text = "Nurk Hub"   -- <--- Change to your Hub name
     LeftTopLabel.TextColor3 = COLORS.TEXT
     LeftTopLabel.TextSize = 16
     LeftTopLabel.Font = Enum.Font.Gotham
