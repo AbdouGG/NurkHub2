@@ -1,3 +1,7 @@
+-- PandaAuth Library - Smooth Gray Theme with Modern Layout,
+-- Left Sidebar Navigation, Modern Toggles, Scrollable Content,
+-- Paragraph Functionality, Notifications, and All Functions.
+
 local PandaAuth = {}
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
@@ -10,18 +14,18 @@ local cellWidth = 344   -- Grid cell width
 local cellHeight = 180  -- Grid cell height
 
 ----------------------------------------------------------------
--- Theme Colors & Settings (Smooth Gray Design)
+-- Smooth Gray Theme Colors & Settings
 ----------------------------------------------------------------
 local COLORS = {
-    BACKGROUND     = Color3.fromRGB(245, 245, 245),     -- Smooth light gray background
-    ACCENT         = Color3.fromRGB(220, 220, 220),     -- Accent used for top bar and buttons
-    SECONDARY      = Color3.fromRGB(235, 235, 235),     -- Secondary panels and containers
-    TEXT           = Color3.fromRGB(50, 50, 50),        -- Dark text for contrast
-    SUCCESS        = Color3.fromRGB(100, 200, 100),     -- Soft green for success
-    ERROR          = Color3.fromRGB(240, 128, 128),     -- Soft red (light coral) for errors
-    HOVER          = Color3.fromRGB(225, 225, 225),     -- A subtle darker gray for hover effects
-    TAB_SELECTED   = Color3.fromRGB(210, 210, 210),     -- Selected tab color
-    TAB_UNSELECTED = Color3.fromRGB(235, 235, 235)      -- Unselected tab color
+    BACKGROUND     = Color3.fromRGB(45, 45, 45),    -- Main window background (dark gray)
+    ACCENT         = Color3.fromRGB(120, 120, 120), -- Accent color (medium gray)
+    SECONDARY      = Color3.fromRGB(60, 60, 60),     -- Slightly lighter than BACKGROUND
+    TEXT           = Color3.fromRGB(255, 255, 255),  -- White text
+    SUCCESS        = Color3.fromRGB(80, 250, 123),   -- Vibrant green for success
+    ERROR          = Color3.fromRGB(250, 80, 80),    -- Bold red for errors
+    HOVER          = Color3.fromRGB(70, 70, 70),     -- Hover effect (lighter gray)
+    TAB_SELECTED   = Color3.fromRGB(120, 120, 120),  -- Same as ACCENT
+    TAB_UNSELECTED = Color3.fromRGB(60, 60, 60)      -- Same as SECONDARY
 }
 
 local TWEEN_INFO = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
@@ -87,19 +91,11 @@ function PandaAuth:CreateWindow(centerTitleText)
     MainFrame.ClipsDescendants = true
     MainFrame.Parent = ScreenGui
 
-    -- Add a smooth gradient effect to the main window
-    local mainGradient = Instance.new("UIGradient", MainFrame)
-    mainGradient.Color = ColorSequence.new{
-        ColorSequenceKeypoint.new(0, COLORS.BACKGROUND),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(235,235,235))
-    }
-    mainGradient.Rotation = 90
-
     local UICorner = Instance.new("UICorner", MainFrame)
     UICorner.CornerRadius = UDim.new(0,10)
 
     local UIStroke = Instance.new("UIStroke", MainFrame)
-    UIStroke.Color = Color3.fromRGB(180, 180, 180)
+    UIStroke.Color = Color3.fromRGB(20,20,20)
     UIStroke.Thickness = 2
     UIStroke.Transparency = 0
 
@@ -109,7 +105,7 @@ function PandaAuth:CreateWindow(centerTitleText)
     Shadow.Position = UDim2.new(0,-15,0,-15)
     Shadow.Size = UDim2.new(1,30,1,30)
     Shadow.Image = "rbxassetid://5028857084"
-    Shadow.ImageColor3 = Color3.fromRGB(200,200,200)
+    Shadow.ImageColor3 = COLORS.BACKGROUND
     Shadow.ImageTransparency = 0.6
 
     -- Top Bar (full width)
@@ -120,47 +116,39 @@ function PandaAuth:CreateWindow(centerTitleText)
     local TopBarCorner = Instance.new("UICorner", TopBar)
     TopBarCorner.CornerRadius = UDim.new(0,10)
 
-    -- Add a subtle gradient to the top bar for a cool effect
-    local topBarGradient = Instance.new("UIGradient", TopBar)
-    topBarGradient.Color = ColorSequence.new{
-        ColorSequenceKeypoint.new(0, COLORS.ACCENT),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(200,200,200))
-    }
-    topBarGradient.Rotation = 90
-
     -- Left Label (Hub Name or anything you want)
     local LeftTopLabel = Instance.new("TextLabel", TopBar)
     LeftTopLabel.Name = "LeftTopLabel"
     LeftTopLabel.Size = UDim2.new(0, 200, 1, 0)
     LeftTopLabel.Position = UDim2.new(0, 10, 0, 0)
     LeftTopLabel.BackgroundTransparency = 1
-    LeftTopLabel.Text = "Nurk Hub"
+    LeftTopLabel.Text = "GrayHub"   -- <--- Change to your hub name
     LeftTopLabel.TextColor3 = COLORS.TEXT
     LeftTopLabel.TextSize = 16
     LeftTopLabel.Font = Enum.Font.Gotham
     LeftTopLabel.TextXAlignment = Enum.TextXAlignment.Left
 
-    -- Center Label for the main title
+    -- Center Label for main title (change as needed)
     local CenterTopLabel = Instance.new("TextLabel", TopBar)
     CenterTopLabel.Name = "CenterTopLabel"
     CenterTopLabel.AnchorPoint = Vector2.new(0.5, 0.5)
     CenterTopLabel.Position = UDim2.new(0.5, 0, 0.5, 0)
     CenterTopLabel.Size = UDim2.new(0, 300, 1, 0)
     CenterTopLabel.BackgroundTransparency = 1
-    CenterTopLabel.Text = centerTitleText or "Nurk Hub"
+    CenterTopLabel.Text = centerTitleText or "Smooth Gray UI"
     CenterTopLabel.TextColor3 = COLORS.TEXT
     CenterTopLabel.TextSize = 20
     CenterTopLabel.Font = Enum.Font.GothamBold
     CenterTopLabel.TextXAlignment = Enum.TextXAlignment.Center
 
-    -- Right Label for e.g.
+    -- Right Label (for a link or any info)
     local RightTopLabel = Instance.new("TextLabel", TopBar)
     RightTopLabel.Name = "RightTopLabel"
     RightTopLabel.AnchorPoint = Vector2.new(1, 0.5)
     RightTopLabel.Position = UDim2.new(1, -10, 0.5, 0)
     RightTopLabel.Size = UDim2.new(0, 150, 1, 0)
     RightTopLabel.BackgroundTransparency = 1
-    RightTopLabel.Text = "discord.gg/nurk"  -- <--- Change to your link or anything you want
+    RightTopLabel.Text = "discord.gg/Gray"  -- <--- Change to your link or info
     RightTopLabel.TextColor3 = COLORS.TEXT
     RightTopLabel.TextSize = 16
     RightTopLabel.Font = Enum.Font.Gotham
@@ -173,7 +161,6 @@ function PandaAuth:CreateWindow(centerTitleText)
     HorizontalSeparator.Position = UDim2.new(0,0,0,40)
     HorizontalSeparator.BackgroundColor3 = COLORS.ACCENT
     HorizontalSeparator.BackgroundTransparency = 0.3
-    HorizontalSeparator.ZIndex = 9999
 
     -- Left Sidebar for Tabs
     local TabHolder = Instance.new("Frame", MainFrame)
@@ -190,7 +177,7 @@ function PandaAuth:CreateWindow(centerTitleText)
     TabList.SortOrder = Enum.SortOrder.LayoutOrder
     TabList.Padding = UDim.new(0,6)
     TabList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        TabHolder.CanvasSize = UDim2.new(0,0,0,TabList.AbsoluteContentSize.Y)
+        TabHolder.CanvasSize = UDim2.new(0, 0, 0, TabList.AbsoluteContentSize.Y)
     end)
 
     -- Vertical Separator between the TabHolder and ContentHolder
@@ -214,7 +201,6 @@ function PandaAuth:CreateWindow(centerTitleText)
     local tabs = {}
     local selectedTab = nil
 
-    -- Optionally pass an icon asset ID as second parameter
     function window:CreateTab(name, iconAsset)
         local tab = {}
         tab.SectionCount = 0
@@ -261,7 +247,7 @@ function PandaAuth:CreateWindow(centerTitleText)
 
         local grid = Instance.new("UIGridLayout", TabContent)
         grid.CellSize = UDim2.new(0, cellWidth, 0, cellHeight)
-        grid.CellPadding = UDim2.new(0, 10, 0, 10)
+        grid.CellPadding = UDim2.new(0,10,0,10)
         grid.FillDirectionMaxCells = 2
         grid.HorizontalAlignment = Enum.HorizontalAlignment.Left
         grid.SortOrder = Enum.SortOrder.LayoutOrder
@@ -287,9 +273,6 @@ function PandaAuth:CreateWindow(centerTitleText)
 
         table.insert(tabs, {Button = TabButton, Content = TabContent})
 
-        ----------------------------------------------------------------
-        -- Create sections within each tab
-        ----------------------------------------------------------------
         function tab:CreateSection(sectionName)
             local section = {}
             local SectionFrame = Instance.new("Frame", TabContent)
@@ -333,9 +316,6 @@ function PandaAuth:CreateWindow(centerTitleText)
             UIListLayout_Section.HorizontalAlignment = Enum.HorizontalAlignment.Center
             UIListLayout_Section.SortOrder = Enum.SortOrder.LayoutOrder
 
-            ----------------------------------------------------------------
-            -- Element creation inside each section
-            ----------------------------------------------------------------
             function section:AddButton(text, callback)
                 local Button = Instance.new("TextButton", SectionContent)
                 Button.Name = "Button"
@@ -402,14 +382,14 @@ function PandaAuth:CreateWindow(centerTitleText)
             function section:AddDropdown(text, options, callback)
                 local DropdownFrame = Instance.new("Frame", SectionContent)
                 DropdownFrame.Name = "DropdownFrame"
-                DropdownFrame.Size = UDim2.new(0,0.92,0,38)
+                DropdownFrame.Size = UDim2.new(0.92,0,0,38)
                 DropdownFrame.BackgroundColor3 = COLORS.SECONDARY
                 local UICorner_Dropdown = Instance.new("UICorner", DropdownFrame)
                 UICorner_Dropdown.CornerRadius = UDim.new(0,8)
                 local Title = Instance.new("TextLabel", DropdownFrame)
                 Title.Name = "Title"
-                Title.Size = UDim2.new(0,0.65,1,0)
-                Title.Position = UDim2.new(0,0.05,0,0)
+                Title.Size = UDim2.new(0.65,0,1,0)
+                Title.Position = UDim2.new(0.05,0,0,0)
                 Title.BackgroundTransparency = 1
                 Title.Text = text
                 Title.TextColor3 = COLORS.TEXT
@@ -418,8 +398,8 @@ function PandaAuth:CreateWindow(centerTitleText)
                 Title.TextXAlignment = Enum.TextXAlignment.Left
                 local DropdownButton = Instance.new("TextButton", DropdownFrame)
                 DropdownButton.Name = "DropdownButton"
-                DropdownButton.Size = UDim2.new(0,0.17,0,0.6)
-                DropdownButton.Position = UDim2.new(0,0.78,0,0.2)
+                DropdownButton.Size = UDim2.new(0.17,0,0.6,0)
+                DropdownButton.Position = UDim2.new(0.78,0,0.2,0)
                 DropdownButton.BackgroundColor3 = COLORS.ACCENT
                 DropdownButton.Text = "▼"
                 DropdownButton.TextColor3 = COLORS.TEXT
@@ -457,7 +437,7 @@ function PandaAuth:CreateWindow(centerTitleText)
                 for _, option in ipairs(options) do
                     local OptionButton = Instance.new("TextButton", OptionsFrame)
                     OptionButton.Name = "OptionButton"
-                    OptionButton.Size = UDim2.new(0,0.92,0,32)
+                    OptionButton.Size = UDim2.new(0.92,0,0,32)
                     OptionButton.BackgroundColor3 = COLORS.BACKGROUND
                     OptionButton.BackgroundTransparency = 0.2
                     OptionButton.Text = option
@@ -594,12 +574,11 @@ function PandaAuth:CreateWindow(centerTitleText)
                 return InputFrame
             end
 
-            -- Paragraph container with a title and multi–line text label
             function section:AddParagraph(paragraphTitle, paragraphContent)
                 local ParagraphFrame = Instance.new("Frame", SectionContent)
                 ParagraphFrame.Name = "ParagraphFrame"
                 ParagraphFrame.BackgroundTransparency = 1
-                ParagraphFrame.Size = UDim2.new(0.92, 0, 0, 50)  -- Will expand based on content
+                ParagraphFrame.Size = UDim2.new(0.92, 0, 0, 50)
                 local paragraphLayout = Instance.new("UIListLayout", ParagraphFrame)
                 paragraphLayout.FillDirection = Enum.FillDirection.Vertical
                 paragraphLayout.SortOrder = Enum.SortOrder.LayoutOrder
@@ -620,7 +599,7 @@ function PandaAuth:CreateWindow(centerTitleText)
 
                 local ContentLabel = Instance.new("TextLabel", ParagraphFrame)
                 ContentLabel.Name = "ParagraphContent"
-                ContentLabel.Size = UDim2.new(1,0,0,0)  -- Height auto-updates
+                ContentLabel.Size = UDim2.new(1,0,0,0)
                 ContentLabel.BackgroundTransparency = 1
                 ContentLabel.Text = paragraphContent or ""
                 ContentLabel.TextColor3 = COLORS.TEXT
@@ -630,7 +609,6 @@ function PandaAuth:CreateWindow(centerTitleText)
                 ContentLabel.TextXAlignment = Enum.TextXAlignment.Left
                 ContentLabel.AutomaticSize = Enum.AutomaticSize.Y
 
-                -- Force an update when the text bounds change
                 ContentLabel:GetPropertyChangedSignal("TextBounds"):Connect(function()
                     ParagraphFrame.Size = UDim2.new(0.92, 0, 0, paragraphLayout.AbsoluteContentSize.Y)
                 end)
