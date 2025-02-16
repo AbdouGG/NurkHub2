@@ -1,5 +1,5 @@
--- PandaAuth Library - Smooth Gray Theme with Enhanced Transitions/Effects.
--- Retains all existing functionality (buttons, toggles, etc.) while adding improved hover & fade-in effects.
+-- PandaAuth Library - A more creative, modern design with dark gray + teal accents,
+-- subtle gradients, enhanced hover effects, scale-up fade-in animation, and full functionality.
 
 local PandaAuth = {}
 local UserInputService = game:GetService("UserInputService")
@@ -9,38 +9,37 @@ local Workspace = game:GetService("Workspace")
 ----------------------------------------------------------------
 -- Configuration for Grid Cells in Content Area
 ----------------------------------------------------------------
-local cellWidth = 344   -- Grid cell width
-local cellHeight = 180  -- Grid cell height
+local cellWidth = 344
+local cellHeight = 180
 
 ----------------------------------------------------------------
--- Smooth Gray Theme Colors & Settings
+-- Modern Color Palette with Teal Accents
 ----------------------------------------------------------------
 local COLORS = {
-    BACKGROUND     = Color3.fromRGB(45, 45, 45),    -- Main window background (dark gray)
-    ACCENT         = Color3.fromRGB(120, 120, 120), -- Accent color (medium gray)
-    SECONDARY      = Color3.fromRGB(60, 60, 60),     -- Slightly lighter than BACKGROUND
-    TEXT           = Color3.fromRGB(255, 255, 255),  -- White text
-    SUCCESS        = Color3.fromRGB(80, 250, 123),   -- Vibrant green for success
-    ERROR          = Color3.fromRGB(250, 80, 80),    -- Bold red for errors
-    HOVER          = Color3.fromRGB(70, 70, 70),     -- Hover effect (lighter gray)
-    TAB_SELECTED   = Color3.fromRGB(120, 120, 120),  -- Same as ACCENT
-    TAB_UNSELECTED = Color3.fromRGB(60, 60, 60)      -- Same as SECONDARY
+    BACKGROUND     = Color3.fromRGB(48, 48, 48),   -- Dark gray
+    ACCENT         = Color3.fromRGB(0, 224, 188),  -- Teal accent
+    SECONDARY      = Color3.fromRGB(58, 58, 58),   -- Slightly lighter/darker sections
+    TEXT           = Color3.fromRGB(255, 255, 255),-- White text
+    SUCCESS        = Color3.fromRGB(80, 250, 123), -- Vibrant green for toggles
+    ERROR          = Color3.fromRGB(250, 80, 80),  -- Bold red for toggles
+    HOVER          = Color3.fromRGB(70, 70, 70),   -- Hover effect
+    TAB_SELECTED   = Color3.fromRGB(0, 224, 188),  -- Same as ACCENT
+    TAB_UNSELECTED = Color3.fromRGB(58, 58, 58)    -- Same as SECONDARY
 }
 
--- We'll use two different tween infos: one for general UI elements (0.3s),
--- and one for the initial window size tween (0.5s).
+-- Two different tween durations: short for UI elements, longer for the scale-up effect.
 local TWEEN_INFO = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 local TWEEN_INFO_SIZE = TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 
 ----------------------------------------------------------------
--- Utility: Enhanced Hover Effect with a UIStroke
+-- Utility: Enhanced Hover Effect with UIStroke Outline
 ----------------------------------------------------------------
 local function createHoverEffect(button)
     local originalColor = button.BackgroundColor3
 
-    -- Create a UIStroke that is invisible (Thickness=0) until hovered
+    -- Create a UIStroke that remains invisible (Thickness=0) until hovered
     local stroke = Instance.new("UIStroke")
-    stroke.Color = Color3.fromRGB(160,160,160)
+    stroke.Color = COLORS.ACCENT
     stroke.Thickness = 0
     stroke.Transparency = 0.3
     stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
@@ -58,7 +57,7 @@ local function createHoverEffect(button)
 end
 
 ----------------------------------------------------------------
--- CreateWindow: Builds the main UI with a left sidebar for navigation tabs
+-- CreateWindow: Builds the main UI
 ----------------------------------------------------------------
 function PandaAuth:CreateWindow(centerTitleText)
     local window = {}
@@ -84,7 +83,7 @@ function PandaAuth:CreateWindow(centerTitleText)
     end
 
     ----------------------------------------------------------------
-    -- Detect Screen Size and Apply UIScale if necessary
+    -- Detect Screen Size and Apply UIScale if needed
     ----------------------------------------------------------------
     local camera = Workspace.CurrentCamera or game:GetService("Workspace").CurrentCamera
     local viewportSize = camera and camera.ViewportSize or Vector2.new(1920,1080)
@@ -96,11 +95,11 @@ function PandaAuth:CreateWindow(centerTitleText)
     uiScale.Scale = scale
     uiScale.Parent = ScreenGui
 
-    -- Main window, initially 0×0 (for a scale-up effect in fadeIn)
+    -- MainFrame starts at 0×0 for a scale-up effect
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "MainFrame"
-    MainFrame.Size = UDim2.new(0,0,0,0)   -- Start at 0×0
-    MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)  -- Centered
+    MainFrame.Size = UDim2.new(0,0,0,0)
+    MainFrame.Position = UDim2.new(0.5,0,0.5,0)
     MainFrame.BackgroundColor3 = COLORS.BACKGROUND
     MainFrame.ClipsDescendants = true
     MainFrame.Parent = ScreenGui
@@ -122,7 +121,15 @@ function PandaAuth:CreateWindow(centerTitleText)
     Shadow.ImageColor3 = COLORS.BACKGROUND
     Shadow.ImageTransparency = 0.6
 
-    -- Top Bar (full width)
+    -- Add a subtle gradient to the MainFrame background
+    local mainGradient = Instance.new("UIGradient", MainFrame)
+    mainGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(55,55,55)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(35,35,35))
+    })
+    mainGradient.Rotation = 90
+
+    -- Top Bar
     local TopBar = Instance.new("Frame", MainFrame)
     TopBar.Name = "TopBar"
     TopBar.Size = UDim2.new(1,0,0,40)
@@ -130,52 +137,58 @@ function PandaAuth:CreateWindow(centerTitleText)
     local TopBarCorner = Instance.new("UICorner", TopBar)
     TopBarCorner.CornerRadius = UDim.new(0,10)
 
-    -- Left Label (Hub Name or anything you want)
+    -- Teal gradient on the TopBar
+    local topGradient = Instance.new("UIGradient", TopBar)
+    topGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(0,180,151)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(0,224,188))
+    })
+    topGradient.Rotation = 90
+
+    -- Left Label (Hub Name)
     local LeftTopLabel = Instance.new("TextLabel", TopBar)
     LeftTopLabel.Name = "LeftTopLabel"
-    LeftTopLabel.Size = UDim2.new(0, 200, 1, 0)
-    LeftTopLabel.Position = UDim2.new(0, 10, 0, 0)
+    LeftTopLabel.Size = UDim2.new(0,200,1,0)
+    LeftTopLabel.Position = UDim2.new(0,10,0,0)
     LeftTopLabel.BackgroundTransparency = 1
-    LeftTopLabel.Text = "GrayHub"
+    LeftTopLabel.Text = "TealHub"  -- Change as needed
     LeftTopLabel.TextColor3 = COLORS.TEXT
     LeftTopLabel.TextSize = 16
     LeftTopLabel.Font = Enum.Font.Gotham
     LeftTopLabel.TextXAlignment = Enum.TextXAlignment.Left
 
-    -- Center Label for the main title
+    -- Center Label
     local CenterTopLabel = Instance.new("TextLabel", TopBar)
     CenterTopLabel.Name = "CenterTopLabel"
-    CenterTopLabel.AnchorPoint = Vector2.new(0.5, 0.5)
-    CenterTopLabel.Position = UDim2.new(0.5, 0, 0.5, 0)
-    CenterTopLabel.Size = UDim2.new(0, 300, 1, 0)
+    CenterTopLabel.AnchorPoint = Vector2.new(0.5,0.5)
+    CenterTopLabel.Position = UDim2.new(0.5,0,0.5,0)
+    CenterTopLabel.Size = UDim2.new(0,300,1,0)
     CenterTopLabel.BackgroundTransparency = 1
-    CenterTopLabel.Text = centerTitleText or "Smooth Gray UI"
+    CenterTopLabel.Text = centerTitleText or "Creative UI"
     CenterTopLabel.TextColor3 = COLORS.TEXT
     CenterTopLabel.TextSize = 20
     CenterTopLabel.Font = Enum.Font.GothamBold
     CenterTopLabel.TextXAlignment = Enum.TextXAlignment.Center
 
-    -- Right Label (for a link or any info)
+    -- Right Label (Link/Info)
     local RightTopLabel = Instance.new("TextLabel", TopBar)
     RightTopLabel.Name = "RightTopLabel"
-    RightTopLabel.AnchorPoint = Vector2.new(1, 0.5)
-    RightTopLabel.Position = UDim2.new(1, -10, 0.5, 0)
-    RightTopLabel.Size = UDim2.new(0, 150, 1, 0)
+    RightTopLabel.AnchorPoint = Vector2.new(1,0.5)
+    RightTopLabel.Position = UDim2.new(1,-10,0.5,0)
+    RightTopLabel.Size = UDim2.new(0,150,1,0)
     RightTopLabel.BackgroundTransparency = 1
-    RightTopLabel.Text = "discord.gg/Gray"
+    RightTopLabel.Text = "discord.gg/Teal"
     RightTopLabel.TextColor3 = COLORS.TEXT
     RightTopLabel.TextSize = 16
     RightTopLabel.Font = Enum.Font.Gotham
     RightTopLabel.TextXAlignment = Enum.TextXAlignment.Right
 
-    -- Horizontal Separator below Top Bar
     local HorizontalSeparator = Instance.new("Frame", MainFrame)
     HorizontalSeparator.Name = "HorizontalSeparator"
     HorizontalSeparator.Size = UDim2.new(1,0,0,1)
     HorizontalSeparator.Position = UDim2.new(0,0,0,40)
     HorizontalSeparator.BackgroundColor3 = COLORS.ACCENT
     HorizontalSeparator.BackgroundTransparency = 0.3
-    HorizontalSeparator.ZIndex = 9999
 
     -- Left Sidebar for Tabs
     local TabHolder = Instance.new("Frame", MainFrame)
@@ -186,6 +199,14 @@ function PandaAuth:CreateWindow(centerTitleText)
     local TabHolderCorner = Instance.new("UICorner", TabHolder)
     TabHolderCorner.CornerRadius = UDim.new(0,10)
 
+    -- Gradient on the TabHolder
+    local tabGradient = Instance.new("UIGradient", TabHolder)
+    tabGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(58,58,58)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(40,40,40))
+    })
+    tabGradient.Rotation = 90
+
     local TabList = Instance.new("UIListLayout", TabHolder)
     TabList.FillDirection = Enum.FillDirection.Vertical
     TabList.HorizontalAlignment = Enum.HorizontalAlignment.Left
@@ -195,7 +216,6 @@ function PandaAuth:CreateWindow(centerTitleText)
         TabHolder.CanvasSize = UDim2.new(0, 0, 0, TabList.AbsoluteContentSize.Y)
     end)
 
-    -- Vertical Separator
     local Separator = Instance.new("Frame", MainFrame)
     Separator.Name = "Separator"
     Separator.Size = UDim2.new(0,1,0,460)
@@ -203,13 +223,15 @@ function PandaAuth:CreateWindow(centerTitleText)
     Separator.BackgroundColor3 = Color3.fromRGB(255,255,255)
     Separator.BackgroundTransparency = 0.5
 
-    -- Content Holder
     local ContentHolder = Instance.new("Frame", MainFrame)
     ContentHolder.Name = "ContentHolder"
     ContentHolder.Position = UDim2.new(0,151,0,40)
     ContentHolder.Size = UDim2.new(1,-151,1,-40)
     ContentHolder.BackgroundTransparency = 1
 
+    ----------------------------------------------------------------
+    -- Tabs System
+    ----------------------------------------------------------------
     local tabs = {}
     local selectedTab = nil
 
@@ -267,6 +289,7 @@ function PandaAuth:CreateWindow(centerTitleText)
             TabContent.CanvasSize = UDim2.new(0, grid.AbsoluteContentSize.X, 0, grid.AbsoluteContentSize.Y)
         end)
 
+        -- Enhanced hover on tab button
         createHoverEffect(TabButton)
 
         TabButton.MouseButton1Click:Connect(function()
@@ -287,6 +310,7 @@ function PandaAuth:CreateWindow(centerTitleText)
 
         table.insert(tabs, {Button = TabButton, Content = TabContent})
 
+        -- Sections within tab
         function tab:CreateSection(sectionName)
             local section = {}
             local SectionFrame = Instance.new("Frame", TabContent)
@@ -330,6 +354,7 @@ function PandaAuth:CreateWindow(centerTitleText)
             UIListLayout_Section.HorizontalAlignment = Enum.HorizontalAlignment.Center
             UIListLayout_Section.SortOrder = Enum.SortOrder.LayoutOrder
 
+            -- Buttons, toggles, etc. remain identical in function
             function section:AddButton(text, callback)
                 local Button = Instance.new("TextButton", SectionContent)
                 Button.Name = "Button"
@@ -706,18 +731,17 @@ function PandaAuth:CreateWindow(centerTitleText)
     end)
 
     ----------------------------------------------------------------
-    -- Fade-In Animation for the Window (Scale Up + Fade)
+    -- Fade-In Animation (Scale-Up + Fade) for the Window
     ----------------------------------------------------------------
     local function fadeIn()
-        -- Tween the MainFrame from 0×0 to 850×500, centered
+        -- Animate MainFrame from 0×0 at center to 850×500
         local finalSize = UDim2.new(0,850,0,500)
         local finalPos = UDim2.new(0.5,-425,0.5,-250)
 
-        local tweenSizePos = TweenService:Create(MainFrame, TWEEN_INFO_SIZE, {
+        TweenService:Create(MainFrame, TWEEN_INFO_SIZE, {
             Size = finalSize,
             Position = finalPos
-        })
-        tweenSizePos:Play()
+        }):Play()
 
         -- Fade in each child element
         for _, obj in ipairs(MainFrame:GetDescendants()) do
