@@ -1,6 +1,5 @@
--- PandaAuth Library - Smooth Gray Theme with Modern Layout,
--- Left Sidebar Navigation, Modern Toggles, Scrollable Content,
--- Paragraph Functionality, Notifications, and All Functions.
+-- PandaAuth Library - Smooth Gray Theme with Enhanced Transitions/Effects.
+-- Retains all existing functionality (buttons, toggles, etc.) while adding improved hover & fade-in effects.
 
 local PandaAuth = {}
 local UserInputService = game:GetService("UserInputService")
@@ -28,18 +27,33 @@ local COLORS = {
     TAB_UNSELECTED = Color3.fromRGB(60, 60, 60)      -- Same as SECONDARY
 }
 
+-- We'll use two different tween infos: one for general UI elements (0.3s),
+-- and one for the initial window size tween (0.5s).
 local TWEEN_INFO = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+local TWEEN_INFO_SIZE = TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 
 ----------------------------------------------------------------
--- Utility: Hover Effect
+-- Utility: Enhanced Hover Effect with a UIStroke
 ----------------------------------------------------------------
 local function createHoverEffect(button)
     local originalColor = button.BackgroundColor3
+
+    -- Create a UIStroke that is invisible (Thickness=0) until hovered
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.fromRGB(160,160,160)
+    stroke.Thickness = 0
+    stroke.Transparency = 0.3
+    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    stroke.Parent = button
+
     button.MouseEnter:Connect(function()
         TweenService:Create(button, TWEEN_INFO, {BackgroundColor3 = COLORS.HOVER}):Play()
+        TweenService:Create(stroke, TWEEN_INFO, {Thickness = 2}):Play()
     end)
+
     button.MouseLeave:Connect(function()
         TweenService:Create(button, TWEEN_INFO, {BackgroundColor3 = originalColor}):Play()
+        TweenService:Create(stroke, TWEEN_INFO, {Thickness = 0}):Play()
     end)
 end
 
@@ -82,11 +96,11 @@ function PandaAuth:CreateWindow(centerTitleText)
     uiScale.Scale = scale
     uiScale.Parent = ScreenGui
 
-    -- Main window (850 x 500)
+    -- Main window, initially 0×0 (for a scale-up effect in fadeIn)
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "MainFrame"
-    MainFrame.Size = UDim2.new(0,850,0,500)
-    MainFrame.Position = UDim2.new(0.5,-425,0.5,-250)
+    MainFrame.Size = UDim2.new(0,0,0,0)   -- Start at 0×0
+    MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)  -- Centered
     MainFrame.BackgroundColor3 = COLORS.BACKGROUND
     MainFrame.ClipsDescendants = true
     MainFrame.Parent = ScreenGui
@@ -122,13 +136,13 @@ function PandaAuth:CreateWindow(centerTitleText)
     LeftTopLabel.Size = UDim2.new(0, 200, 1, 0)
     LeftTopLabel.Position = UDim2.new(0, 10, 0, 0)
     LeftTopLabel.BackgroundTransparency = 1
-    LeftTopLabel.Text = "GrayHub"   -- <--- Change to your hub name
+    LeftTopLabel.Text = "GrayHub"
     LeftTopLabel.TextColor3 = COLORS.TEXT
     LeftTopLabel.TextSize = 16
     LeftTopLabel.Font = Enum.Font.Gotham
     LeftTopLabel.TextXAlignment = Enum.TextXAlignment.Left
 
-    -- Center Label for main title (change as needed)
+    -- Center Label for the main title
     local CenterTopLabel = Instance.new("TextLabel", TopBar)
     CenterTopLabel.Name = "CenterTopLabel"
     CenterTopLabel.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -148,7 +162,7 @@ function PandaAuth:CreateWindow(centerTitleText)
     RightTopLabel.Position = UDim2.new(1, -10, 0.5, 0)
     RightTopLabel.Size = UDim2.new(0, 150, 1, 0)
     RightTopLabel.BackgroundTransparency = 1
-    RightTopLabel.Text = "discord.gg/Gray"  -- <--- Change to your link or info
+    RightTopLabel.Text = "discord.gg/Gray"
     RightTopLabel.TextColor3 = COLORS.TEXT
     RightTopLabel.TextSize = 16
     RightTopLabel.Font = Enum.Font.Gotham
@@ -161,6 +175,7 @@ function PandaAuth:CreateWindow(centerTitleText)
     HorizontalSeparator.Position = UDim2.new(0,0,0,40)
     HorizontalSeparator.BackgroundColor3 = COLORS.ACCENT
     HorizontalSeparator.BackgroundTransparency = 0.3
+    HorizontalSeparator.ZIndex = 9999
 
     -- Left Sidebar for Tabs
     local TabHolder = Instance.new("Frame", MainFrame)
@@ -180,7 +195,7 @@ function PandaAuth:CreateWindow(centerTitleText)
         TabHolder.CanvasSize = UDim2.new(0, 0, 0, TabList.AbsoluteContentSize.Y)
     end)
 
-    -- Vertical Separator between the TabHolder and ContentHolder
+    -- Vertical Separator
     local Separator = Instance.new("Frame", MainFrame)
     Separator.Name = "Separator"
     Separator.Size = UDim2.new(0,1,0,460)
@@ -188,16 +203,13 @@ function PandaAuth:CreateWindow(centerTitleText)
     Separator.BackgroundColor3 = Color3.fromRGB(255,255,255)
     Separator.BackgroundTransparency = 0.5
 
-    -- Content Holder on the right side
+    -- Content Holder
     local ContentHolder = Instance.new("Frame", MainFrame)
     ContentHolder.Name = "ContentHolder"
     ContentHolder.Position = UDim2.new(0,151,0,40)
     ContentHolder.Size = UDim2.new(1,-151,1,-40)
     ContentHolder.BackgroundTransparency = 1
 
-    ----------------------------------------------------------------
-    -- Tabs System (Left Sidebar)
-    ----------------------------------------------------------------
     local tabs = {}
     local selectedTab = nil
 
@@ -254,6 +266,8 @@ function PandaAuth:CreateWindow(centerTitleText)
         grid:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
             TabContent.CanvasSize = UDim2.new(0, grid.AbsoluteContentSize.X, 0, grid.AbsoluteContentSize.Y)
         end)
+
+        createHoverEffect(TabButton)
 
         TabButton.MouseButton1Click:Connect(function()
             if selectedTab then
@@ -692,9 +706,20 @@ function PandaAuth:CreateWindow(centerTitleText)
     end)
 
     ----------------------------------------------------------------
-    -- Fade-In Animation for the Window
+    -- Fade-In Animation for the Window (Scale Up + Fade)
     ----------------------------------------------------------------
     local function fadeIn()
+        -- Tween the MainFrame from 0×0 to 850×500, centered
+        local finalSize = UDim2.new(0,850,0,500)
+        local finalPos = UDim2.new(0.5,-425,0.5,-250)
+
+        local tweenSizePos = TweenService:Create(MainFrame, TWEEN_INFO_SIZE, {
+            Size = finalSize,
+            Position = finalPos
+        })
+        tweenSizePos:Play()
+
+        -- Fade in each child element
         for _, obj in ipairs(MainFrame:GetDescendants()) do
             if obj:IsA("Frame") or obj:IsA("TextButton") or obj:IsA("TextLabel") then
                 if obj.BackgroundTransparency < 1 then
@@ -731,7 +756,7 @@ function PandaAuth:Notify(title, description, duration)
     notifyFrame.BackgroundColor3 = COLORS.SECONDARY
     notifyFrame.AnchorPoint = Vector2.new(0,1)
     notifyFrame.Position = UDim2.new(1,320,1,-100)
-    
+
     local notifyCorner = Instance.new("UICorner", notifyFrame)
     notifyCorner.CornerRadius = UDim.new(0,8)
 
