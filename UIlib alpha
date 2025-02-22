@@ -1,34 +1,36 @@
--- ModernUI Lib v2 (Updated) for Roblox Scripts
--- This version uses tostring() for all name concatenations to avoid table/string errors.
--- Example usage:
---   local PandaAuth = loadstring(game:HttpGet("https://your-hosted-url.com/ModernUILib_v2.lua"))()
---   local window = PandaAuth:CreateWindow("My Window")
---   local mainSection = window:CreateSection("Main")
---   mainSection:AddButton("Execute", function()
---       print("Button clicked!")
---   end)
+-- ModernUI Lib v3 (Improved) for Roblox Scripts
+-- Full script: Copy/paste into your executor.
+-- Example usage at bottom.
 
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 
 -- Create a ScreenGui and parent it to CoreGui
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "ModernUILib_v2"
+ScreenGui.Name = "ModernUILib_v3"
 if syn and syn.protect_gui then 
     syn.protect_gui(ScreenGui) 
 end
 ScreenGui.Parent = game:GetService("CoreGui")
 
+-- Main library table
+local Library = {
+    BlockDrag = false -- used to block window-dragging when interacting with sliders, dropdown, etc.
+}
+
 -----------------------------------------------------------------
--- Utility: Draggable function (for full-window background drag)
+-- Draggable function (for full-window background dragging)
+-- Respects Library.BlockDrag so sliders, dropdowns won't move the window.
 -----------------------------------------------------------------
 local function MakeDraggable(dragHandle, dragTarget)
     local dragging = false
     local dragInput, dragStart, startPos
-    dragHandle.Active = true  -- ensures it receives input
+
+    dragHandle.Active = true  -- ensures it receives mouse input
 
     dragHandle.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        -- Only begin drag if not blocked (e.g., user is interacting with slider) 
+        if input.UserInputType == Enum.UserInputType.MouseButton1 and not Library.BlockDrag then
             dragging = true
             dragStart = input.Position
             startPos = dragTarget.Position
@@ -62,8 +64,6 @@ end
 -----------------------------------------------------------------
 -- Library Definition
 -----------------------------------------------------------------
-local Library = {}
-
 function Library:CreateWindow(title)
     -- Main window frame
     local WindowFrame = Instance.new("Frame")
@@ -76,7 +76,7 @@ function Library:CreateWindow(title)
     WindowFrame.Parent = ScreenGui
     WindowFrame.Active = true
 
-    -- Modern gradient background for window
+    -- Gradient background
     local WinGradient = Instance.new("UIGradient")
     WinGradient.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0, Color3.fromRGB(45, 45, 45)),
@@ -136,7 +136,7 @@ function Library:CreateWindow(title)
         SectionContainer.CanvasSize = UDim2.new(0, 0, 0, SectionLayout.AbsoluteContentSize.Y)
     end)
 
-    -- Make entire window draggable
+    -- Make the entire window draggable
     MakeDraggable(WindowFrame, WindowFrame)
 
     local Window = {}
@@ -307,7 +307,7 @@ function Library:CreateWindow(title)
         end
 
         -------------------------------------------
-        -- Slider
+        -- Slider (blocks window-drag while in use)
         -------------------------------------------
         function Section:AddSlider(name, min, max, callback)
             local SliderFrame = Instance.new("Frame")
@@ -366,6 +366,7 @@ function Library:CreateWindow(title)
 
             SliderBar.InputBegan:Connect(function(input)
                 if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    Library.BlockDrag = true  -- block window dragging
                     dragging = true
                     updateSlider(input.Position.X)
                 end
@@ -373,6 +374,7 @@ function Library:CreateWindow(title)
             SliderBar.InputEnded:Connect(function(input)
                 if input.UserInputType == Enum.UserInputType.MouseButton1 then
                     dragging = false
+                    Library.BlockDrag = false
                 end
             end)
             UserInputService.InputChanged:Connect(function(input)
@@ -383,7 +385,7 @@ function Library:CreateWindow(title)
         end
 
         -------------------------------------------
-        -- Dropdown
+        -- Dropdown (improved design, smooth expand)
         -------------------------------------------
         function Section:AddDropdown(name, options, callback)
             local DropdownFrame = Instance.new("Frame")
@@ -418,23 +420,60 @@ function Library:CreateWindow(title)
             DB_Corner.CornerRadius = UDim.new(0, 6)
             DB_Corner.Parent = DropdownButton
 
-            local DropdownList = Instance.new("Frame")
+            -- ScrollingFrame for the dropdown list
+            local DropdownList = Instance.new("ScrollingFrame")
             DropdownList.Name = "DropdownList_" .. tostring(name)
             DropdownList.Size = UDim2.new(1, 0, 0, 0)
             DropdownList.Position = UDim2.new(0, 0, 1, 0)
             DropdownList.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+            DropdownList.BorderSizePixel = 0
             DropdownList.Visible = false
             DropdownList.Parent = DropdownButton
 
+            DropdownList.ScrollingEnabled = true
+            DropdownList.ScrollBarThickness = 4
+            DropdownList.AutomaticCanvasSize = Enum.AutomaticSize.Y
+
+            -- Rounded corners, stroke, gradient for the dropdown
+            local DropListCorner = Instance.new("UICorner")
+            DropListCorner.CornerRadius = UDim.new(0, 6)
+            DropListCorner.Parent = DropdownList
+
+            local DropListStroke = Instance.new("UIStroke")
+            DropListStroke.Thickness = 1
+            DropListStroke.Color = Color3.fromRGB(80, 80, 80)
+            DropListStroke.Parent = DropdownList
+
+            local DropListGradient = Instance.new("UIGradient")
+            DropListGradient.Color = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(60, 60, 60)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(50, 50, 50))
+            })
+            DropListGradient.Rotation = 90
+            DropListGradient.Parent = DropdownList
+
+            -- Prevent window-drag while scrolling/clicking inside dropdown
+            DropdownList.InputBegan:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    Library.BlockDrag = true
+                end
+            end)
+            DropdownList.InputEnded:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    Library.BlockDrag = false
+                end
+            end)
+
             local ListLayout = Instance.new("UIListLayout")
             ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+            ListLayout.Padding = UDim.new(0, 2)
             ListLayout.Parent = DropdownList
 
             local expanded = false
+            local maxHeight = 200 -- max height before scrolling
 
             DropdownButton.MouseButton1Click:Connect(function()
                 expanded = not expanded
-                DropdownList.Visible = expanded
 
                 if expanded then
                     -- Create option buttons
@@ -447,8 +486,8 @@ function Library:CreateWindow(title)
                         OptionButton.TextColor3 = Color3.new(1, 1, 1)
                         OptionButton.Font = Enum.Font.Gotham
                         OptionButton.TextSize = 16
-                        OptionButton.Parent = DropdownList
                         OptionButton.AutoButtonColor = false
+                        OptionButton.Parent = DropdownList
 
                         OptionButton.MouseEnter:Connect(function()
                             TweenService:Create(OptionButton, TweenInfo.new(0.2), {
@@ -463,23 +502,48 @@ function Library:CreateWindow(title)
 
                         OptionButton.MouseButton1Click:Connect(function()
                             DropdownButton.Text = tostring(option)
-                            DropdownList.Visible = false
                             expanded = false
-                            if callback then
-                                callback(option)
-                            end
-                            -- Clear old options
+                            -- Tween dropdown to height 0
+                            TweenService:Create(DropdownList, TweenInfo.new(0.2, Enum.EasingStyle.Sine), {
+                                Size = UDim2.new(1, 0, 0, 0)
+                            }):Play()
+                            wait(0.2)
+                            DropdownList.Visible = false
+                            -- Clear old option buttons
                             for _, child in ipairs(DropdownList:GetChildren()) do
                                 if child:IsA("TextButton") then
                                     child:Destroy()
                                 end
                             end
+                            if callback then
+                                callback(option)
+                            end
                         end)
                     end
-                    -- Resize to fit all options
-                    DropdownList.Size = UDim2.new(1, 0, 0, #options * 28)
+
+                    -- Calculate final height
+                    local desiredHeight = #options * 28
+                    if desiredHeight > maxHeight then
+                        desiredHeight = maxHeight
+                    end
+
+                    DropdownList.Visible = true
+                    TweenService:Create(DropdownList, TweenInfo.new(0.2, Enum.EasingStyle.Sine), {
+                        Size = UDim2.new(1, 0, 0, desiredHeight)
+                    }):Play()
                 else
+                    -- Collapse
+                    TweenService:Create(DropdownList, TweenInfo.new(0.2, Enum.EasingStyle.Sine), {
+                        Size = UDim2.new(1, 0, 0, 0)
+                    }):Play()
+                    wait(0.2)
                     DropdownList.Visible = false
+                    -- Clear old options
+                    for _, child in ipairs(DropdownList:GetChildren()) do
+                        if child:IsA("TextButton") then
+                            child:Destroy()
+                        end
+                    end
                 end
             end)
         end
@@ -487,6 +551,7 @@ function Library:CreateWindow(title)
         return Section
     end
 
+    -- Return a small proxy that lets you do window:CreateSection(...)
     return setmetatable({}, {
         __index = function(_, key)
             if key == "CreateSection" then
