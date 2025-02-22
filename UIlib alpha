@@ -1,0 +1,387 @@
+-- ModernUI Lib for Roblox Scripts
+-- Copy and paste the entire script into your executor.
+-- Usage Example:
+-- local PandaAuth = loadstring(game:HttpGet('URL_TO_THIS_SCRIPT'))()
+-- local window = PandaAuth:CreateWindow("My Window")
+-- local mainSection = window:CreateSection("Main")
+-- mainSection:AddButton("Execute", function()
+--     print("Button clicked!")
+-- end)
+
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+
+-- Create a ScreenGui and parent it to CoreGui (works best in executor environments)
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "ModernUILib"
+if syn and syn.protect_gui then 
+    syn.protect_gui(ScreenGui) 
+end
+ScreenGui.Parent = game:GetService("CoreGui")
+
+-- Utility: Make a frame draggable
+local function MakeDraggable(Frame)
+    local dragging
+    local dragInput
+    local dragStart
+    local startPos
+
+    local function update(input)
+        local delta = input.Position - dragStart
+        Frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+
+    Frame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            dragStart = input.Position
+            startPos = Frame.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+
+    Frame.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement then
+            dragInput = input
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            update(input)
+        end
+    end)
+end
+
+local Library = {}
+
+function Library:CreateWindow(title)
+    -- Create the main window frame
+    local WindowFrame = Instance.new("Frame")
+    WindowFrame.Size = UDim2.new(0, 400, 0, 300)
+    WindowFrame.Position = UDim2.new(0.5, -200, 0.5, -150)
+    WindowFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    WindowFrame.BorderSizePixel = 0
+    WindowFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+    WindowFrame.Parent = ScreenGui
+
+    local UICorner = Instance.new("UICorner")
+    UICorner.CornerRadius = UDim.new(0, 8)
+    UICorner.Parent = WindowFrame
+
+    -- Title bar
+    local TitleBar = Instance.new("Frame")
+    TitleBar.Size = UDim2.new(1, 0, 0, 30)
+    TitleBar.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    TitleBar.BorderSizePixel = 0
+    TitleBar.Parent = WindowFrame
+
+    local TitleLabel = Instance.new("TextLabel")
+    TitleLabel.Size = UDim2.new(1, -10, 1, 0)
+    TitleLabel.Position = UDim2.new(0, 5, 0, 0)
+    TitleLabel.BackgroundTransparency = 1
+    TitleLabel.Text = title
+    TitleLabel.TextColor3 = Color3.new(1, 1, 1)
+    TitleLabel.Font = Enum.Font.GothamSemibold
+    TitleLabel.TextSize = 18
+    TitleLabel.Parent = TitleBar
+
+    -- Enable dragging the window by its title bar
+    MakeDraggable(TitleBar)
+
+    -- Container for sections (with scrolling)
+    local SectionContainer = Instance.new("ScrollingFrame")
+    SectionContainer.Size = UDim2.new(1, 0, 1, -30)
+    SectionContainer.Position = UDim2.new(0, 0, 0, 30)
+    SectionContainer.BackgroundTransparency = 1
+    SectionContainer.ScrollBarThickness = 4
+    SectionContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
+    SectionContainer.Parent = WindowFrame
+
+    local UIListLayout = Instance.new("UIListLayout")
+    UIListLayout.Padding = UDim.new(0, 5)
+    UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    UIListLayout.Parent = SectionContainer
+
+    UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        SectionContainer.CanvasSize = UDim2.new(0, 0, 0, UIListLayout.AbsoluteContentSize.Y)
+    end)
+
+    local Window = {}
+
+    -- Create a new section inside the window
+    function Window:CreateSection(sectionTitle)
+        local Section = {}
+        local SectionFrame = Instance.new("Frame")
+        SectionFrame.Size = UDim2.new(1, -10, 0, 0)
+        SectionFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+        SectionFrame.BorderSizePixel = 0
+        SectionFrame.Parent = SectionContainer
+
+        local SectionLayout = Instance.new("UIListLayout")
+        SectionLayout.FillDirection = Enum.FillDirection.Vertical
+        SectionLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        SectionLayout.Padding = UDim.new(0, 5)
+        SectionLayout.Parent = SectionFrame
+
+        local SectionTitle = Instance.new("TextLabel")
+        SectionTitle.Size = UDim2.new(1, -10, 0, 25)
+        SectionTitle.BackgroundTransparency = 1
+        SectionTitle.Text = sectionTitle
+        SectionTitle.TextColor3 = Color3.new(1, 1, 1)
+        SectionTitle.Font = Enum.Font.GothamSemibold
+        SectionTitle.TextSize = 18
+        SectionTitle.Parent = SectionFrame
+
+        local ElementContainer = Instance.new("Frame")
+        ElementContainer.Size = UDim2.new(1, -10, 0, 0)
+        ElementContainer.BackgroundTransparency = 1
+        ElementContainer.Parent = SectionFrame
+
+        local ElementLayout = Instance.new("UIListLayout")
+        ElementLayout.Padding = UDim.new(0, 5)
+        ElementLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        ElementLayout.Parent = ElementContainer
+
+        ElementLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            ElementContainer.Size = UDim2.new(1, -10, 0, ElementLayout.AbsoluteContentSize.Y)
+        end)
+
+        -- Button
+        function Section:AddButton(name, callback)
+            local Button = Instance.new("TextButton")
+            Button.Size = UDim2.new(1, 0, 0, 30)
+            Button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+            Button.Text = name
+            Button.TextColor3 = Color3.new(1, 1, 1)
+            Button.Font = Enum.Font.GothamSemibold
+            Button.TextSize = 16
+            Button.Parent = ElementContainer
+
+            local ButtonCorner = Instance.new("UICorner")
+            ButtonCorner.CornerRadius = UDim.new(0, 4)
+            ButtonCorner.Parent = Button
+
+            Button.MouseButton1Click:Connect(callback)
+        end
+
+        -- Label (with update functionality)
+        function Section:AddLabel(name)
+            local Label = Instance.new("TextLabel")
+            Label.Size = UDim2.new(1, 0, 0, 25)
+            Label.BackgroundTransparency = 1
+            Label.Text = name
+            Label.TextColor3 = Color3.new(1, 1, 1)
+            Label.Font = Enum.Font.Gotham
+            Label.TextSize = 16
+            Label.Parent = ElementContainer
+
+            return {
+                Update = function(newText)
+                    Label.Text = newText
+                end
+            }
+        end
+
+        -- Toggle Button
+        function Section:AddToggle(name, callback)
+            local ToggleFrame = Instance.new("Frame")
+            ToggleFrame.Size = UDim2.new(1, 0, 0, 30)
+            ToggleFrame.BackgroundTransparency = 1
+            ToggleFrame.Parent = ElementContainer
+
+            local ToggleLabel = Instance.new("TextLabel")
+            ToggleLabel.Size = UDim2.new(0.7, 0, 1, 0)
+            ToggleLabel.BackgroundTransparency = 1
+            ToggleLabel.Text = name
+            ToggleLabel.TextColor3 = Color3.new(1, 1, 1)
+            ToggleLabel.Font = Enum.Font.Gotham
+            ToggleLabel.TextSize = 16
+            ToggleLabel.Parent = ToggleFrame
+
+            local ToggleButton = Instance.new("TextButton")
+            ToggleButton.Size = UDim2.new(0.3, -5, 0.6, 0)
+            ToggleButton.Position = UDim2.new(0.7, 5, 0.2, 0)
+            ToggleButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+            ToggleButton.Text = "Off"
+            ToggleButton.TextColor3 = Color3.new(1, 1, 1)
+            ToggleButton.Font = Enum.Font.GothamSemibold
+            ToggleButton.TextSize = 16
+            ToggleButton.Parent = ToggleFrame
+
+            local ToggleCorner = Instance.new("UICorner")
+            ToggleCorner.CornerRadius = UDim.new(0, 4)
+            ToggleCorner.Parent = ToggleButton
+
+            local toggled = false
+            ToggleButton.MouseButton1Click:Connect(function()
+                toggled = not toggled
+                if toggled then
+                    ToggleButton.Text = "On"
+                else
+                    ToggleButton.Text = "Off"
+                end
+                callback(toggled)
+            end)
+        end
+
+        -- Slider
+        function Section:AddSlider(name, min, max, callback)
+            local SliderFrame = Instance.new("Frame")
+            SliderFrame.Size = UDim2.new(1, 0, 0, 40)
+            SliderFrame.BackgroundTransparency = 1
+            SliderFrame.Parent = ElementContainer
+
+            local SliderLabel = Instance.new("TextLabel")
+            SliderLabel.Size = UDim2.new(1, 0, 0, 20)
+            SliderLabel.BackgroundTransparency = 1
+            SliderLabel.Text = name .. ": " .. min
+            SliderLabel.TextColor3 = Color3.new(1, 1, 1)
+            SliderLabel.Font = Enum.Font.Gotham
+            SliderLabel.TextSize = 16
+            SliderLabel.Parent = SliderFrame
+
+            local SliderBar = Instance.new("Frame")
+            SliderBar.Size = UDim2.new(1, 0, 0, 10)
+            SliderBar.Position = UDim2.new(0, 0, 0, 25)
+            SliderBar.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+            SliderBar.Parent = SliderFrame
+
+            local SliderFill = Instance.new("Frame")
+            SliderFill.Size = UDim2.new(0, 0, 1, 0)
+            SliderFill.BackgroundColor3 = Color3.fromRGB(100, 100, 255)
+            SliderFill.Parent = SliderBar
+
+            local SliderCorner = Instance.new("UICorner")
+            SliderCorner.CornerRadius = UDim.new(0, 4)
+            SliderCorner.Parent = SliderBar
+
+            local SliderFillCorner = Instance.new("UICorner")
+            SliderFillCorner.CornerRadius = UDim.new(0, 4)
+            SliderFillCorner.Parent = SliderFill
+
+            local dragging = false
+            local value = min
+
+            local function updateSlider(inputX)
+                local relative = math.clamp((inputX - SliderBar.AbsolutePosition.X) / SliderBar.AbsoluteSize.X, 0, 1)
+                value = min + (max - min) * relative
+                SliderFill.Size = UDim2.new(relative, 0, 1, 0)
+                SliderLabel.Text = name .. ": " .. math.floor(value)
+                callback(value)
+            end
+
+            SliderBar.InputBegan:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    dragging = true
+                    updateSlider(input.Position.X)
+                end
+            end)
+            SliderBar.InputEnded:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    dragging = false
+                end
+            end)
+            UserInputService.InputChanged:Connect(function(input)
+                if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+                    updateSlider(input.Position.X)
+                end
+            end)
+        end
+
+        -- Dropdown
+        function Section:AddDropdown(name, options, callback)
+            local DropdownFrame = Instance.new("Frame")
+            DropdownFrame.Size = UDim2.new(1, 0, 0, 30)
+            DropdownFrame.BackgroundTransparency = 1
+            DropdownFrame.Parent = ElementContainer
+
+            local DropdownLabel = Instance.new("TextLabel")
+            DropdownLabel.Size = UDim2.new(0.7, 0, 1, 0)
+            DropdownLabel.BackgroundTransparency = 1
+            DropdownLabel.Text = name
+            DropdownLabel.TextColor3 = Color3.new(1, 1, 1)
+            DropdownLabel.Font = Enum.Font.Gotham
+            DropdownLabel.TextSize = 16
+            DropdownLabel.Parent = DropdownFrame
+
+            local DropdownButton = Instance.new("TextButton")
+            DropdownButton.Size = UDim2.new(0.3, -5, 0.8, 0)
+            DropdownButton.Position = UDim2.new(0.7, 5, 0.1, 0)
+            DropdownButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+            DropdownButton.Text = "Select"
+            DropdownButton.TextColor3 = Color3.new(1, 1, 1)
+            DropdownButton.Font = Enum.Font.GothamSemibold
+            DropdownButton.TextSize = 16
+            DropdownButton.Parent = DropdownFrame
+
+            local DropdownCorner = Instance.new("UICorner")
+            DropdownCorner.CornerRadius = UDim.new(0, 4)
+            DropdownCorner.Parent = DropdownButton
+
+            local DropdownList = Instance.new("Frame")
+            DropdownList.Size = UDim2.new(1, 0, 0, 0)
+            DropdownList.Position = UDim2.new(0, 0, 1, 0)
+            DropdownList.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+            DropdownList.Visible = false
+            DropdownList.Parent = DropdownButton
+
+            local ListLayout = Instance.new("UIListLayout")
+            ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+            ListLayout.Parent = DropdownList
+
+            local expanded = false
+
+            DropdownButton.MouseButton1Click:Connect(function()
+                expanded = not expanded
+                DropdownList.Visible = expanded
+                if expanded then
+                    for i, option in ipairs(options) do
+                        local OptionButton = Instance.new("TextButton")
+                        OptionButton.Size = UDim2.new(1, 0, 0, 25)
+                        OptionButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+                        OptionButton.Text = option
+                        OptionButton.TextColor3 = Color3.new(1, 1, 1)
+                        OptionButton.Font = Enum.Font.Gotham
+                        OptionButton.TextSize = 16
+                        OptionButton.Parent = DropdownList
+
+                        OptionButton.MouseButton1Click:Connect(function()
+                            DropdownButton.Text = option
+                            DropdownList.Visible = false
+                            expanded = false
+                            callback(option)
+                            -- Clean up list for next dropdown open
+                            for _,child in ipairs(DropdownList:GetChildren()) do
+                                if child:IsA("TextButton") then
+                                    child:Destroy()
+                                end
+                            end
+                        end)
+                    end
+                    DropdownList.Size = UDim2.new(1, 0, 0, #options * 25)
+                else
+                    DropdownList.Visible = false
+                end
+            end)
+        end
+
+        return Section
+    end
+
+    return setmetatable({}, {
+        __index = function(self, key)
+            if key == "CreateSection" then
+                return function(...)
+                    return Window:CreateSection(...)
+                end
+            end
+        end
+    })
+end
+
+return Library
