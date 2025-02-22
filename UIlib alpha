@@ -1,12 +1,12 @@
--- ModernUI Lib v2 for Roblox Scripts
--- Paste this full script into your executor.
+-- ModernUI Lib v2 (Updated) for Roblox Scripts
+-- This version uses tostring() for all name concatenations to avoid table/string errors.
 -- Example usage:
--- local PandaAuth = loadstring(game:HttpGet("https://your-hosted-url.com/ModernUILib_v2.lua"))()
--- local window = PandaAuth:CreateWindow("My Window")
--- local mainSection = window:CreateSection("Main")
--- mainSection:AddButton("Execute", function()
---     print("Button clicked!")
--- end)
+--   local PandaAuth = loadstring(game:HttpGet("https://your-hosted-url.com/ModernUILib_v2.lua"))()
+--   local window = PandaAuth:CreateWindow("My Window")
+--   local mainSection = window:CreateSection("Main")
+--   mainSection:AddButton("Execute", function()
+--       print("Button clicked!")
+--   end)
 
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -19,9 +19,9 @@ if syn and syn.protect_gui then
 end
 ScreenGui.Parent = game:GetService("CoreGui")
 
-----------------------------------------------------------
--- Utility: Draggable function (for full-window dragging)
-----------------------------------------------------------
+-----------------------------------------------------------------
+-- Utility: Draggable function (for full-window background drag)
+-----------------------------------------------------------------
 local function MakeDraggable(dragHandle, dragTarget)
     local dragging = false
     local dragInput, dragStart, startPos
@@ -49,14 +49,19 @@ local function MakeDraggable(dragHandle, dragTarget)
     UserInputService.InputChanged:Connect(function(input)
         if dragging and input == dragInput then
             local delta = input.Position - dragStart
-            dragTarget.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+            dragTarget.Position = UDim2.new(
+                startPos.X.Scale, 
+                startPos.X.Offset + delta.X, 
+                startPos.Y.Scale, 
+                startPos.Y.Offset + delta.Y
+            )
         end
     end)
 end
 
-----------------------------------------------------------
+-----------------------------------------------------------------
 -- Library Definition
-----------------------------------------------------------
+-----------------------------------------------------------------
 local Library = {}
 
 function Library:CreateWindow(title)
@@ -84,7 +89,7 @@ function Library:CreateWindow(title)
     WinCorner.CornerRadius = UDim.new(0, 10)
     WinCorner.Parent = WindowFrame
 
-    -- Title bar (for display only; dragging works from anywhere on the window background)
+    -- Title bar (display only; background is draggable)
     local TitleBar = Instance.new("Frame")
     TitleBar.Name = "TitleBar"
     TitleBar.Size = UDim2.new(1, 0, 0, 35)
@@ -96,13 +101,13 @@ function Library:CreateWindow(title)
     TitleLabel.Size = UDim2.new(1, -10, 1, 0)
     TitleLabel.Position = UDim2.new(0, 5, 0, 0)
     TitleLabel.BackgroundTransparency = 1
-    TitleLabel.Text = title
+    TitleLabel.Text = tostring(title)
     TitleLabel.TextColor3 = Color3.new(1, 1, 1)
     TitleLabel.Font = Enum.Font.GothamSemibold
     TitleLabel.TextSize = 20
     TitleLabel.Parent = TitleBar
 
-    -- Add a subtle gradient to the TitleBar
+    -- Subtle gradient on the TitleBar
     local TitleGradient = Instance.new("UIGradient")
     TitleGradient.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0, Color3.fromRGB(30, 30, 30)),
@@ -111,7 +116,7 @@ function Library:CreateWindow(title)
     TitleGradient.Rotation = 90
     TitleGradient.Parent = TitleBar
 
-    -- Container for UI sections with scrolling
+    -- Container for sections with scrolling
     local SectionContainer = Instance.new("ScrollingFrame")
     SectionContainer.Name = "SectionContainer"
     SectionContainer.Size = UDim2.new(1, 0, 1, -35)
@@ -119,8 +124,8 @@ function Library:CreateWindow(title)
     SectionContainer.BackgroundTransparency = 1
     SectionContainer.ScrollBarThickness = 6
     SectionContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
-    SectionContainer.Parent = WindowFrame
     SectionContainer.BorderSizePixel = 0
+    SectionContainer.Parent = WindowFrame
 
     local SectionLayout = Instance.new("UIListLayout")
     SectionLayout.Padding = UDim.new(0, 8)
@@ -131,18 +136,19 @@ function Library:CreateWindow(title)
         SectionContainer.CanvasSize = UDim2.new(0, 0, 0, SectionLayout.AbsoluteContentSize.Y)
     end)
 
-    -- Enable dragging on the entire window (click anywhere on the background)
+    -- Make entire window draggable
     MakeDraggable(WindowFrame, WindowFrame)
 
     local Window = {}
 
-    ----------------------------------------------------------
-    -- Section Creation
-    ----------------------------------------------------------
+    -----------------------------------------------------------------
+    -- CreateSection
+    -----------------------------------------------------------------
     function Window:CreateSection(sectionTitle)
         local Section = {}
+
         local SectionFrame = Instance.new("Frame")
-        SectionFrame.Name = "Section_" .. sectionTitle
+        SectionFrame.Name = "Section_" .. tostring(sectionTitle)
         SectionFrame.Size = UDim2.new(1, -16, 0, 0)
         SectionFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
         SectionFrame.BorderSizePixel = 0
@@ -161,15 +167,15 @@ function Library:CreateWindow(title)
             SectionFrame.Size = UDim2.new(1, -16, 0, SectionLayout.AbsoluteContentSize.Y + 10)
         end)
 
-        local SectionTitle = Instance.new("TextLabel")
-        SectionTitle.Name = "SectionTitle"
-        SectionTitle.Size = UDim2.new(1, -10, 0, 30)
-        SectionTitle.BackgroundTransparency = 1
-        SectionTitle.Text = sectionTitle
-        SectionTitle.TextColor3 = Color3.new(1, 1, 1)
-        SectionTitle.Font = Enum.Font.GothamBold
-        SectionTitle.TextSize = 18
-        SectionTitle.Parent = SectionFrame
+        local TitleLabel = Instance.new("TextLabel")
+        TitleLabel.Name = "SectionTitle"
+        TitleLabel.Size = UDim2.new(1, -10, 0, 30)
+        TitleLabel.BackgroundTransparency = 1
+        TitleLabel.Text = tostring(sectionTitle)
+        TitleLabel.TextColor3 = Color3.new(1, 1, 1)
+        TitleLabel.Font = Enum.Font.GothamBold
+        TitleLabel.TextSize = 18
+        TitleLabel.Parent = SectionFrame
 
         local ElementContainer = Instance.new("Frame")
         ElementContainer.Name = "ElementContainer"
@@ -191,10 +197,10 @@ function Library:CreateWindow(title)
         -------------------------------------------
         function Section:AddButton(name, callback)
             local Button = Instance.new("TextButton")
-            Button.Name = "Button_" .. name
+            Button.Name = "Button_" .. tostring(name)
             Button.Size = UDim2.new(1, 0, 0, 35)
             Button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-            Button.Text = name
+            Button.Text = tostring(name)
             Button.TextColor3 = Color3.new(1, 1, 1)
             Button.Font = Enum.Font.GothamSemibold
             Button.TextSize = 17
@@ -207,13 +213,21 @@ function Library:CreateWindow(title)
 
             -- Hover effect
             Button.MouseEnter:Connect(function()
-                TweenService:Create(Button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(60, 60, 60)}):Play()
+                TweenService:Create(Button, TweenInfo.new(0.2), {
+                    BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+                }):Play()
             end)
             Button.MouseLeave:Connect(function()
-                TweenService:Create(Button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(50, 50, 50)}):Play()
+                TweenService:Create(Button, TweenInfo.new(0.2), {
+                    BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+                }):Play()
             end)
 
-            Button.MouseButton1Click:Connect(callback)
+            Button.MouseButton1Click:Connect(function()
+                if callback then
+                    callback()
+                end
+            end)
         end
 
         -------------------------------------------
@@ -221,10 +235,10 @@ function Library:CreateWindow(title)
         -------------------------------------------
         function Section:AddLabel(name)
             local Label = Instance.new("TextLabel")
-            Label.Name = "Label_" .. name
+            Label.Name = "Label_" .. tostring(name)
             Label.Size = UDim2.new(1, 0, 0, 28)
             Label.BackgroundTransparency = 1
-            Label.Text = name
+            Label.Text = tostring(name)
             Label.TextColor3 = Color3.new(1, 1, 1)
             Label.Font = Enum.Font.Gotham
             Label.TextSize = 16
@@ -232,7 +246,7 @@ function Library:CreateWindow(title)
 
             return {
                 Update = function(newText)
-                    Label.Text = newText
+                    Label.Text = tostring(newText)
                 end
             }
         end
@@ -242,23 +256,23 @@ function Library:CreateWindow(title)
         -------------------------------------------
         function Section:AddToggle(name, callback)
             local ToggleFrame = Instance.new("Frame")
-            ToggleFrame.Name = "Toggle_" .. name
+            ToggleFrame.Name = "Toggle_" .. tostring(name)
             ToggleFrame.Size = UDim2.new(1, 0, 0, 35)
             ToggleFrame.BackgroundTransparency = 1
             ToggleFrame.Parent = ElementContainer
 
             local ToggleLabel = Instance.new("TextLabel")
-            ToggleLabel.Name = "ToggleLabel_" .. name
+            ToggleLabel.Name = "ToggleLabel_" .. tostring(name)
             ToggleLabel.Size = UDim2.new(0.65, 0, 1, 0)
             ToggleLabel.BackgroundTransparency = 1
-            ToggleLabel.Text = name
+            ToggleLabel.Text = tostring(name)
             ToggleLabel.TextColor3 = Color3.new(1, 1, 1)
             ToggleLabel.Font = Enum.Font.Gotham
             ToggleLabel.TextSize = 16
             ToggleLabel.Parent = ToggleFrame
 
             local ToggleButton = Instance.new("TextButton")
-            ToggleButton.Name = "ToggleButton_" .. name
+            ToggleButton.Name = "ToggleButton_" .. tostring(name)
             ToggleButton.Size = UDim2.new(0.3, -5, 0.6, 0)
             ToggleButton.Position = UDim2.new(0.65, 5, 0.2, 0)
             ToggleButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
@@ -277,12 +291,18 @@ function Library:CreateWindow(title)
                 toggled = not toggled
                 if toggled then
                     ToggleButton.Text = "On"
-                    TweenService:Create(ToggleButton, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(80, 200, 120)}):Play()
+                    TweenService:Create(ToggleButton, TweenInfo.new(0.15), {
+                        BackgroundColor3 = Color3.fromRGB(80, 200, 120)
+                    }):Play()
                 else
                     ToggleButton.Text = "Off"
-                    TweenService:Create(ToggleButton, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(50, 50, 50)}):Play()
+                    TweenService:Create(ToggleButton, TweenInfo.new(0.15), {
+                        BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+                    }):Play()
                 end
-                callback(toggled)
+                if callback then
+                    callback(toggled)
+                end
             end)
         end
 
@@ -291,30 +311,30 @@ function Library:CreateWindow(title)
         -------------------------------------------
         function Section:AddSlider(name, min, max, callback)
             local SliderFrame = Instance.new("Frame")
-            SliderFrame.Name = "Slider_" .. name
+            SliderFrame.Name = "Slider_" .. tostring(name)
             SliderFrame.Size = UDim2.new(1, 0, 0, 45)
             SliderFrame.BackgroundTransparency = 1
             SliderFrame.Parent = ElementContainer
 
             local SliderLabel = Instance.new("TextLabel")
-            SliderLabel.Name = "SliderLabel_" .. name
+            SliderLabel.Name = "SliderLabel_" .. tostring(name)
             SliderLabel.Size = UDim2.new(1, 0, 0, 20)
             SliderLabel.BackgroundTransparency = 1
-            SliderLabel.Text = name .. ": " .. min
+            SliderLabel.Text = tostring(name) .. ": " .. min
             SliderLabel.TextColor3 = Color3.new(1, 1, 1)
             SliderLabel.Font = Enum.Font.Gotham
             SliderLabel.TextSize = 16
             SliderLabel.Parent = SliderFrame
 
             local SliderBar = Instance.new("Frame")
-            SliderBar.Name = "SliderBar_" .. name
+            SliderBar.Name = "SliderBar_" .. tostring(name)
             SliderBar.Size = UDim2.new(1, 0, 0, 10)
             SliderBar.Position = UDim2.new(0, 0, 0, 25)
             SliderBar.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
             SliderBar.Parent = SliderFrame
 
             local SliderFill = Instance.new("Frame")
-            SliderFill.Name = "SliderFill_" .. name
+            SliderFill.Name = "SliderFill_" .. tostring(name)
             SliderFill.Size = UDim2.new(0, 0, 1, 0)
             SliderFill.BackgroundColor3 = Color3.fromRGB(100, 100, 255)
             SliderFill.Parent = SliderBar
@@ -331,11 +351,17 @@ function Library:CreateWindow(title)
             local value = min
 
             local function updateSlider(inputX)
-                local relative = math.clamp((inputX - SliderBar.AbsolutePosition.X) / SliderBar.AbsoluteSize.X, 0, 1)
+                local relative = math.clamp(
+                    (inputX - SliderBar.AbsolutePosition.X) / SliderBar.AbsoluteSize.X, 
+                    0, 
+                    1
+                )
                 value = min + (max - min) * relative
                 SliderFill.Size = UDim2.new(relative, 0, 1, 0)
-                SliderLabel.Text = name .. ": " .. math.floor(value)
-                callback(value)
+                SliderLabel.Text = tostring(name) .. ": " .. math.floor(value)
+                if callback then
+                    callback(value)
+                end
             end
 
             SliderBar.InputBegan:Connect(function(input)
@@ -361,23 +387,23 @@ function Library:CreateWindow(title)
         -------------------------------------------
         function Section:AddDropdown(name, options, callback)
             local DropdownFrame = Instance.new("Frame")
-            DropdownFrame.Name = "Dropdown_" .. name
+            DropdownFrame.Name = "Dropdown_" .. tostring(name)
             DropdownFrame.Size = UDim2.new(1, 0, 0, 35)
             DropdownFrame.BackgroundTransparency = 1
             DropdownFrame.Parent = ElementContainer
 
             local DropdownLabel = Instance.new("TextLabel")
-            DropdownLabel.Name = "DropdownLabel_" .. name
+            DropdownLabel.Name = "DropdownLabel_" .. tostring(name)
             DropdownLabel.Size = UDim2.new(0.65, 0, 1, 0)
             DropdownLabel.BackgroundTransparency = 1
-            DropdownLabel.Text = name
+            DropdownLabel.Text = tostring(name)
             DropdownLabel.TextColor3 = Color3.new(1, 1, 1)
             DropdownLabel.Font = Enum.Font.Gotham
             DropdownLabel.TextSize = 16
             DropdownLabel.Parent = DropdownFrame
 
             local DropdownButton = Instance.new("TextButton")
-            DropdownButton.Name = "DropdownButton_" .. name
+            DropdownButton.Name = "DropdownButton_" .. tostring(name)
             DropdownButton.Size = UDim2.new(0.3, -5, 0.8, 0)
             DropdownButton.Position = UDim2.new(0.65, 5, 0.1, 0)
             DropdownButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
@@ -393,7 +419,7 @@ function Library:CreateWindow(title)
             DB_Corner.Parent = DropdownButton
 
             local DropdownList = Instance.new("Frame")
-            DropdownList.Name = "DropdownList_" .. name
+            DropdownList.Name = "DropdownList_" .. tostring(name)
             DropdownList.Size = UDim2.new(1, 0, 0, 0)
             DropdownList.Position = UDim2.new(0, 0, 1, 0)
             DropdownList.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
@@ -409,13 +435,15 @@ function Library:CreateWindow(title)
             DropdownButton.MouseButton1Click:Connect(function()
                 expanded = not expanded
                 DropdownList.Visible = expanded
+
                 if expanded then
-                    for i, option in ipairs(options) do
+                    -- Create option buttons
+                    for _, option in ipairs(options) do
                         local OptionButton = Instance.new("TextButton")
-                        OptionButton.Name = "Option_" .. option
+                        OptionButton.Name = "Option_" .. tostring(option)
                         OptionButton.Size = UDim2.new(1, 0, 0, 28)
                         OptionButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-                        OptionButton.Text = option
+                        OptionButton.Text = tostring(option)
                         OptionButton.TextColor3 = Color3.new(1, 1, 1)
                         OptionButton.Font = Enum.Font.Gotham
                         OptionButton.TextSize = 16
@@ -423,24 +451,32 @@ function Library:CreateWindow(title)
                         OptionButton.AutoButtonColor = false
 
                         OptionButton.MouseEnter:Connect(function()
-                            TweenService:Create(OptionButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(70, 70, 70)}):Play()
+                            TweenService:Create(OptionButton, TweenInfo.new(0.2), {
+                                BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+                            }):Play()
                         end)
                         OptionButton.MouseLeave:Connect(function()
-                            TweenService:Create(OptionButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(60, 60, 60)}):Play()
+                            TweenService:Create(OptionButton, TweenInfo.new(0.2), {
+                                BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+                            }):Play()
                         end)
 
                         OptionButton.MouseButton1Click:Connect(function()
-                            DropdownButton.Text = option
+                            DropdownButton.Text = tostring(option)
                             DropdownList.Visible = false
                             expanded = false
-                            callback(option)
-                            for _,child in ipairs(DropdownList:GetChildren()) do
+                            if callback then
+                                callback(option)
+                            end
+                            -- Clear old options
+                            for _, child in ipairs(DropdownList:GetChildren()) do
                                 if child:IsA("TextButton") then
                                     child:Destroy()
                                 end
                             end
                         end)
                     end
+                    -- Resize to fit all options
                     DropdownList.Size = UDim2.new(1, 0, 0, #options * 28)
                 else
                     DropdownList.Visible = false
@@ -452,7 +488,7 @@ function Library:CreateWindow(title)
     end
 
     return setmetatable({}, {
-        __index = function(self, key)
+        __index = function(_, key)
             if key == "CreateSection" then
                 return function(...)
                     return Window:CreateSection(...)
