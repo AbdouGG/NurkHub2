@@ -136,7 +136,7 @@ function PandaAuth:CreateWindow(centerTitleText)
     LeftTopLabel.Size = UDim2.new(0, 200, 1, 0)
     LeftTopLabel.Position = UDim2.new(0, 10, 0, 0)
     LeftTopLabel.BackgroundTransparency = 1
-    LeftTopLabel.Text = "GrayHub"
+    LeftTopLabel.Text = "NurkHub"
     LeftTopLabel.TextColor3 = COLORS.TEXT
     LeftTopLabel.TextSize = 16
     LeftTopLabel.Font = Enum.Font.Gotham
@@ -162,7 +162,7 @@ function PandaAuth:CreateWindow(centerTitleText)
     RightTopLabel.Position = UDim2.new(1, -10, 0.5, 0)
     RightTopLabel.Size = UDim2.new(0, 150, 1, 0)
     RightTopLabel.BackgroundTransparency = 1
-    RightTopLabel.Text = "discord.gg/Gray"
+    RightTopLabel.Text = "Version 1"
     RightTopLabel.TextColor3 = COLORS.TEXT
     RightTopLabel.TextSize = 16
     RightTopLabel.Font = Enum.Font.Gotham
