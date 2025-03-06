@@ -1,0 +1,842 @@
+-- NurkHub UI Library
+-- A sleek, modern UI library for Roblox exploits
+-- Created for AbdouGG
+
+local Library = {}
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local CoreGui = game:GetService("CoreGui")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+-- UI Settings & Theme
+local Settings = {
+    Theme = {
+        Background = Color3.fromRGB(30, 30, 30),
+        Accent = Color3.fromRGB(0, 170, 255),
+        LightContrast = Color3.fromRGB(40, 40, 40),
+        DarkContrast = Color3.fromRGB(25, 25, 25),
+        TextColor = Color3.fromRGB(255, 255, 255),
+        SubTextColor = Color3.fromRGB(200, 200, 200)
+    },
+    Transparency = {
+        Background = 0.95,
+        Elements = 0.98
+    },
+    Font = Enum.Font.Gotham,
+    TextSize = 14,
+    Rounding = 5
+}
+
+-- Utility Functions
+local Util = {}
+
+function Util.Create(class, properties)
+    local instance = Instance.new(class)
+    
+    for prop, value in next, properties or {} do
+        if prop ~= "Parent" then
+            instance[prop] = value
+        end
+    end
+    
+    if properties and properties.Parent then
+        instance.Parent = properties.Parent
+    end
+    
+    return instance
+end
+
+function Util.Tween(instance, properties, duration, style, direction)
+    local tween = TweenService:Create(
+        instance,
+        TweenInfo.new(duration or 0.3, style or Enum.EasingStyle.Quad, direction or Enum.EasingDirection.Out),
+        properties
+    )
+    tween:Play()
+    return tween
+end
+
+function Util.Ripple(parent, origin)
+    local ripple = Util.Create("Frame", {
+        Name = "Ripple",
+        Parent = parent,
+        BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+        BackgroundTransparency = 0.7,
+        Position = UDim2.fromOffset(origin.X - parent.AbsolutePosition.X, origin.Y - parent.AbsolutePosition.Y),
+        Size = UDim2.fromOffset(0, 0),
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        BorderSizePixel = 0,
+        ZIndex = parent.ZIndex + 1
+    })
+    
+    Util.Create("UICorner", {
+        Parent = ripple,
+        CornerRadius = UDim.new(1, 0)
+    })
+    
+    local size = math.max(parent.AbsoluteSize.X, parent.AbsoluteSize.Y) * 2
+    
+    Util.Tween(ripple, {
+        Size = UDim2.fromOffset(size, size),
+        BackgroundTransparency = 1
+    }, 0.5)
+    
+    spawn(function()
+        wait(0.5)
+        ripple:Destroy()
+    end)
+end
+
+-- Make UI Draggable
+function Util.Draggable(gui)
+    local dragging
+    local dragInput
+    local dragStart
+    local startPos
+    
+    local function update(input)
+        local delta = input.Position - dragStart
+        gui.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+    
+    gui.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = gui.Position
+            
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+    
+    gui.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
+    end)
+    
+    UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            update(input)
+        end
+    end)
+end
+
+-- Core UI Creation
+function Library:CreateWindow(title, size)
+    -- Default size if not provided
+    size = size or UDim2.new(0, 550, 0, 400)
+    
+    -- Create ScreenGui
+    local NurkHubGui = (syn and syn.protect_gui) and syn.protect_gui(Util.Create("ScreenGui", {
+        Name = "NurkHub2",
+        ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+        ResetOnSpawn = false
+    })) or Util.Create("ScreenGui", {
+        Name = "NurkHub2",
+        ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+        ResetOnSpawn = false
+    })
+    
+    if gethui then
+        NurkHubGui.Parent = gethui()
+    elseif syn and syn.protect_gui then
+        syn.protect_gui(NurkHubGui)
+        NurkHubGui.Parent = CoreGui
+    else
+        NurkHubGui.Parent = CoreGui
+    end
+    
+    -- Main window
+    local Main = Util.Create("Frame", {
+        Name = "Main",
+        Parent = NurkHubGui,
+        BackgroundColor3 = Settings.Theme.Background,
+        BorderSizePixel = 0,
+        Position = UDim2.new(0.5, -size.X.Offset / 2, 0.5, -size.Y.Offset / 2),
+        Size = size,
+        ClipsDescendants = true
+    })
+    
+    -- Apply corner radius
+    Util.Create("UICorner", {
+        Parent = Main,
+        CornerRadius = UDim.new(0, Settings.Rounding)
+    })
+    
+    -- Apply shadow
+    local Shadow = Util.Create("ImageLabel", {
+        Name = "Shadow",
+        Parent = Main,
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0, -15, 0, -15),
+        Size = UDim2.new(1, 30, 1, 30),
+        ZIndex = 0,
+        Image = "rbxassetid://5554236805",
+        ImageColor3 = Color3.fromRGB(0, 0, 0),
+        ImageTransparency = 0.5,
+        ScaleType = Enum.ScaleType.Slice,
+        SliceCenter = Rect.new(23, 23, 277, 277)
+    })
+    
+    -- Title bar
+    local TitleBar = Util.Create("Frame", {
+        Name = "TitleBar",
+        Parent = Main,
+        BackgroundColor3 = Settings.Theme.DarkContrast,
+        BorderSizePixel = 0,
+        Size = UDim2.new(1, 0, 0, 30)
+    })
+    
+    Util.Create("UICorner", {
+        Parent = TitleBar,
+        CornerRadius = UDim.new(0, Settings.Rounding)
+    })
+    
+    -- Title bar bottom cover (to make only top corners rounded)
+    Util.Create("Frame", {
+        Parent = TitleBar,
+        BackgroundColor3 = Settings.Theme.DarkContrast,
+        BorderSizePixel = 0,
+        Position = UDim2.new(0, 0, 1, -Settings.Rounding),
+        Size = UDim2.new(1, 0, 0, Settings.Rounding)
+    })
+    
+    -- Title
+    local TitleLabel = Util.Create("TextLabel", {
+        Name = "Title",
+        Parent = TitleBar,
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0, 10, 0, 0),
+        Size = UDim2.new(1, -20, 1, 0),
+        Font = Settings.Font,
+        Text = title or "NurkHub",
+        TextColor3 = Settings.Theme.TextColor,
+        TextSize = Settings.TextSize + 2,
+        TextXAlignment = Enum.TextXAlignment.Left
+    })
+    
+    -- Close button
+    local CloseButton = Util.Create("TextButton", {
+        Name = "CloseButton",
+        Parent = TitleBar,
+        BackgroundTransparency = 1,
+        Position = UDim2.new(1, -25, 0.5, -9),
+        Size = UDim2.new(0, 18, 0, 18),
+        Font = Enum.Font.GothamBold,
+        Text = "×",
+        TextColor3 = Settings.Theme.TextColor,
+        TextSize = 20
+    })
+    
+    CloseButton.MouseEnter:Connect(function()
+        Util.Tween(CloseButton, {TextColor3 = Color3.fromRGB(255, 75, 75)}, 0.2)
+    end)
+    
+    CloseButton.MouseLeave:Connect(function()
+        Util.Tween(CloseButton, {TextColor3 = Settings.Theme.TextColor}, 0.2)
+    end)
+    
+    CloseButton.MouseButton1Click:Connect(function()
+        NurkHubGui:Destroy()
+    end)
+    
+    -- Make window draggable
+    Util.Draggable(Main)
+    
+    -- Create container for tabs and content
+    local TabContainer = Util.Create("Frame", {
+        Name = "TabContainer",
+        Parent = Main,
+        BackgroundColor3 = Settings.Theme.LightContrast,
+        BorderSizePixel = 0,
+        Position = UDim2.new(0, 10, 0, 40),
+        Size = UDim2.new(0, 130, 1, -50)
+    })
+    
+    Util.Create("UICorner", {
+        Parent = TabContainer,
+        CornerRadius = UDim.new(0, Settings.Rounding)
+    })
+    
+    local TabList = Util.Create("ScrollingFrame", {
+        Name = "TabList",
+        Parent = TabContainer,
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0, 0, 0, 8),
+        Size = UDim2.new(1, 0, 1, -16),
+        CanvasSize = UDim2.new(0, 0, 0, 0),
+        ScrollBarThickness = 3,
+        ScrollBarImageColor3 = Settings.Theme.Accent,
+        BorderSizePixel = 0
+    })
+    
+    local TabListLayout = Util.Create("UIListLayout", {
+        Parent = TabList,
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        Padding = UDim.new(0, 5)
+    })
+    
+    -- Content container
+    local ContentContainer = Util.Create("Frame", {
+        Name = "ContentContainer",
+        Parent = Main,
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0, 150, 0, 40),
+        Size = UDim2.new(1, -160, 1, -50)
+    })
+    
+    -- Window object
+    local Window = {
+        Gui = NurkHubGui,
+        Main = Main,
+        Tabs = {}
+    }
+    
+    -- Tab creation function
+    function Window:CreateTab(name, icon)
+        local iconId = icon or "rbxassetid://7733717634" -- Default icon
+        
+        -- Tab button
+        local TabButton = Util.Create("TextButton", {
+            Name = name.."Tab",
+            Parent = TabList,
+            BackgroundColor3 = Settings.Theme.DarkContrast,
+            Size = UDim2.new(1, -10, 0, 32),
+            Text = "",
+            AutoButtonColor = false
+        })
+        
+        Util.Create("UICorner", {
+            Parent = TabButton,
+            CornerRadius = UDim.new(0, Settings.Rounding - 2)
+        })
+        
+        -- Tab Icon
+        local TabIcon = Util.Create("ImageLabel", {
+            Name = "Icon",
+            Parent = TabButton,
+            BackgroundTransparency = 1,
+            Position = UDim2.new(0, 8, 0.5, -8),
+            Size = UDim2.new(0, 16, 0, 16),
+            Image = iconId,
+            ImageColor3 = Settings.Theme.SubTextColor
+        })
+        
+        -- Tab Name
+        local TabName = Util.Create("TextLabel", {
+            Name = "TabName",
+            Parent = TabButton,
+            BackgroundTransparency = 1,
+            Position = UDim2.new(0, 30, 0, 0),
+            Size = UDim2.new(1, -30, 1, 0),
+            Font = Settings.Font,
+            Text = name,
+            TextColor3 = Settings.Theme.SubTextColor,
+            TextSize = Settings.TextSize,
+            TextXAlignment = Enum.TextXAlignment.Left
+        })
+        
+        -- Tab Content Frame
+        local TabContent = Util.Create("ScrollingFrame", {
+            Name = name.."Content",
+            Parent = ContentContainer,
+            BackgroundTransparency = 1,
+            BorderSizePixel = 0,
+            Size = UDim2.new(1, 0, 1, 0),
+            Visible = false,
+            ScrollBarThickness = 3,
+            ScrollBarImageColor3 = Settings.Theme.Accent,
+            CanvasSize = UDim2.new(0, 0, 0, 0),
+            ClipsDescendants = true
+        })
+        
+        local ElementsLayout = Util.Create("UIListLayout", {
+            Parent = TabContent,
+            SortOrder = Enum.SortOrder.LayoutOrder,
+            Padding = UDim.new(0, 10)
+        })
+        
+        local ElementsPadding = Util.Create("UIPadding", {
+            Parent = TabContent,
+            PaddingLeft = UDim.new(0, 5),
+            PaddingRight = UDim.new(0, 5),
+            PaddingTop = UDim.new(0, 5),
+            PaddingBottom = UDim.new(0, 5)
+        })
+        
+        -- Auto-update canvas size
+        ElementsLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            TabContent.CanvasSize = UDim2.new(0, 0, 0, ElementsLayout.AbsoluteContentSize.Y + 10)
+        end)
+        
+        -- Active tab highlight
+        local isActive = false
+        
+        -- Tab click logic
+        TabButton.MouseButton1Click:Connect(function()
+            -- Hide all tabs
+            for _, tab in next, Window.Tabs do
+                tab.Button.BackgroundColor3 = Settings.Theme.DarkContrast
+                tab.Button.Icon.ImageColor3 = Settings.Theme.SubTextColor
+                tab.Button.TabName.TextColor3 = Settings.Theme.SubTextColor
+                tab.Content.Visible = false
+            end
+            
+            -- Show selected tab
+            TabButton.BackgroundColor3 = Settings.Theme.Accent
+            TabIcon.ImageColor3 = Settings.Theme.TextColor
+            TabName.TextColor3 = Settings.Theme.TextColor
+            TabContent.Visible = true
+            
+            -- Create ripple effect
+            local mouse = UserInputService:GetMouseLocation()
+            Util.Ripple(TabButton, mouse)
+        end)
+        
+        -- Tab hover effects
+        TabButton.MouseEnter:Connect(function()
+            if not isActive then
+                Util.Tween(TabButton, {BackgroundColor3 = Color3.fromRGB(50, 50, 50)}, 0.2)
+            end
+        end)
+        
+        TabButton.MouseLeave:Connect(function()
+            if not isActive then
+                Util.Tween(TabButton, {BackgroundColor3 = Settings.Theme.DarkContrast}, 0.2)
+            end
+        end)
+        
+        -- Tab object
+        local Tab = {
+            Name = name,
+            Button = {
+                Instance = TabButton,
+                Icon = TabIcon,
+                TabName = TabName
+            },
+            Content = TabContent
+        }
+        
+        -- Auto-adjust tab list canvas
+        TabListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            TabList.CanvasSize = UDim2.new(0, 0, 0, TabListLayout.AbsoluteContentSize.Y + 10)
+        end)
+        
+        -- Element creation methods
+        function Tab:CreateLabel(text)
+            local LabelFrame = Util.Create("Frame", {
+                Name = "Label",
+                Parent = TabContent,
+                BackgroundTransparency = 1,
+                Size = UDim2.new(1, 0, 0, 25)
+            })
+            
+            local LabelText = Util.Create("TextLabel", {
+                Name = "LabelText",
+                Parent = LabelFrame,
+                BackgroundTransparency = 1,
+                Size = UDim2.new(1, 0, 1, 0),
+                Font = Settings.Font,
+                Text = text,
+                TextColor3 = Settings.Theme.TextColor,
+                TextSize = Settings.TextSize,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                TextYAlignment = Enum.TextYAlignment.Center,
+                TextWrapped = true
+            })
+            
+            local Label = {
+                Instance = LabelFrame,
+                TextLabel = LabelText
+            }
+            
+            function Label:Update(newText)
+                LabelText.Text = newText
+            end
+            
+            return Label
+        end
+        
+        function Tab:CreateButton(text, callback)
+            callback = callback or function() end
+            
+            local ButtonFrame = Util.Create("Frame", {
+                Name = "Button",
+                Parent = TabContent,
+                BackgroundTransparency = 1,
+                Size = UDim2.new(1, 0, 0, 32)
+            })
+            
+            local Button = Util.Create("TextButton", {
+                Name = "ButtonElement",
+                Parent = ButtonFrame,
+                BackgroundColor3 = Settings.Theme.LightContrast,
+                Size = UDim2.new(1, 0, 1, 0),
+                Text = "",
+                ClipsDescendants = true,
+                AutoButtonColor = false
+            })
+            
+            Util.Create("UICorner", {
+                Parent = Button,
+                CornerRadius = UDim.new(0, Settings.Rounding - 2)
+            })
+            
+            local ButtonText = Util.Create("TextLabel", {
+                Name = "ButtonText",
+                Parent = Button,
+                BackgroundTransparency = 1,
+                Size = UDim2.new(1, 0, 1, 0),
+                Font = Settings.Font,
+                Text = text,
+                TextColor3 = Settings.Theme.TextColor,
+                TextSize = Settings.TextSize
+            })
+            
+            -- Button click and hover effects
+            Button.MouseButton1Click:Connect(function()
+                local mouse = UserInputService:GetMouseLocation()
+                Util.Ripple(Button, mouse)
+                
+                pcall(callback)
+            end)
+            
+            Button.MouseEnter:Connect(function()
+                Util.Tween(Button, {BackgroundColor3 = Color3.fromRGB(60, 60, 60)}, 0.2)
+            end)
+            
+            Button.MouseLeave:Connect(function()
+                Util.Tween(Button, {BackgroundColor3 = Settings.Theme.LightContrast}, 0.2)
+            end)
+            
+            local ButtonObj = {
+                Instance = ButtonFrame,
+                Button = Button,
+                Text = ButtonText
+            }
+            
+            function ButtonObj:Update(newText)
+                ButtonText.Text = newText
+            end
+            
+            return ButtonObj
+        end
+        
+        function Tab:CreateToggle(text, default, callback)
+            default = default or false
+            callback = callback or function() end
+            
+            local ToggleFrame = Util.Create("Frame", {
+                Name = "Toggle",
+                Parent = TabContent,
+                BackgroundTransparency = 1,
+                Size = UDim2.new(1, 0, 0, 32)
+            })
+            
+            local ToggleButton = Util.Create("TextButton", {
+                Name = "ToggleElement",
+                Parent = ToggleFrame,
+                BackgroundColor3 = Settings.Theme.LightContrast,
+                Size = UDim2.new(1, 0, 1, 0),
+                Text = "",
+                ClipsDescendants = true,
+                AutoButtonColor = false
+            })
+            
+            Util.Create("UICorner", {
+                Parent = ToggleButton,
+                CornerRadius = UDim.new(0, Settings.Rounding - 2)
+            })
+            
+            local ToggleText = Util.Create("TextLabel", {
+                Name = "ToggleText",
+                Parent = ToggleButton,
+                BackgroundTransparency = 1,
+                Position = UDim2.new(0, 10, 0, 0),
+                Size = UDim2.new(1, -50, 1, 0),
+                Font = Settings.Font,
+                Text = text,
+                TextColor3 = Settings.Theme.TextColor,
+                TextSize = Settings.TextSize,
+                TextXAlignment = Enum.TextXAlignment.Left
+            })
+            
+            local ToggleIndicator = Util.Create("Frame", {
+                Name = "Indicator",
+                Parent = ToggleButton,
+                BackgroundColor3 = Color3.fromRGB(50, 50, 50),
+                Position = UDim2.new(1, -40, 0.5, -9),
+                Size = UDim2.new(0, 30, 0, 18),
+                BorderSizePixel = 0
+            })
+            
+            Util.Create("UICorner", {
+                Parent = ToggleIndicator,
+                CornerRadius = UDim.new(1, 0)
+            })
+            
+            local ToggleSwitch = Util.Create("Frame", {
+                Name = "Switch",
+                Parent = ToggleIndicator,
+                BackgroundColor3 = Color3.fromRGB(200, 200, 200),
+                Position = UDim2.new(0, 2, 0.5, -7),
+                Size = UDim2.new(0, 14, 0, 14),
+                BorderSizePixel = 0
+            })
+            
+            Util.Create("UICorner", {
+                Parent = ToggleSwitch,
+                CornerRadius = UDim.new(1, 0)
+            })
+            
+            -- Toggle state
+            local toggled = default
+            
+            local function UpdateToggle()
+                if toggled then
+                    Util.Tween(ToggleIndicator, {BackgroundColor3 = Settings.Theme.Accent}, 0.2)
+                    Util.Tween(ToggleSwitch, {
+                        BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+                        Position = UDim2.new(0, 14, 0.5, -7)
+                    }, 0.2)
+                else
+                    Util.Tween(ToggleIndicator, {BackgroundColor3 = Color3.fromRGB(50, 50, 50)}, 0.2)
+                    Util.Tween(ToggleSwitch, {
+                        BackgroundColor3 = Color3.fromRGB(200, 200, 200),
+                        Position = UDim2.new(0, 2, 0.5, -7)
+                    }, 0.2)
+                end
+                
+                pcall(callback, toggled)
+            end
+            
+            -- Set initial state
+            if default then
+                UpdateToggle()
+            end
+            
+            -- Toggle button click
+            ToggleButton.MouseButton1Click:Connect(function()
+                toggled = not toggled
+                UpdateToggle()
+                
+                -- Ripple effect
+                local mouse = UserInputService:GetMouseLocation()
+                Util.Ripple(ToggleButton, mouse)
+            end)
+            
+            -- Hover effects
+            ToggleButton.MouseEnter:Connect(function()
+                Util.Tween(ToggleButton, {BackgroundColor3 = Color3.fromRGB(60, 60, 60)}, 0.2)
+            end)
+            
+            ToggleButton.MouseLeave:Connect(function()
+                Util.Tween(ToggleButton, {BackgroundColor3 = Settings.Theme.LightContrast}, 0.2)
+            end)
+            
+            local ToggleObj = {
+                Instance = ToggleFrame,
+                Button = ToggleButton,
+                Text = ToggleText,
+                Indicator = ToggleIndicator,
+                Switch = ToggleSwitch,
+                Value = toggled
+            }
+            
+            function ToggleObj:Update(newText)
+                ToggleText.Text = newText
+            end
+            
+            function ToggleObj:SetValue(value)
+                toggled = value
+                ToggleObj.Value = value
+                UpdateToggle()
+            end
+            
+            function ToggleObj:GetValue()
+                return toggled
+            end
+            
+            return ToggleObj
+        end
+        
+        function Tab:CreateSlider(text, options, callback)
+            -- Default options
+            options = options or {}
+            options.min = options.min or 0
+            options.max = options.max or 100
+            options.default = options.default or options.min
+            options.precise = options.precise or false
+            
+            callback = callback or function() end
+            
+            -- Slider frame
+            local SliderFrame = Util.Create("Frame", {
+                Name = "Slider",
+                Parent = TabContent,
+                BackgroundTransparency = 1,
+                Size = UDim2.new(1, 0, 0, 50)
+            })
+            
+            local SliderTitle = Util.Create("TextLabel", {
+                Name = "SliderTitle",
+                Parent = SliderFrame,
+                BackgroundTransparency = 1,
+                Position = UDim2.new(0, 0, 0, 0),
+                Size = UDim2.new(1, 0, 0, 20),
+                Font = Settings.Font,
+                Text = text,
+                TextColor3 = Settings.Theme.TextColor,
+                TextSize = Settings.TextSize,
+                TextXAlignment = Enum.TextXAlignment.Left
+            })
+            
+            local SliderBackground = Util.Create("Frame", {
+                Name = "SliderBackground",
+                Parent = SliderFrame,
+                BackgroundColor3 = Settings.Theme.LightContrast,
+                Position = UDim2.new(0, 0, 0, 25),
+                Size = UDim2.new(1, 0, 0, 18),
+                BorderSizePixel = 0
+            })
+            
+            Util.Create("UICorner", {
+                Parent = SliderBackground,
+                CornerRadius = UDim.new(0, Settings.Rounding - 2)
+            })
+            
+            local SliderFill = Util.Create("Frame", {
+                Name = "SliderFill",
+                Parent = SliderBackground,
+                BackgroundColor3 = Settings.Theme.Accent,
+                Size = UDim2.new(0, 0, 1, 0),
+                BorderSizePixel = 0
+            })
+            
+            Util.Create("UICorner", {
+                Parent = SliderFill,
+                CornerRadius = UDim.new(0, Settings.Rounding - 2)
+            })
+            
+            local SliderBall = Util.Create("Frame", {
+                Name = "SliderBall",
+                Parent = SliderFill,
+                BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+                Position = UDim2.new(1, -9, 0.5, -9),
+                Size = UDim2.new(0, 18, 0, 18),
+                BorderSizePixel = 0,
+                ZIndex = 2
+            })
+            
+            Util.Create("UICorner", {
+                Parent = SliderBall,
+                CornerRadius = UDim.new(1, 0)
+            })
+            
+            local SliderValue = Util.Create("TextLabel", {
+                Name = "SliderValue",
+                Parent = SliderBackground,
+                BackgroundTransparency = 1,
+                Position = UDim2.new(0, 0, 0, 0),
+                Size = UDim2.new(1, 0, 1, 0),
+                Font = Settings.Font,
+                Text = tostring(options.default),
+                TextColor3 = Settings.Theme.TextColor,
+                TextSize = Settings.TextSize - 2
+            })
+            
+            -- Slider logic
+            local percent = 0
+            local value = options.default
+            
+            local function UpdateSlider(input)
+                local sizeX = math.clamp((input.Position.X - SliderBackground.AbsolutePosition.X) / SliderBackground.AbsoluteSize.X, 0, 1)
+                value = options.min + (options.max - options.min) * sizeX
+                
+                if not options.precise then
+                    value = math.floor(value)
+                end
+                
+                SliderValue.Text = options.precise and string.format("%.2f", value) or tostring(value)
+                percent = sizeX
+                
+                Util.Tween(SliderFill, {Size = UDim2.new(percent, 0, 1, 0)}, 0.1)
+                pcall(callback, value)
+            end
+            
+            -- Initialize slider
+            local percentDefault = (options.default - options.min) / (options.max - options.min)
+            SliderFill.Size = UDim2.new(percentDefault, 0, 1, 0)
+            SliderValue.Text = options.precise and string.format("%.2f", options.default) or tostring(options.default)
+            
+            -- Slider interaction
+            local sliding = false
+            
+            SliderBackground.InputBegan:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                    sliding = true
+                    UpdateSlider(input)
+                end
+            end)
+            
+            SliderBackground.InputBegan:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                    sliding = true
+                    UpdateSlider(input)
+                end
+            end)
+            
+            UserInputService.InputChanged:Connect(function(input)
+                if sliding and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+                    UpdateSlider(input)
+                end
+            end)
+            
+            UserInputService.InputEnded:Connect(function(input)
+                if sliding and (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
+                    sliding = false
+                end
+            end)
+            
+            local SliderObj = {
+                Instance = SliderFrame,
+                GetValue = function()
+                    return value
+                end,
+                SetValue = function(newValue)
+                    newValue = math.clamp(newValue, options.min, options.max)
+                    value = newValue
+                    local newPercent = (value - options.min) / (options.max - options.min)
+                    SliderValue.Text = options.precise and string.format("%.2f", value) or tostring(value)
+                    Util.Tween(SliderFill, {Size = UDim2.new(newPercent, 0, 1, 0)}, 0.1)
+                    pcall(callback, value)
+                end
+            }
+            
+            return SliderObj
+        end
+        
+        -- End of Tab element creation methods
+        
+        -- Auto-adjust the tab list canvas size
+        TabListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            TabList.CanvasSize = UDim2.new(0, 0, 0, TabListLayout.AbsoluteContentSize.Y + 10)
+        end)
+        
+        -- Insert the new tab into the window's tabs table
+        table.insert(Window.Tabs, Tab)
+        
+        return Tab
+    end
+    
+    return Window
+end
+
+return Library
