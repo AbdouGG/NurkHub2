@@ -1610,23 +1610,23 @@ function PandaAuth:CreateWindow(centerTitleText)
         return tab
     end
     
-    function library:Show()
+    function window:Show()
         MainFrame.Visible = true
     end
     
-    function library:Hide()
+    function window:Hide()
         MainFrame.Visible = false
     end
     
-    function library:Toggle()
+    function window:Toggle()
         MainFrame.Visible = not MainFrame.Visible
     end
     
-    function library:Destroy()
+    function window:Destroy()
         ScreenGui:Destroy()
     end
     
-    function library:SetTheme(theme)
+    function window:SetTheme(theme)
         if theme == "Dark" then
             COLORS = {
                 BACKGROUND = Color3.fromRGB(30, 30, 35),
@@ -1677,10 +1677,10 @@ function PandaAuth:CreateWindow(centerTitleText)
         -- Update all elements with new colors
         -- This would require keeping track of all created elements
         -- For simplicity, just show a message that a refresh is needed
-        local notification = library:CreateNotification("Theme Changed", "The theme has been set to " .. theme .. ". Please re-open the UI for full effect.", 5)
+        local notification = window:CreateNotification("Theme Changed", "The theme has been set to " .. theme .. ". Please re-open the UI for full effect.", 5)
     end
     
-    function library:CreateNotification(title, text, duration)
+    function window:CreateNotification(title, text, duration)
         duration = duration or 3
         
         local NotificationFrame = Instance.new("Frame", ScreenGui)
@@ -1753,7 +1753,7 @@ function PandaAuth:CreateWindow(centerTitleText)
         return NotificationFrame
     end
     
-    return library
+    return window
 end
 
 
