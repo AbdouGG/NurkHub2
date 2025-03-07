@@ -1756,4 +1756,4 @@ function PandaAuth:CreateWindow(centerTitleText)
     return window
 end
 
-
+return PandaAuth
