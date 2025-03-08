@@ -715,7 +715,7 @@ function NurkUI:CreateWindow(title)
                 Dropdown.BackgroundColor3 = Settings.Theme.Primary
                 Dropdown.BackgroundTransparency = 0.4
                 Dropdown.Size = UDim2.new(1, 0, 0, 36)
-                Dropdown.ZIndex = 4
+                Dropdown.ZIndex = 99999
                 Dropdown.Parent = SectionContent
                 
                 local DropdownCorner = Instance.new("UICorner")
@@ -733,7 +733,7 @@ function NurkUI:CreateWindow(title)
                 DropdownLabel.TextColor3 = Settings.Theme.Text
                 DropdownLabel.TextSize = 14
                 DropdownLabel.TextXAlignment = Enum.TextXAlignment.Left
-                DropdownLabel.ZIndex = 4
+                DropdownLabel.ZIndex = 99999
                 DropdownLabel.Parent = Dropdown
                 
                 -- Selected Value Button
@@ -747,7 +747,7 @@ function NurkUI:CreateWindow(title)
                 SelectedValue.Text = default
                 SelectedValue.TextColor3 = Settings.Theme.Text
                 SelectedValue.TextSize = 14
-                SelectedValue.ZIndex = 4
+                SelectedValue.ZIndex = 99999
                 SelectedValue.Parent = Dropdown
                 SelectedValue.AutoButtonColor = false
                 
@@ -1578,7 +1578,7 @@ function NurkUI:CreateWindow(title)
                     ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 0, 0))
                 })
                 ValueUIGradient.Transparency = NumberSequence.new({
-                    NumberSequenceKeypoint.new(0, 0),
+                    NumberSequenceKeypoint.new(0, 1),  -- FIXED: Changed from 0 to 1 to make the gradient visible
                     NumberSequenceKeypoint.new(1, 0)
                 })
                 ValueUIGradient.Rotation = 0
@@ -1736,7 +1736,7 @@ function NurkUI:CreateWindow(title)
                     -- Update Hue slider position
                     HueKnob.Position = UDim2.new(HSV.H, 0, 0.5, 0)
                     
-                    -- Fixed: Update the SVCanvas background color based on hue
+                    -- Update the SVCanvas background color based on hue
                     SVCanvas.BackgroundColor3 = HSVtoRGB({ H = HSV.H, S = 1, V = 1 })
                 end
                 
@@ -1745,7 +1745,7 @@ function NurkUI:CreateWindow(title)
                     IsOpen = not IsOpen
                     ColorPickerPopup.Visible = IsOpen
                     
-                    -- Fixed: Force update the UI when opening popup
+                    -- Force update the UI when opening popup
                     if IsOpen then
                         UpdateInterface()
                         UpdateColor()
@@ -1876,13 +1876,10 @@ function NurkUI:CreateWindow(title)
                     end
                 end)
                 
-                -- Initialize display with proper defaults for red
-                -- Fixed: Initialize HSV to red if the default color is red
-                if defaultColor.R == 1 and defaultColor.G == 0 and defaultColor.B == 0 then
-                    HSV = { H = 0, S = 1, V = 1 } -- Pure red
-                end
+                -- Initialize HSV based on default color
+                HSV = RGBtoHSV(defaultColor)
                 
-                -- Fixed: Call these after HSV is properly initialized
+                -- Important: Ensure the UI is updated immediately
                 UpdateInterface()
                 UpdateColor()
                 
