@@ -1413,6 +1413,513 @@ function NurkUI:CreateWindow(title)
                 table.insert(SectionObject.Elements, ParagraphObject)
                 return ParagraphObject
             end
+
+            function SectionObject:AddColorPicker(pickerText, defaultColor, callback)
+                defaultColor = defaultColor or Color3.fromRGB(255, 255, 255)
+                callback = callback or function() end
+                
+                -- Create ColorPicker Container
+                local ColorPicker = Instance.new("Frame")
+                ColorPicker.Name = "ColorPicker_" .. pickerText
+                ColorPicker.BackgroundColor3 = Settings.Theme.Primary
+                ColorPicker.BackgroundTransparency = 0.4
+                ColorPicker.Size = UDim2.new(1, 0, 0, 36)
+                ColorPicker.ZIndex = 4
+                ColorPicker.Parent = SectionContent
+                
+                local ColorPickerCorner = Instance.new("UICorner")
+                ColorPickerCorner.CornerRadius = UDim.new(0, 4)
+                ColorPickerCorner.Parent = ColorPicker
+                
+                -- ColorPicker Label
+                local ColorPickerLabel = Instance.new("TextLabel")
+                ColorPickerLabel.Name = "ColorPickerLabel"
+                ColorPickerLabel.BackgroundTransparency = 1
+                ColorPickerLabel.Position = UDim2.new(0, 10, 0, 0)
+                ColorPickerLabel.Size = UDim2.new(1, -60, 1, 0)
+                ColorPickerLabel.Font = Settings.Font
+                ColorPickerLabel.Text = pickerText
+                ColorPickerLabel.TextColor3 = Settings.Theme.Text
+                ColorPickerLabel.TextSize = 14
+                ColorPickerLabel.TextXAlignment = Enum.TextXAlignment.Left
+                ColorPickerLabel.ZIndex = 4
+                ColorPickerLabel.Parent = ColorPicker
+                
+                -- Color Display Button
+                local ColorDisplay = Instance.new("TextButton")
+                ColorDisplay.Name = "ColorDisplay"
+                ColorDisplay.Position = UDim2.new(1, -46, 0.5, 0)
+                ColorDisplay.AnchorPoint = Vector2.new(0, 0.5)
+                ColorDisplay.Size = UDim2.new(0, 36, 0, 22)
+                ColorDisplay.BackgroundColor3 = defaultColor
+                ColorDisplay.Text = ""
+                ColorDisplay.ZIndex = 5
+                ColorDisplay.Parent = ColorPicker
+                ColorDisplay.AutoButtonColor = false
+                
+                local ColorDisplayCorner = Instance.new("UICorner")
+                ColorDisplayCorner.CornerRadius = UDim.new(0, 4)
+                ColorDisplayCorner.Parent = ColorDisplay
+                
+                -- Color Display Shadow
+                CreateShadow(ColorDisplay, 6)
+                
+                -- Color Picker Popup
+                local ColorPickerPopup = Instance.new("Frame")
+                ColorPickerPopup.Name = "ColorPickerPopup"
+                ColorPickerPopup.BackgroundColor3 = Settings.Theme.Secondary
+                ColorPickerPopup.BackgroundTransparency = 0.1
+                ColorPickerPopup.Position = UDim2.new(0, 0, 1, 10)
+                ColorPickerPopup.Size = UDim2.new(1, 0, 0, 200)
+                ColorPickerPopup.Visible = false
+                ColorPickerPopup.ZIndex = 999999
+                ColorPickerPopup.Parent = ColorPicker
+                
+                local PopupCorner = Instance.new("UICorner")
+                PopupCorner.CornerRadius = UDim.new(0, 6)
+                PopupCorner.Parent = ColorPickerPopup
+                
+                -- Popup Shadow
+                CreateShadow(ColorPickerPopup, 8)
+                
+                -- Color Picker Components
+                
+                -- Hue Slider
+                local HueSlider = Instance.new("Frame")
+                HueSlider.Name = "HueSlider"
+                HueSlider.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                HueSlider.Position = UDim2.new(0, 10, 0, 160)
+                HueSlider.Size = UDim2.new(1, -20, 0, 20)
+                HueSlider.ZIndex = 999999
+                HueSlider.Parent = ColorPickerPopup
+                
+                local HueSliderCorner = Instance.new("UICorner")
+                HueSliderCorner.CornerRadius = UDim.new(0, 4)
+                HueSliderCorner.Parent = HueSlider
+                
+                -- Create Hue Gradient
+                local HueGradient = Instance.new("UIGradient")
+                HueGradient.Color = ColorSequence.new({
+                    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)),
+                    ColorSequenceKeypoint.new(0.167, Color3.fromRGB(255, 255, 0)),
+                    ColorSequenceKeypoint.new(0.333, Color3.fromRGB(0, 255, 0)),
+                    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 255, 255)),
+                    ColorSequenceKeypoint.new(0.667, Color3.fromRGB(0, 0, 255)),
+                    ColorSequenceKeypoint.new(0.833, Color3.fromRGB(255, 0, 255)),
+                    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 0))
+                })
+                HueGradient.Parent = HueSlider
+                
+                -- Hue Slider Knob
+                local HueKnob = Instance.new("Frame")
+                HueKnob.Name = "HueKnob"
+                HueKnob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                HueKnob.BorderSizePixel = 0
+                HueKnob.Position = UDim2.new(0, 0, 0.5, 0)
+                HueKnob.AnchorPoint = Vector2.new(0.5, 0.5)
+                HueKnob.Size = UDim2.new(0, 6, 1, 6)
+                HueKnob.ZIndex = 1000000
+                HueKnob.Parent = HueSlider
+                
+                local HueKnobCorner = Instance.new("UICorner")
+                HueKnobCorner.CornerRadius = UDim.new(1, 0)
+                HueKnobCorner.Parent = HueKnob
+                
+                -- Shadow for Hue Knob
+                CreateShadow(HueKnob, 4)
+                
+                -- Saturation-Value Canvas
+                local SVCanvas = Instance.new("Frame")
+                SVCanvas.Name = "SVCanvas"
+                SVCanvas.BackgroundColor3 = Color3.fromRGB(255, 0, 0) -- Will be updated by hue
+                SVCanvas.Position = UDim2.new(0, 10, 0, 10)
+                SVCanvas.Size = UDim2.new(1, -20, 0, 140)
+                SVCanvas.ZIndex = 999999
+                SVCanvas.ClipsDescendants = true
+                SVCanvas.Parent = ColorPickerPopup
+                
+                local SVCanvasCorner = Instance.new("UICorner")
+                SVCanvasCorner.CornerRadius = UDim.new(0, 4)
+                SVCanvasCorner.Parent = SVCanvas
+                
+                -- White Gradient (Saturation)
+                local SaturationGradient = Instance.new("Frame")
+                SaturationGradient.Name = "SaturationGradient"
+                SaturationGradient.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                SaturationGradient.BorderSizePixel = 0
+                SaturationGradient.Size = UDim2.new(1, 0, 1, 0)
+                SaturationGradient.ZIndex = 999999
+                SaturationGradient.Parent = SVCanvas
+                
+                local SaturationUIGradient = Instance.new("UIGradient")
+                SaturationUIGradient.Color = ColorSequence.new({
+                    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+                    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255, 0))
+                })
+                SaturationUIGradient.Transparency = NumberSequence.new({
+                    NumberSequenceKeypoint.new(0, 0),
+                    NumberSequenceKeypoint.new(1, 1)
+                })
+                SaturationUIGradient.Rotation = 90
+                SaturationUIGradient.Parent = SaturationGradient
+                
+                -- Black Gradient (Value)
+                local ValueGradient = Instance.new("Frame")
+                ValueGradient.Name = "ValueGradient"
+                ValueGradient.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+                ValueGradient.BorderSizePixel = 0
+                ValueGradient.Size = UDim2.new(1, 0, 1, 0)
+                ValueGradient.ZIndex = 999999
+                ValueGradient.Parent = SVCanvas
+                
+                local ValueUIGradient = Instance.new("UIGradient")
+                ValueUIGradient.Color = ColorSequence.new({
+                    ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 0, 0, 0)),
+                    ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 0, 0))
+                })
+                ValueUIGradient.Transparency = NumberSequence.new({
+                    NumberSequenceKeypoint.new(0, 0),
+                    NumberSequenceKeypoint.new(1, 0)
+                })
+                ValueUIGradient.Rotation = 0
+                ValueUIGradient.Parent = ValueGradient
+                
+                -- SV Selector
+                local SVSelector = Instance.new("Frame")
+                SVSelector.Name = "SVSelector"
+                SVSelector.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                SVSelector.BackgroundTransparency = 1
+                SVSelector.Position = UDim2.new(1, 0, 0, 0)
+                SVSelector.AnchorPoint = Vector2.new(0.5, 0.5)
+                SVSelector.Size = UDim2.new(0, 10, 0, 10)
+                SVSelector.ZIndex = 1000000
+                SVSelector.Parent = SVCanvas
+                
+                local SVSelectorIcon = Instance.new("ImageLabel")
+                SVSelectorIcon.Name = "SVSelectorIcon"
+                SVSelectorIcon.BackgroundTransparency = 1
+                SVSelectorIcon.Size = UDim2.new(1, 0, 1, 0)
+                SVSelectorIcon.Image = "rbxassetid://5100631919" -- Circle outline
+                SVSelectorIcon.ImageColor3 = Color3.fromRGB(255, 255, 255)
+                SVSelectorIcon.ZIndex = 1000000
+                SVSelectorIcon.Parent = SVSelector
+                
+                -- RGB Indicators
+                local RGBInfo = Instance.new("Frame")
+                RGBInfo.Name = "RGBInfo"
+                RGBInfo.BackgroundTransparency = 1
+                RGBInfo.Position = UDim2.new(0, 10, 0, 185)
+                RGBInfo.Size = UDim2.new(1, -20, 0, 0)
+                RGBInfo.ZIndex = 999999
+                RGBInfo.Parent = ColorPickerPopup
+                
+                local RGBLabel = Instance.new("TextLabel")
+                RGBLabel.Name = "RGBLabel"
+                RGBLabel.BackgroundTransparency = 1
+                RGBLabel.Size = UDim2.new(0, 120, 0, 20)
+                RGBLabel.Font = Settings.Font
+                RGBLabel.Text = "RGB: 255, 255, 255"
+                RGBLabel.TextColor3 = Settings.Theme.SubText
+                RGBLabel.TextSize = 12
+                RGBLabel.TextXAlignment = Enum.TextXAlignment.Left
+                RGBLabel.ZIndex = 999999
+                RGBLabel.Parent = RGBInfo
+                
+                local HexLabel = Instance.new("TextLabel")
+                HexLabel.Name = "HexLabel"
+                HexLabel.BackgroundTransparency = 1
+                HexLabel.Position = UDim2.new(1, -120, 0, 0)
+                HexLabel.Size = UDim2.new(0, 120, 0, 20)
+                HexLabel.Font = Settings.Font
+                HexLabel.Text = "Hex: #FFFFFF"
+                HexLabel.TextColor3 = Settings.Theme.SubText
+                HexLabel.TextSize = 12
+                HexLabel.TextXAlignment = Enum.TextXAlignment.Right
+                HexLabel.ZIndex = 999999
+                HexLabel.Parent = RGBInfo
+                
+                -- State tracking
+                local HSV = { H = 0, S = 0, V = 1 } -- Default to white
+                local SelectedColor = defaultColor
+                local IsOpen = false
+                
+                -- Convert RGB to HSV
+                local function RGBtoHSV(color)
+                    local r, g, b = color.R, color.G, color.B
+                    local max, min = math.max(r, g, b), math.min(r, g, b)
+                    local delta = max - min
+                    local h, s, v
+                    
+                    v = max
+                    
+                    if max == 0 then
+                        s = 0
+                    else
+                        s = delta / max
+                    end
+                    
+                    if delta == 0 then
+                        h = 0
+                    else
+                        if max == r then
+                            h = (g - b) / delta
+                            if g < b then h = h + 6 end
+                        elseif max == g then
+                            h = (b - r) / delta + 2
+                        else
+                            h = (r - g) / delta + 4
+                        end
+                        h = h / 6
+                    end
+                    
+                    return { H = h, S = s, V = v }
+                end
+                
+                -- Convert HSV to RGB
+                local function HSVtoRGB(hsv)
+                    local h, s, v = hsv.H, hsv.S, hsv.V
+                    local r, g, b
+                    
+                    local i = math.floor(h * 6)
+                    local f = h * 6 - i
+                    local p = v * (1 - s)
+                    local q = v * (1 - f * s)
+                    local t = v * (1 - (1 - f) * s)
+                    
+                    i = i % 6
+                    
+                    if i == 0 then r, g, b = v, t, p
+                    elseif i == 1 then r, g, b = q, v, p
+                    elseif i == 2 then r, g, b = p, v, t
+                    elseif i == 3 then r, g, b = p, q, v
+                    elseif i == 4 then r, g, b = t, p, v
+                    elseif i == 5 then r, g, b = v, p, q
+                    end
+                    
+                    return Color3.fromRGB(r * 255, g * 255, b * 255)
+                end
+                
+                -- RGB to Hex
+                local function RGBtoHex(color)
+                    local r = math.round(color.R * 255)
+                    local g = math.round(color.G * 255)
+                    local b = math.round(color.B * 255)
+                    return string.format("#%02X%02X%02X", r, g, b)
+                end
+                
+                -- Convert initial color to HSV
+                HSV = RGBtoHSV(defaultColor)
+                
+                -- Update the color display and call callback
+                local function UpdateColor()
+                    SelectedColor = HSVtoRGB(HSV)
+                    ColorDisplay.BackgroundColor3 = SelectedColor
+                    SVCanvas.BackgroundColor3 = HSVtoRGB({ H = HSV.H, S = 1, V = 1 })
+                    
+                    local r = math.round(SelectedColor.R * 255)
+                    local g = math.round(SelectedColor.G * 255)
+                    local b = math.round(SelectedColor.B * 255)
+                    
+                    RGBLabel.Text = string.format("RGB: %d, %d, %d", r, g, b)
+                    HexLabel.Text = "Hex: " .. RGBtoHex(SelectedColor)
+                    
+                    task.spawn(function()
+                        callback(SelectedColor)
+                    end)
+                end
+                
+                -- Update interface elements
+                local function UpdateInterface()
+                    -- Update SV selector position
+                    SVSelector.Position = UDim2.new(HSV.S, 0, 1 - HSV.V, 0)
+                    
+                    -- Update Hue slider position
+                    HueKnob.Position = UDim2.new(HSV.H, 0, 0.5, 0)
+                end
+                
+                -- Toggle popup visibility
+                local function TogglePopup()
+                    IsOpen = not IsOpen
+                    ColorPickerPopup.Visible = IsOpen
+                end
+                
+                -- Handle SV canvas interaction
+                local function SVCanvasInteraction(input)
+                    local connection
+                    
+                    local function UpdateSV(input)
+                        local canvasPos = SVCanvas.AbsolutePosition
+                        local canvasSize = SVCanvas.AbsoluteSize
+                        local mousePos = input.Position
+                        
+                        local saturation = math.clamp((mousePos.X - canvasPos.X) / canvasSize.X, 0, 1)
+                        local value = 1 - math.clamp((mousePos.Y - canvasPos.Y) / canvasSize.Y, 0, 1)
+                        
+                        HSV.S = saturation
+                        HSV.V = value
+                        
+                        UpdateInterface()
+                        UpdateColor()
+                    end
+                    
+                    -- Initial update
+                    UpdateSV(input)
+                    
+                    -- Continue updating while mouse is down
+                    connection = UserInputService.InputChanged:Connect(function(input)
+                        if input.UserInputType == Enum.UserInputType.MouseMovement or 
+                        input.UserInputType == Enum.UserInputType.Touch then
+                            UpdateSV(input)
+                        end
+                    end)
+                    
+                    -- Clean up when input ends
+                    local endConnection
+                    endConnection = UserInputService.InputEnded:Connect(function(input)
+                        if input.UserInputType == Enum.UserInputType.MouseButton1 or
+                        input.UserInputType == Enum.UserInputType.Touch then
+                            if connection then
+                                connection:Disconnect()
+                            end
+                            endConnection:Disconnect()
+                        end
+                    end)
+                end
+                
+                -- Handle Hue slider interaction
+                local function HueSliderInteraction(input)
+                    local connection
+                    
+                    local function UpdateHue(input)
+                        local sliderPos = HueSlider.AbsolutePosition.X
+                        local sliderWidth = HueSlider.AbsoluteSize.X
+                        local mousePos = input.Position.X
+                        
+                        local hueValue = math.clamp((mousePos - sliderPos) / sliderWidth, 0, 1)
+                        HSV.H = hueValue
+                        
+                        UpdateInterface()
+                        UpdateColor()
+                    end
+                    
+                    -- Initial update
+                    UpdateHue(input)
+                    
+                    -- Continue updating while mouse is down
+                    connection = UserInputService.InputChanged:Connect(function(input)
+                        if input.UserInputType == Enum.UserInputType.MouseMovement or 
+                        input.UserInputType == Enum.UserInputType.Touch then
+                            UpdateHue(input)
+                        end
+                    end)
+                    
+                    -- Clean up when input ends
+                    local endConnection
+                    endConnection = UserInputService.InputEnded:Connect(function(input)
+                        if input.UserInputType == Enum.UserInputType.MouseButton1 or
+                        input.UserInputType == Enum.UserInputType.Touch then
+                            if connection then
+                                connection:Disconnect()
+                            end
+                            endConnection:Disconnect()
+                        end
+                    end)
+                end
+                
+                -- Connect events
+                ColorDisplay.MouseButton1Click:Connect(TogglePopup)
+                
+                SVCanvas.InputBegan:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+                    input.UserInputType == Enum.UserInputType.Touch then
+                        SVCanvasInteraction(input)
+                    end
+                end)
+                
+                HueSlider.InputBegan:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+                    input.UserInputType == Enum.UserInputType.Touch then
+                        HueSliderInteraction(input)
+                    end
+                end)
+                
+                -- Close popup when clicking outside
+                UserInputService.InputBegan:Connect(function(input)
+                    if not IsOpen then return end
+                    if input.UserInputType ~= Enum.UserInputType.MouseButton1 and 
+                    input.UserInputType ~= Enum.UserInputType.Touch then return end
+                    
+                    local mousePos = input.Position
+                    
+                    -- Check if click is inside popup or ColorDisplay
+                    local isInsidePopup = mousePos.X >= ColorPickerPopup.AbsolutePosition.X and
+                                        mousePos.X <= ColorPickerPopup.AbsolutePosition.X + ColorPickerPopup.AbsoluteSize.X and
+                                        mousePos.Y >= ColorPickerPopup.AbsolutePosition.Y and
+                                        mousePos.Y <= ColorPickerPopup.AbsolutePosition.Y + ColorPickerPopup.AbsoluteSize.Y
+                                        
+                    local isInsideButton = mousePos.X >= ColorDisplay.AbsolutePosition.X and
+                                        mousePos.X <= ColorDisplay.AbsolutePosition.X + ColorDisplay.AbsoluteSize.X and
+                                        mousePos.Y >= ColorDisplay.AbsolutePosition.Y and
+                                        mousePos.Y <= ColorDisplay.AbsolutePosition.Y + ColorDisplay.AbsoluteSize.Y
+                    
+                    if not isInsidePopup and not isInsideButton then
+                        TogglePopup()
+                    end
+                end)
+                
+                -- Initialize display
+                UpdateInterface()
+                UpdateColor()
+                
+                -- Create ripple effect for clickable elements
+                CreateRipple(ColorDisplay)
+                
+                -- ColorPicker Object with API
+                local ColorPickerObject = {
+                    Instance = ColorPicker,
+                    Get = function()
+                        return SelectedColor
+                    end,
+                    Set = function(self, color)
+                        HSV = RGBtoHSV(color)
+                        UpdateInterface()
+                        UpdateColor()
+                        return self
+                    end,
+                    SetRGB = function(self, r, g, b)
+                        local color = Color3.fromRGB(r, g, b)
+                        return self:Set(color)
+                    end,
+                    SetHex = function(self, hex)
+                        if hex:sub(1, 1) == "#" then
+                            hex = hex:sub(2)
+                        end
+                        
+                        if #hex == 6 then
+                            local r = tonumber(hex:sub(1, 2), 16) or 255
+                            local g = tonumber(hex:sub(3, 4), 16) or 255
+                            local b = tonumber(hex:sub(5, 6), 16) or 255
+                            
+                            return self:SetRGB(r, g, b)
+                        end
+                        
+                        return self
+                    end,
+                    SetHSV = function(self, h, s, v)
+                        HSV = { H = h, S = s, V = v }
+                        UpdateInterface()
+                        UpdateColor()
+                        return self
+                    end,
+                    Toggle = function(self)
+                        TogglePopup()
+                        return self
+                    end
+                }
+                
+                table.insert(SectionObject.Elements, ColorPickerObject)
+                return ColorPickerObject
+            end
             
             -- Add more UI elements here like AddToggle, AddSlider, etc.
 
