@@ -1334,6 +1334,7 @@ function NurkUI:CreateWindow(title)
                 Paragraph.BackgroundTransparency = 0.6
                 Paragraph.Size = UDim2.new(1, 0, 0, 60) -- Initial height, will resize based on content
                 Paragraph.ZIndex = 4
+                Paragraph.AutomaticSize = Enum.AutomaticSize.Y -- Allow automatic vertical sizing
                 Paragraph.Parent = SectionContent
                 
                 local ParagraphCorner = Instance.new("UICorner")
@@ -1369,40 +1370,14 @@ function NurkUI:CreateWindow(title)
                 ParagraphContent.TextXAlignment = Enum.TextXAlignment.Left
                 ParagraphContent.TextYAlignment = Enum.TextYAlignment.Top
                 ParagraphContent.TextWrapped = true
+                ParagraphContent.AutomaticSize = Enum.AutomaticSize.Y -- This ensures all content is shown
                 ParagraphContent.ZIndex = 4
                 ParagraphContent.Parent = Paragraph
                 
-                -- Auto-resize based on text content
-                local function UpdateSize()
-                    -- Get text bounds
-                    local titleTextSize = TextService:GetTextSize(
-                        ParagraphTitle.Text,
-                        ParagraphTitle.TextSize,
-                        ParagraphTitle.Font,
-                        Vector2.new(ParagraphTitle.AbsoluteSize.X, math.huge)
-                    )
-                    
-                    local contentTextSize = TextService:GetTextSize(
-                        ParagraphContent.Text,
-                        ParagraphContent.TextSize,
-                        ParagraphContent.Font,
-                        Vector2.new(ParagraphContent.AbsoluteSize.X, math.huge)
-                    )
-                    
-                    -- Calculate content height with padding
-                    local contentHeight = math.max(25, contentTextSize.Y + 10)
-                    ParagraphContent.Size = UDim2.new(1, -20, 0, contentHeight)
-                    
-                    -- Update overall container height
-                    Paragraph.Size = UDim2.new(1, 0, 0, 35 + contentHeight)
-                end
-                
-                -- Set up auto-resize when text changes
-                ParagraphTitle:GetPropertyChangedSignal("Text"):Connect(UpdateSize)
-                ParagraphContent:GetPropertyChangedSignal("Text"):Connect(UpdateSize)
-                
-                -- Initial size update
-                task.defer(UpdateSize)
+                -- Add padding at the bottom
+                local BottomPadding = Instance.new("UIPadding")
+                BottomPadding.PaddingBottom = UDim.new(0, 10)
+                BottomPadding.Parent = Paragraph
                 
                 -- Paragraph Object with API
                 local ParagraphObject = {
@@ -1424,6 +1399,16 @@ function NurkUI:CreateWindow(title)
                         return self
                     end
                 }
+                
+                task.spawn(function()
+                    -- Give the layout system time to update
+                    task.wait(0.1)
+                    
+                    -- Ensure the section parent updates its layout after the paragraph resizes
+                    if ContentLayout then
+                        ContentLayout:ApplyLayout()
+                    end
+                end)
                 
                 table.insert(SectionObject.Elements, ParagraphObject)
                 return ParagraphObject
