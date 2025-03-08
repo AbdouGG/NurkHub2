@@ -1041,6 +1041,239 @@ function NurkUI:CreateWindow(title)
                 table.insert(SectionObject.Elements, DropdownObject)
                 return DropdownObject
             end
+
+            -- Add Slider method for SectionObject
+            function SectionObject:AddSlider(sliderText, min, max, default, increment, callback)
+                min = min or 0
+                max = max or 100
+                default = default or min
+                increment = increment or 1
+                callback = callback or function() end
+                
+                -- Ensure default value is within bounds and properly incremented
+                default = math.clamp(default, min, max)
+                default = math.floor((default - min) / increment + 0.5) * increment + min
+                
+                -- Create Slider Container
+                local Slider = Instance.new("Frame")
+                Slider.Name = "Slider_" .. sliderText
+                Slider.BackgroundColor3 = Settings.Theme.Primary
+                Slider.BackgroundTransparency = 0.4
+                Slider.Size = UDim2.new(1, 0, 0, 50)
+                Slider.ZIndex = 4
+                Slider.Parent = SectionContent
+                
+                local SliderCorner = Instance.new("UICorner")
+                SliderCorner.CornerRadius = UDim.new(0, 4)
+                SliderCorner.Parent = Slider
+                
+                -- Slider Label
+                local SliderLabel = Instance.new("TextLabel")
+                SliderLabel.Name = "SliderLabel"
+                SliderLabel.BackgroundTransparency = 1
+                SliderLabel.Position = UDim2.new(0, 10, 0, 0)
+                SliderLabel.Size = UDim2.new(1, -20, 0, 20)
+                SliderLabel.Font = Settings.Font
+                SliderLabel.Text = sliderText
+                SliderLabel.TextColor3 = Settings.Theme.Text
+                SliderLabel.TextSize = 14
+                SliderLabel.TextXAlignment = Enum.TextXAlignment.Left
+                SliderLabel.ZIndex = 4
+                SliderLabel.Parent = Slider
+                
+                -- Value Display
+                local ValueDisplay = Instance.new("TextLabel")
+                ValueDisplay.Name = "ValueDisplay"
+                ValueDisplay.BackgroundTransparency = 1
+                ValueDisplay.Position = UDim2.new(1, -60, 0, 0)
+                ValueDisplay.Size = UDim2.new(0, 50, 0, 20)
+                ValueDisplay.Font = Settings.Font
+                ValueDisplay.Text = tostring(default)
+                ValueDisplay.TextColor3 = Settings.Theme.SubText
+                ValueDisplay.TextSize = 14
+                ValueDisplay.TextXAlignment = Enum.TextXAlignment.Right
+                ValueDisplay.ZIndex = 4
+                ValueDisplay.Parent = Slider
+                
+                -- Slider Background
+                local SliderBackground = Instance.new("Frame")
+                SliderBackground.Name = "SliderBackground"
+                SliderBackground.BackgroundColor3 = Settings.Theme.Secondary
+                SliderBackground.Position = UDim2.new(0, 10, 0, 30)
+                SliderBackground.Size = UDim2.new(1, -20, 0, 5)
+                SliderBackground.ZIndex = 4
+                SliderBackground.Parent = Slider
+                
+                local SliderBackgroundCorner = Instance.new("UICorner")
+                SliderBackgroundCorner.CornerRadius = UDim.new(1, 0)
+                SliderBackgroundCorner.Parent = SliderBackground
+                
+                -- Slider Fill
+                local SliderFill = Instance.new("Frame")
+                SliderFill.Name = "SliderFill"
+                SliderFill.BackgroundColor3 = Settings.Theme.Accent
+                SliderFill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
+                SliderFill.ZIndex = 5
+                SliderFill.Parent = SliderBackground
+                
+                local SliderFillCorner = Instance.new("UICorner")
+                SliderFillCorner.CornerRadius = UDim.new(1, 0)
+                SliderFillCorner.Parent = SliderFill
+                
+                -- Slider Knob
+                local SliderKnob = Instance.new("Frame")
+                SliderKnob.Name = "SliderKnob"
+                SliderKnob.BackgroundColor3 = Settings.Theme.Text
+                SliderKnob.Position = UDim2.new(1, 0, 0.5, 0)
+                SliderKnob.AnchorPoint = Vector2.new(0.5, 0.5)
+                SliderKnob.Size = UDim2.new(0, 14, 0, 14)
+                SliderKnob.ZIndex = 6
+                SliderKnob.Parent = SliderFill
+                
+                local SliderKnobCorner = Instance.new("UICorner")
+                SliderKnobCorner.CornerRadius = UDim.new(1, 0)
+                SliderKnobCorner.Parent = SliderKnob
+                
+                -- Shadow effect for the knob
+                CreateShadow(SliderKnob, 4)
+                
+                -- Ripple effect for slider background
+                CreateRipple(SliderBackground)
+                
+                -- Current value tracking
+                local Value = default
+                
+                -- Format value display (handle decimals)
+                local function FormatValue(value)
+                    if increment >= 1 then
+                        return tostring(math.floor(value))
+                    else
+                        local decimalPlaces = math.max(0, -math.floor(math.log10(increment) + 0.5))
+                        return string.format("%." .. decimalPlaces .. "f", value)
+                    end
+                end
+                
+                -- Update slider visually and trigger callback
+                local function UpdateSlider(value, isUserInteraction)
+                    -- Clamp value between min and max
+                    value = math.clamp(value, min, max)
+                    
+                    -- Round to nearest increment
+                    value = math.floor((value - min) / increment + 0.5) * increment + min
+                    
+                    -- Store value
+                    Value = value
+                    
+                    -- Update value display
+                    ValueDisplay.Text = FormatValue(value)
+                    
+                    -- Update slider fill and knob position
+                    local percent = (value - min) / (max - min)
+                    SliderFill.Size = UDim2.new(percent, 0, 1, 0)
+                    
+                    -- Execute callback if this was triggered by user
+                    if isUserInteraction then
+                        task.spawn(function()
+                            callback(value)
+                        end)
+                    end
+                end
+                
+                -- Slider interaction
+                local function BeginSliding(input)
+                    local Connection
+                    
+                    local function UpdateFromMousePosition(input)
+                        local sliderPos = SliderBackground.AbsolutePosition.X
+                        local sliderWidth = SliderBackground.AbsoluteSize.X
+                        local mousePos = input.Position.X
+                        
+                        -- Calculate relative position and convert to value
+                        local relPos = math.clamp((mousePos - sliderPos) / sliderWidth, 0, 1)
+                        local newValue = min + (max - min) * relPos
+                        
+                        UpdateSlider(newValue, true)
+                    end
+                    
+                    -- Initial update
+                    UpdateFromMousePosition(input)
+                    
+                    -- Continue updating while mouse is down
+                    Connection = UserInputService.InputChanged:Connect(function(input)
+                        if input.UserInputType == Enum.UserInputType.MouseMovement or 
+                        input.UserInputType == Enum.UserInputType.Touch then
+                            UpdateFromMousePosition(input)
+                        end
+                    end)
+                    
+                    -- Clean up when input ends
+                    local EndConnection
+                    EndConnection = UserInputService.InputEnded:Connect(function(input)
+                        if input.UserInputType == Enum.UserInputType.MouseButton1 or
+                        input.UserInputType == Enum.UserInputType.Touch then
+                            if Connection then
+                                Connection:Disconnect()
+                            end
+                            EndConnection:Disconnect()
+                        end
+                    end)
+                end
+                
+                -- Connect events
+                SliderBackground.InputBegan:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+                    input.UserInputType == Enum.UserInputType.Touch then
+                        BeginSliding(input)
+                    end
+                end)
+                
+                SliderKnob.InputBegan:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+                    input.UserInputType == Enum.UserInputType.Touch then
+                        BeginSliding(input)
+                    end
+                end)
+                
+                -- Hover effects for slider background
+                SliderBackground.MouseEnter:Connect(function()
+                    TweenService:Create(SliderKnob, TweenInfo.new(0.2), {
+                        Size = UDim2.new(0, 16, 0, 16)
+                    }):Play()
+                end)
+                
+                SliderBackground.MouseLeave:Connect(function()
+                    TweenService:Create(SliderKnob, TweenInfo.new(0.2), {
+                        Size = UDim2.new(0, 14, 0, 14)
+                    }):Play()
+                end)
+                
+                -- Slider Object with API
+                local SliderObject = {
+                    Instance = Slider,
+                    Get = function()
+                        return Value
+                    end,
+                    Set = function(self, value, runCallback)
+                        UpdateSlider(value, runCallback == true)
+                        return self
+                    end,
+                    SetRange = function(self, newMin, newMax)
+                        min = newMin
+                        max = newMax
+                        Value = math.clamp(Value, min, max)
+                        UpdateSlider(Value, false)
+                        return self
+                    end,
+                    SetIncrement = function(self, newIncrement)
+                        increment = newIncrement
+                        UpdateSlider(Value, false)
+                        return self
+                    end
+                }
+                
+                table.insert(SectionObject.Elements, SliderObject)
+                return SliderObject
+            end
             
             -- Add more UI elements here like AddToggle, AddSlider, etc.
 
