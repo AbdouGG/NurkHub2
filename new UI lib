@@ -225,14 +225,54 @@ function NurkUI:CreateFloatingButton()
     -- Toggle functionality
     local UIVisible = true
     local MainUI = nil
+    local MainFrame = nil
     
     -- Store a reference to the MainUI to toggle
+    -- We need to store this when creating a window
+    
+    -- Function to toggle UI visibility
+    local function ToggleUI()
+        if not MainUI or not MainFrame then return end
+        
+        UIVisible = not UIVisible
+        
+        if UIVisible then
+            -- Show UI with animation
+            MainUI.Enabled = true
+            MainFrame.Visible = true
+            TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+                Size = UDim2.new(0, 500, 0, 350),
+                Position = UDim2.new(0.5, -250, 0.5, -175),
+                BackgroundTransparency = 1 - Settings.Transparency
+            }):Play()
+            
+            TweenService:Create(ButtonIcon, TweenInfo.new(0.3), {
+                Rotation = 0
+            }):Play()
+        else
+            -- Hide UI with animation
+            TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+                Size = UDim2.new(0, MainFrame.Size.X.Offset, 0, 0),
+                Position = UDim2.new(MainFrame.Position.X.Scale, MainFrame.Position.X.Offset, MainFrame.Position.Y.Scale, MainFrame.Position.Y.Offset + (MainFrame.Size.Y.Offset / 2)),
+                BackgroundTransparency = 1
+            }):Play()
+            
+            TweenService:Create(ButtonIcon, TweenInfo.new(0.3), {
+                Rotation = 45
+            }):Play()
+            
+            task.wait(0.3)
+            MainFrame.Visible = false
+        end
+    end
+    
     ButtonDetector.MouseButton1Click:Connect(function()
         if not MainUI then
             -- Find the NurkHubUI
             for _, v in pairs(CoreGui:GetChildren()) do
                 if v.Name == "NurkHubUI" then
                     MainUI = v
+                    MainFrame = v:FindFirstChild("MainFrame")
                     break
                 end
             end
@@ -242,40 +282,26 @@ function NurkUI:CreateFloatingButton()
                 for _, v in pairs(game.Players.LocalPlayer.PlayerGui:GetChildren()) do
                     if v.Name == "NurkHubUI" then
                         MainUI = v
+                        MainFrame = v:FindFirstChild("MainFrame")
                         break
                     end
                 end
             end
         end
         
-        if MainUI then
-            UIVisible = not UIVisible
-            
-            if UIVisible then
-                -- Show UI
-                MainUI.Enabled = true
-                TweenService:Create(ButtonIcon, TweenInfo.new(0.3), {
-                    Rotation = 0
-                }):Play()
-            else
-                -- Hide UI
-                MainUI.Enabled = false
-                TweenService:Create(ButtonIcon, TweenInfo.new(0.3), {
-                    Rotation = 45
-                }):Play()
-            end
-            
-            -- Animate the button
-            TweenService:Create(FloatingButton, TweenInfo.new(0.2), {
-                Size = UDim2.new(0, 45, 0, 45)
-            }):Play()
-            
-            task.wait(0.1)
-            
-            TweenService:Create(FloatingButton, TweenInfo.new(0.2), {
-                Size = UDim2.new(0, 50, 0, 50)
-            }):Play()
-        end
+        -- Animate the button click
+        TweenService:Create(FloatingButton, TweenInfo.new(0.2), {
+            Size = UDim2.new(0, 45, 0, 45)
+        }):Play()
+        
+        task.wait(0.1)
+        
+        TweenService:Create(FloatingButton, TweenInfo.new(0.2), {
+            Size = UDim2.new(0, 50, 0, 50)
+        }):Play()
+        
+        -- Toggle the UI
+        ToggleUI()
     end)
     
     -- Button hover effects
@@ -300,6 +326,7 @@ function NurkUI:CreateFloatingButton()
     NurkUI.CreateWindow = function(self, title)
         local Window = OldCreateWindow(self, title)
         MainUI = Window.GUI
+        MainFrame = Window.Frame
         return Window
     end
     
