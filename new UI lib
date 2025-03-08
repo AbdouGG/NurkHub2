@@ -2213,6 +2213,207 @@ function NurkUI:CreateWindow(title)
                 return AutoFarmFieldObject
             end
 
+            -- Add Notification method for SectionObject
+            function SectionObject:AddNotification(notificationText, notificationType, duration)
+                notificationType = notificationType or "Info" -- Default type: Info, Success, Warning, Error
+                duration = duration or 3 -- Default duration in seconds
+                
+                -- Map notification types to colors
+                local typeColors = {
+                    Info = Color3.fromRGB(70, 130, 180),      -- Steel Blue
+                    Success = Color3.fromRGB(60, 179, 113),   -- Medium Sea Green
+                    Warning = Color3.fromRGB(255, 165, 0),    -- Orange
+                    Error = Color3.fromRGB(220, 20, 60)       -- Crimson
+                }
+                
+                local iconText = {
+                    Info = "ℹ️",
+                    Success = "✓",
+                    Warning = "⚠️",
+                    Error = "✕"
+                }
+                
+                -- Get color based on type or default to Info
+                local notificationColor = typeColors[notificationType] or typeColors.Info
+                local iconSymbol = iconText[notificationType] or iconText.Info
+                
+                -- Create Notification Container
+                local Notification = Instance.new("Frame")
+                Notification.Name = "Notification"
+                Notification.BackgroundColor3 = Settings.Theme.Secondary
+                Notification.BackgroundTransparency = 0.1
+                Notification.Size = UDim2.new(0, 280, 0, 70)
+                Notification.Position = UDim2.new(1, 20, 0.5, 0) -- Start off-screen
+                Notification.AnchorPoint = Vector2.new(0, 0.5)
+                Notification.ZIndex = 100
+                Notification.Parent = game.CoreGui:FindFirstChild("UI Library") or game.Players.LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild("UI Library")
+                
+                local NotificationCorner = Instance.new("UICorner")
+                NotificationCorner.CornerRadius = UDim.new(0, 6)
+                NotificationCorner.Parent = Notification
+                
+                -- Add a border accent
+                local AccentBar = Instance.new("Frame")
+                AccentBar.Name = "AccentBar"
+                AccentBar.BackgroundColor3 = notificationColor
+                AccentBar.Size = UDim2.new(0, 4, 1, 0)
+                AccentBar.Position = UDim2.new(0, 0, 0, 0)
+                AccentBar.ZIndex = 101
+                AccentBar.Parent = Notification
+                
+                local AccentCorner = Instance.new("UICorner")
+                AccentCorner.CornerRadius = UDim.new(0, 6)
+                AccentCorner.Parent = AccentBar
+                
+                -- Shadow for notification
+                CreateShadow(Notification, 10)
+                
+                -- Icon container
+                local IconContainer = Instance.new("Frame")
+                IconContainer.Name = "IconContainer"
+                IconContainer.BackgroundColor3 = notificationColor
+                IconContainer.BackgroundTransparency = 0.8
+                IconContainer.Size = UDim2.new(0, 36, 0, 36)
+                IconContainer.Position = UDim2.new(0, 14, 0.5, 0)
+                IconContainer.AnchorPoint = Vector2.new(0, 0.5)
+                IconContainer.ZIndex = 101
+                IconContainer.Parent = Notification
+                
+                local IconCorner = Instance.new("UICorner")
+                IconCorner.CornerRadius = UDim.new(1, 0)
+                IconCorner.Parent = IconContainer
+                
+                -- Notification Icon
+                local Icon = Instance.new("TextLabel")
+                Icon.Name = "NotificationIcon"
+                Icon.BackgroundTransparency = 1
+                Icon.Size = UDim2.new(1, 0, 1, 0)
+                Icon.Font = Enum.Font.GothamBold
+                Icon.Text = iconSymbol
+                Icon.TextColor3 = notificationColor
+                Icon.TextSize = 18
+                Icon.ZIndex = 102
+                Icon.Parent = IconContainer
+                
+                -- Notification Title
+                local Title = Instance.new("TextLabel")
+                Title.Name = "NotificationTitle"
+                Title.BackgroundTransparency = 1
+                Title.Position = UDim2.new(0, 60, 0, 10)
+                Title.Size = UDim2.new(1, -80, 0, 20)
+                Title.Font = Settings.Font
+                Title.Text = notificationType
+                Title.TextColor3 = notificationColor
+                Title.TextSize = 16
+                Title.TextXAlignment = Enum.TextXAlignment.Left
+                Title.ZIndex = 101
+                Title.Parent = Notification
+                
+                -- Notification Text
+                local Text = Instance.new("TextLabel")
+                Text.Name = "NotificationText"
+                Text.BackgroundTransparency = 1
+                Text.Position = UDim2.new(0, 60, 0, 32)
+                Text.Size = UDim2.new(1, -80, 0, 30)
+                Text.Font = Settings.Font
+                Text.Text = notificationText
+                Text.TextColor3 = Settings.Theme.Text
+                Text.TextSize = 14
+                Text.TextWrapped = true
+                Text.TextXAlignment = Enum.TextXAlignment.Left
+                Text.ZIndex = 101
+                Text.Parent = Notification
+                
+                -- Close button
+                local CloseButton = Instance.new("TextButton")
+                CloseButton.Name = "CloseButton"
+                CloseButton.BackgroundTransparency = 1
+                CloseButton.Position = UDim2.new(1, -30, 0, 10)
+                CloseButton.Size = UDim2.new(0, 20, 0, 20)
+                CloseButton.Font = Enum.Font.GothamBold
+                CloseButton.Text = "×"
+                CloseButton.TextColor3 = Settings.Theme.SubText
+                CloseButton.TextSize = 20
+                CloseButton.ZIndex = 102
+                CloseButton.Parent = Notification
+                
+                -- Progress bar
+                local ProgressBarBackground = Instance.new("Frame")
+                ProgressBarBackground.Name = "ProgressBarBackground"
+                ProgressBarBackground.BackgroundColor3 = Settings.Theme.Primary
+                ProgressBarBackground.BackgroundTransparency = 0.7
+                ProgressBarBackground.Size = UDim2.new(1, 0, 0, 4)
+                ProgressBarBackground.Position = UDim2.new(0, 0, 1, -4)
+                ProgressBarBackground.ZIndex = 101
+                ProgressBarBackground.Parent = Notification
+                
+                local ProgressBar = Instance.new("Frame")
+                ProgressBar.Name = "ProgressBar"
+                ProgressBar.BackgroundColor3 = notificationColor
+                ProgressBar.Size = UDim2.new(1, 0, 1, 0)
+                ProgressBar.ZIndex = 102
+                ProgressBar.Parent = ProgressBarBackground
+                
+                -- Animation functions
+                local function AnimateIn()
+                    TweenService:Create(Notification, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+                        Position = UDim2.new(1, -300, 0.5, 0)
+                    }):Play()
+                end
+                
+                local function AnimateOut()
+                    local outTween = TweenService:Create(Notification, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.In), {
+                        Position = UDim2.new(1, 20, 0.5, 0)
+                    })
+                    outTween:Play()
+                    
+                    outTween.Completed:Connect(function()
+                        Notification:Destroy()
+                    end)
+                end
+                
+                -- Close button functionality
+                CloseButton.MouseButton1Click:Connect(function()
+                    AnimateOut()
+                end)
+                
+                -- Mouse hover effects
+                CloseButton.MouseEnter:Connect(function()
+                    TweenService:Create(CloseButton, TweenInfo.new(0.2), {
+                        TextColor3 = Settings.Theme.Text
+                    }):Play()
+                end)
+                
+                CloseButton.MouseLeave:Connect(function()
+                    TweenService:Create(CloseButton, TweenInfo.new(0.2), {
+                        TextColor3 = Settings.Theme.SubText
+                    }):Play()
+                end)
+                
+                -- Animate progress bar
+                TweenService:Create(ProgressBar, TweenInfo.new(duration, Enum.EasingStyle.Linear), {
+                    Size = UDim2.new(0, 0, 1, 0)
+                }):Play()
+                
+                -- Show notification
+                AnimateIn()
+                
+                -- Auto-close after duration
+                task.delay(duration, function()
+                    AnimateOut()
+                end)
+                
+                -- Return notification object with API
+                local NotificationObject = {
+                    Instance = Notification,
+                    Close = function()
+                        AnimateOut()
+                    end
+                }
+                
+                return NotificationObject
+            end
+
             -- Add more UI elements here like AddToggle, AddSlider, etc.
 
 
