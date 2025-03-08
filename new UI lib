@@ -1274,6 +1274,54 @@ function NurkUI:CreateWindow(title)
                 table.insert(SectionObject.Elements, SliderObject)
                 return SliderObject
             end
+
+            -- Add Label method for SectionObject
+            function SectionObject:AddLabel(labelText, textColor)
+                textColor = textColor or Settings.Theme.Text
+                
+                -- Create Label
+                local Label = Instance.new("Frame")
+                Label.Name = "Label_" .. labelText
+                Label.BackgroundColor3 = Settings.Theme.Primary
+                Label.BackgroundTransparency = 0.7
+                Label.Size = UDim2.new(1, 0, 0, 30)
+                Label.ZIndex = 4
+                Label.Parent = SectionContent
+                
+                local LabelCorner = Instance.new("UICorner")
+                LabelCorner.CornerRadius = UDim.new(0, 4)
+                LabelCorner.Parent = Label
+                
+                local LabelText = Instance.new("TextLabel")
+                LabelText.Name = "LabelText"
+                LabelText.BackgroundTransparency = 1
+                LabelText.Position = UDim2.new(0, 10, 0, 0)
+                LabelText.Size = UDim2.new(1, -20, 1, 0)
+                LabelText.Font = Settings.Font
+                LabelText.Text = labelText
+                LabelText.TextColor3 = textColor
+                LabelText.TextSize = 14
+                LabelText.TextXAlignment = Enum.TextXAlignment.Left
+                LabelText.TextWrapped = true
+                LabelText.ZIndex = 4
+                LabelText.Parent = Label
+                
+                -- Label Object with API
+                local LabelObject = {
+                    Instance = Label,
+                    Set = function(self, text)
+                        LabelText.Text = text
+                        return self
+                    end,
+                    SetColor = function(self, color)
+                        LabelText.TextColor3 = color
+                        return self
+                    end
+                }
+                
+                table.insert(SectionObject.Elements, LabelObject)
+                return LabelObject
+            end
             
             -- Add more UI elements here like AddToggle, AddSlider, etc.
 
