@@ -418,6 +418,161 @@ function NurkUI:CreateWindow(title)
         TabObject.Button = TabButton
         TabObject.Content = TabContent
         TabObject.Elements = {}
+        TabObject.SectionCount = 0
+        
+        -- Add Section method for TabObject
+        function TabObject:AddSection(sectionName)
+            TabObject.SectionCount = TabObject.SectionCount + 1
+            local sectionIndex = TabObject.SectionCount
+            
+            -- Create Section Container
+            local SectionFrame = Instance.new("Frame")
+            SectionFrame.Name = "Section_" .. sectionName
+            SectionFrame.BackgroundColor3 = Settings.Theme.Secondary
+            SectionFrame.BackgroundTransparency = 0.2
+            SectionFrame.Size = UDim2.new(1, -20, 0, 36) -- Will be resized by contents
+            SectionFrame.ZIndex = 2
+            SectionFrame.Parent = TabContent
+            
+            local SectionCorner = Instance.new("UICorner")
+            SectionCorner.CornerRadius = UDim.new(0, 6)
+            SectionCorner.Parent = SectionFrame
+            
+            -- Section Header
+            local SectionHeader = Instance.new("Frame")
+            SectionHeader.Name = "SectionHeader"
+            SectionHeader.BackgroundColor3 = Settings.Theme.Accent
+            SectionHeader.BackgroundTransparency = 0.7
+            SectionHeader.Size = UDim2.new(1, 0, 0, 30)
+            SectionHeader.ZIndex = 3
+            SectionHeader.Parent = SectionFrame
+            
+            local SectionHeaderCorner = Instance.new("UICorner")
+            SectionHeaderCorner.CornerRadius = UDim.new(0, 6)
+            SectionHeaderCorner.Parent = SectionHeader
+            
+            local SectionTitle = Instance.new("TextLabel")
+            SectionTitle.Name = "SectionTitle"
+            SectionTitle.BackgroundTransparency = 1
+            SectionTitle.Position = UDim2.new(0, 10, 0, 0)
+            SectionTitle.Size = UDim2.new(1, -20, 1, 0)
+            SectionTitle.Font = Settings.Font
+            SectionTitle.Text = sectionName
+            SectionTitle.TextColor3 = Settings.Theme.Text
+            SectionTitle.TextSize = 14
+            SectionTitle.TextXAlignment = Enum.TextXAlignment.Left
+            SectionTitle.ZIndex = 3
+            SectionTitle.Parent = SectionHeader
+            
+            -- Bottom Corner Fix
+            local CornerFix = Instance.new("Frame")
+            CornerFix.Name = "CornerFix"
+            CornerFix.BackgroundColor3 = Settings.Theme.Accent
+            CornerFix.BackgroundTransparency = 0.7
+            CornerFix.BorderSizePixel = 0
+            CornerFix.Position = UDim2.new(0, 0, 1, -5)
+            CornerFix.Size = UDim2.new(1, 0, 0, 5)
+            CornerFix.ZIndex = 2
+            CornerFix.Parent = SectionHeader
+            
+            -- Section Content
+            local SectionContent = Instance.new("Frame")
+            SectionContent.Name = "SectionContent"
+            SectionContent.BackgroundTransparency = 1
+            SectionContent.Position = UDim2.new(0, 10, 0, 35)
+            SectionContent.Size = UDim2.new(1, -20, 1, -45)
+            SectionContent.ZIndex = 3
+            SectionContent.Parent = SectionFrame
+            
+            local ContentLayout = Instance.new("UIListLayout")
+            ContentLayout.Name = "ContentLayout"
+            ContentLayout.Padding = UDim.new(0, 8)
+            ContentLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+            ContentLayout.Parent = SectionContent
+            
+            -- Auto-resize section based on content
+            ContentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+                SectionFrame.Size = UDim2.new(1, -20, 0, ContentLayout.AbsoluteContentSize.Y + 45)
+            end)
+            
+            -- Section Object
+            local SectionObject = {}
+            SectionObject.Frame = SectionFrame
+            SectionObject.Content = SectionContent
+            SectionObject.Elements = {}
+            
+            -- Add Button method for SectionObject
+            function SectionObject:AddButton(buttonText, callback)
+                callback = callback or function() end
+                
+                -- Create Button
+                local Button = Instance.new("TextButton")
+                Button.Name = "Button_" .. buttonText
+                Button.BackgroundColor3 = Settings.Theme.Primary
+                Button.BackgroundTransparency = 0.4
+                Button.Size = UDim2.new(1, 0, 0, 36)
+                Button.Font = Settings.Font
+                Button.Text = buttonText
+                Button.TextColor3 = Settings.Theme.Text
+                Button.TextSize = 14
+                Button.ZIndex = 4
+                Button.Parent = SectionContent
+                Button.AutoButtonColor = false
+                
+                local ButtonCorner = Instance.new("UICorner")
+                ButtonCorner.CornerRadius = UDim.new(0, 4)
+                ButtonCorner.Parent = Button
+                
+                -- Create ripple effect
+                CreateRipple(Button)
+                
+                -- Button hover and click effects
+                Button.MouseEnter:Connect(function()
+                    TweenService:Create(Button, TweenInfo.new(0.2), {
+                        BackgroundColor3 = Settings.Theme.Accent
+                    }):Play()
+                end)
+                
+                Button.MouseLeave:Connect(function()
+                    TweenService:Create(Button, TweenInfo.new(0.2), {
+                        BackgroundColor3 = Settings.Theme.Primary
+                    }):Play()
+                end)
+                
+                Button.MouseButton1Click:Connect(function()
+                    -- Animation for click
+                    TweenService:Create(Button, TweenInfo.new(0.1), {
+                        BackgroundColor3 = Color3.fromRGB(
+                            Settings.Theme.Accent.R * 1.1,
+                            Settings.Theme.Accent.G * 1.1,
+                            Settings.Theme.Accent.B * 1.1
+                        ),
+                        Size = UDim2.new(0.98, 0, 0, 34)
+                    }):Play()
+                    
+                    task.spawn(callback) -- Execute callback in a separate thread
+                    
+                    task.wait(0.1)
+                    
+                    TweenService:Create(Button, TweenInfo.new(0.1), {
+                        BackgroundColor3 = Settings.Theme.Accent,
+                        Size = UDim2.new(1, 0, 0, 36)
+                    }):Play()
+                end)
+                
+                local ButtonObject = {
+                    Instance = Button
+                }
+                
+                table.insert(SectionObject.Elements, ButtonObject)
+                return ButtonObject
+            end
+            
+            -- Add more UI elements here like AddToggle, AddSlider, etc.
+            
+            table.insert(TabObject.Elements, SectionObject)
+            return SectionObject
+        end
         
         -- Add tab to window object
         WindowObject.Tabs[tabIndex] = TabObject
