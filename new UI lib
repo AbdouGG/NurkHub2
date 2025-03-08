@@ -567,8 +567,145 @@ function NurkUI:CreateWindow(title)
                 table.insert(SectionObject.Elements, ButtonObject)
                 return ButtonObject
             end
+
+            -- Add Toggle method for SectionObject
+            function SectionObject:AddToggle(toggleText, default, callback)
+                default = default or false
+                callback = callback or function() end
+                
+                -- Create Toggle Container
+                local Toggle = Instance.new("Frame")
+                Toggle.Name = "Toggle_" .. toggleText
+                Toggle.BackgroundColor3 = Settings.Theme.Primary
+                Toggle.BackgroundTransparency = 0.4
+                Toggle.Size = UDim2.new(1, 0, 0, 36)
+                Toggle.ZIndex = 4
+                Toggle.Parent = SectionContent
+                
+                local ToggleCorner = Instance.new("UICorner")
+                ToggleCorner.CornerRadius = UDim.new(0, 4)
+                ToggleCorner.Parent = Toggle
+                
+                -- Toggle Label
+                local ToggleLabel = Instance.new("TextLabel")
+                ToggleLabel.Name = "ToggleLabel"
+                ToggleLabel.BackgroundTransparency = 1
+                ToggleLabel.Position = UDim2.new(0, 10, 0, 0)
+                ToggleLabel.Size = UDim2.new(1, -50, 1, 0)
+                ToggleLabel.Font = Settings.Font
+                ToggleLabel.Text = toggleText
+                ToggleLabel.TextColor3 = Settings.Theme.Text
+                ToggleLabel.TextSize = 14
+                ToggleLabel.TextXAlignment = Enum.TextXAlignment.Left
+                ToggleLabel.ZIndex = 4
+                ToggleLabel.Parent = Toggle
+                
+                -- Toggle Switch Background
+                local ToggleBackground = Instance.new("Frame")
+                ToggleBackground.Name = "ToggleBackground"
+                ToggleBackground.BackgroundColor3 = Settings.Theme.Secondary
+                ToggleBackground.Position = UDim2.new(1, -40, 0.5, -8)
+                ToggleBackground.Size = UDim2.new(0, 36, 0, 16)
+                ToggleBackground.ZIndex = 4
+                ToggleBackground.Parent = Toggle
+                
+                local ToggleBackgroundCorner = Instance.new("UICorner")
+                ToggleBackgroundCorner.CornerRadius = UDim.new(1, 0)
+                ToggleBackgroundCorner.Parent = ToggleBackground
+                
+                -- Toggle Switch Knob
+                local ToggleKnob = Instance.new("Frame")
+                ToggleKnob.Name = "ToggleKnob"
+                ToggleKnob.BackgroundColor3 = Settings.Theme.Text
+                ToggleKnob.Position = UDim2.new(0, 2, 0.5, 0)
+                ToggleKnob.AnchorPoint = Vector2.new(0, 0.5)
+                ToggleKnob.Size = UDim2.new(0, 12, 0, 12)
+                ToggleKnob.ZIndex = 5
+                ToggleKnob.Parent = ToggleBackground
+                
+                local ToggleKnobCorner = Instance.new("UICorner")
+                ToggleKnobCorner.CornerRadius = UDim.new(1, 0)
+                ToggleKnobCorner.Parent = ToggleKnob
+                
+                -- Create ripple effect for the toggle
+                CreateRipple(Toggle)
+                
+                -- Toggle state and update function
+                local Enabled = default
+                
+                local function UpdateToggle()
+                    if Enabled then
+                        TweenService:Create(ToggleBackground, TweenInfo.new(0.2), {
+                            BackgroundColor3 = Settings.Theme.Accent
+                        }):Play()
+                        
+                        TweenService:Create(ToggleKnob, TweenInfo.new(0.2), {
+                            Position = UDim2.new(1, -14, 0.5, 0)
+                        }):Play()
+                    else
+                        TweenService:Create(ToggleBackground, TweenInfo.new(0.2), {
+                            BackgroundColor3 = Settings.Theme.Secondary
+                        }):Play()
+                        
+                        TweenService:Create(ToggleKnob, TweenInfo.new(0.2), {
+                            Position = UDim2.new(0, 2, 0.5, 0)
+                        }):Play()
+                    end
+                    
+                    -- Execute callback with current state
+                    task.spawn(function()
+                        callback(Enabled)
+                    end)
+                end
+                
+                -- Set initial state
+                UpdateToggle()
+                
+                -- Toggle interaction
+                Toggle.InputBegan:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                        Enabled = not Enabled
+                        UpdateToggle()
+                    end
+                end)
+                
+                -- Hover effects
+                Toggle.MouseEnter:Connect(function()
+                    TweenService:Create(Toggle, TweenInfo.new(0.2), {
+                        BackgroundColor3 = Color3.fromRGB(
+                            Settings.Theme.Primary.R * 1.1,
+                            Settings.Theme.Primary.G * 1.1,
+                            Settings.Theme.Primary.B * 1.1
+                        )
+                    }):Play()
+                end)
+                
+                Toggle.MouseLeave:Connect(function()
+                    TweenService:Create(Toggle, TweenInfo.new(0.2), {
+                        BackgroundColor3 = Settings.Theme.Primary
+                    }):Play()
+                end)
+                
+                -- Toggle Object with API
+                local ToggleObject = {
+                    Instance = Toggle,
+                    Set = function(self, state)
+                        Enabled = state
+                        UpdateToggle()
+                        return self
+                    end,
+                    Get = function()
+                        return Enabled
+                    end
+                }
+                
+                table.insert(SectionObject.Elements, ToggleObject)
+                return ToggleObject
+            end
             
             -- Add more UI elements here like AddToggle, AddSlider, etc.
+
+
             
             table.insert(TabObject.Elements, SectionObject)
             return SectionObject
