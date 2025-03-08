@@ -815,7 +815,7 @@ function NurkUI:CreateWindow(title)
                     Option.Text = optionText
                     Option.TextColor3 = Settings.Theme.Text
                     Option.TextSize = 14
-                    Option.ZIndex = 5
+                    Option.ZIndex = 999999
                     Option.Parent = DropdownContent
                     Option.AutoButtonColor = false
                     
@@ -1321,6 +1321,112 @@ function NurkUI:CreateWindow(title)
                 
                 table.insert(SectionObject.Elements, LabelObject)
                 return LabelObject
+            end
+
+            function SectionObject:AddParagraph(title, content)
+                title = title or "Title"
+                content = content or "Content"
+                
+                -- Create Paragraph Container
+                local Paragraph = Instance.new("Frame")
+                Paragraph.Name = "Paragraph_" .. title
+                Paragraph.BackgroundColor3 = Settings.Theme.Primary
+                Paragraph.BackgroundTransparency = 0.6
+                Paragraph.Size = UDim2.new(1, 0, 0, 60) -- Initial height, will resize based on content
+                Paragraph.ZIndex = 4
+                Paragraph.Parent = SectionContent
+                
+                local ParagraphCorner = Instance.new("UICorner")
+                ParagraphCorner.CornerRadius = UDim.new(0, 4)
+                ParagraphCorner.Parent = Paragraph
+                
+                -- Paragraph Title
+                local ParagraphTitle = Instance.new("TextLabel")
+                ParagraphTitle.Name = "ParagraphTitle"
+                ParagraphTitle.BackgroundTransparency = 1
+                ParagraphTitle.Position = UDim2.new(0, 10, 0, 5)
+                ParagraphTitle.Size = UDim2.new(1, -20, 0, 20)
+                ParagraphTitle.Font = Settings.Font
+                ParagraphTitle.Text = title
+                ParagraphTitle.TextColor3 = Settings.Theme.Text
+                ParagraphTitle.TextSize = 15
+                ParagraphTitle.TextXAlignment = Enum.TextXAlignment.Left
+                ParagraphTitle.TextWrapped = true
+                ParagraphTitle.FontFace = Font.fromEnum(Enum.Font.SourceSansBold)
+                ParagraphTitle.ZIndex = 4
+                ParagraphTitle.Parent = Paragraph
+                
+                -- Paragraph Content
+                local ParagraphContent = Instance.new("TextLabel")
+                ParagraphContent.Name = "ParagraphContent"
+                ParagraphContent.BackgroundTransparency = 1
+                ParagraphContent.Position = UDim2.new(0, 10, 0, 30)
+                ParagraphContent.Size = UDim2.new(1, -20, 0, 25)
+                ParagraphContent.Font = Settings.Font
+                ParagraphContent.Text = content
+                ParagraphContent.TextColor3 = Settings.Theme.SubText
+                ParagraphContent.TextSize = 14
+                ParagraphContent.TextXAlignment = Enum.TextXAlignment.Left
+                ParagraphContent.TextYAlignment = Enum.TextYAlignment.Top
+                ParagraphContent.TextWrapped = true
+                ParagraphContent.ZIndex = 4
+                ParagraphContent.Parent = Paragraph
+                
+                -- Auto-resize based on text content
+                local function UpdateSize()
+                    -- Get text bounds
+                    local titleTextSize = TextService:GetTextSize(
+                        ParagraphTitle.Text,
+                        ParagraphTitle.TextSize,
+                        ParagraphTitle.Font,
+                        Vector2.new(ParagraphTitle.AbsoluteSize.X, math.huge)
+                    )
+                    
+                    local contentTextSize = TextService:GetTextSize(
+                        ParagraphContent.Text,
+                        ParagraphContent.TextSize,
+                        ParagraphContent.Font,
+                        Vector2.new(ParagraphContent.AbsoluteSize.X, math.huge)
+                    )
+                    
+                    -- Calculate content height with padding
+                    local contentHeight = math.max(25, contentTextSize.Y + 10)
+                    ParagraphContent.Size = UDim2.new(1, -20, 0, contentHeight)
+                    
+                    -- Update overall container height
+                    Paragraph.Size = UDim2.new(1, 0, 0, 35 + contentHeight)
+                end
+                
+                -- Set up auto-resize when text changes
+                ParagraphTitle:GetPropertyChangedSignal("Text"):Connect(UpdateSize)
+                ParagraphContent:GetPropertyChangedSignal("Text"):Connect(UpdateSize)
+                
+                -- Initial size update
+                task.defer(UpdateSize)
+                
+                -- Paragraph Object with API
+                local ParagraphObject = {
+                    Instance = Paragraph,
+                    SetTitle = function(self, newTitle)
+                        ParagraphTitle.Text = newTitle
+                        return self
+                    end,
+                    SetContent = function(self, newContent)
+                        ParagraphContent.Text = newContent
+                        return self
+                    end,
+                    SetTitleColor = function(self, color)
+                        ParagraphTitle.TextColor3 = color
+                        return self
+                    end,
+                    SetContentColor = function(self, color)
+                        ParagraphContent.TextColor3 = color
+                        return self
+                    end
+                }
+                
+                table.insert(SectionObject.Elements, ParagraphObject)
+                return ParagraphObject
             end
             
             -- Add more UI elements here like AddToggle, AddSlider, etc.
