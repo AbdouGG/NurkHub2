@@ -214,14 +214,17 @@ function NurkUI:CreateFloatingButton()
     CreateRipple(FloatingButton)
     
     -- Toggle functionality
-    local MainGUI = nil
+    local MainGUIFrame = nil
     local GUIVisible = true
     
     -- Return the button controller
     return {
         Button = FloatingButton,
-        SetGUI = function(gui)
-            MainGUI = gui
+        SetGUI = function(windowObj)
+            -- Store the actual MainFrame from the window object
+            if windowObj and windowObj.Frame then
+                MainGUIFrame = windowObj.Frame
+            end
         end,
         Show = function()
             FloatingButton.Visible = true
@@ -230,14 +233,16 @@ function NurkUI:CreateFloatingButton()
             FloatingButton.Visible = false
         end,
         Toggle = function()
-            if MainGUI then
+            if MainGUIFrame then
                 GUIVisible = not GUIVisible
-                MainGUI.Visible = GUIVisible
                 
-                -- Change button appearance based on state
                 if GUIVisible then
+                    -- Show the UI
+                    MainGUIFrame.Visible = true
                     ButtonIcon.Text = "NH"
                 else
+                    -- Hide the UI
+                    MainGUIFrame.Visible = false
                     ButtonIcon.Text = "+"
                 end
             end
