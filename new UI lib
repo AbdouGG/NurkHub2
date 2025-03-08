@@ -227,9 +227,6 @@ function NurkUI:CreateFloatingButton()
     local MainUI = nil
     local MainFrame = nil
     
-    -- Store a reference to the MainUI to toggle
-    -- We need to store this when creating a window
-    
     -- Function to toggle UI visibility
     local function ToggleUI()
         if not MainUI or not MainFrame then return end
@@ -263,12 +260,23 @@ function NurkUI:CreateFloatingButton()
             
             task.wait(0.3)
             MainFrame.Visible = false
+            MainUI.Enabled = false
         end
     end
     
+    -- Store the window being created to access it later for toggling
+    local originalCreateWindow = NurkUI.CreateWindow
+    NurkUI.CreateWindow = function(self, title)
+        local Window = originalCreateWindow(self, title)
+        MainUI = Window.GUI
+        MainFrame = Window.Frame
+        return Window
+    end
+    
+    -- Button click handler
     ButtonDetector.MouseButton1Click:Connect(function()
+        -- Try to find the main UI if not set yet
         if not MainUI then
-            -- Find the NurkHubUI
             for _, v in pairs(CoreGui:GetChildren()) do
                 if v.Name == "NurkHubUI" then
                     MainUI = v
@@ -278,7 +286,7 @@ function NurkUI:CreateFloatingButton()
             end
             
             -- Also check PlayerGui as fallback
-            if not MainUI then
+            if not MainUI and game.Players.LocalPlayer then
                 for _, v in pairs(game.Players.LocalPlayer.PlayerGui:GetChildren()) do
                     if v.Name == "NurkHubUI" then
                         MainUI = v
@@ -301,7 +309,9 @@ function NurkUI:CreateFloatingButton()
         }):Play()
         
         -- Toggle the UI
-        ToggleUI()
+        if MainUI and MainFrame then
+            ToggleUI()
+        end
     end)
     
     -- Button hover effects
@@ -320,15 +330,6 @@ function NurkUI:CreateFloatingButton()
             BackgroundColor3 = Settings.Theme.Accent
         }):Play()
     end)
-    
-    -- Update the stored MainUI reference when creating a window
-    local OldCreateWindow = NurkUI.CreateWindow
-    NurkUI.CreateWindow = function(self, title)
-        local Window = OldCreateWindow(self, title)
-        MainUI = Window.GUI
-        MainFrame = Window.Frame
-        return Window
-    end
     
     return FloatingButton
 end
