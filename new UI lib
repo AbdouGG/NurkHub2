@@ -6,13 +6,8 @@ local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
 
+-- Create the UI module
 local NurkUI = {}
-local Window = {}
-local Tab = {}
-local Element = {}
-
-local SelectedTab = nil
-local TabCount = 0
 
 -- UI Settings
 local Settings = {
@@ -74,7 +69,7 @@ local function CreateRipple(parent)
     RippleContainer.BackgroundTransparency = 1
     RippleContainer.ClipsDescendants = true
     RippleContainer.Size = UDim2.fromScale(1, 1)
-    RippleContainer.ZIndex = parent.ZIndex +
+    RippleContainer.ZIndex = parent.ZIndex + 1
     RippleContainer.Parent = parent
 
     local function Ripple(position)
@@ -147,13 +142,21 @@ function NurkUI:CreateWindow(title)
     NurkHubUI.ResetOnSpawn = false
     NurkHubUI.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     
-    if syn then
-        syn.protect_gui(NurkHubUI)
-        NurkHubUI.Parent = CoreGui
-    elseif gethui then
-        NurkHubUI.Parent = gethui()
-    else
-        NurkHubUI.Parent = CoreGui
+    -- Safe parent the GUI
+    pcall(function()
+        if syn then
+            syn.protect_gui(NurkHubUI)
+            NurkHubUI.Parent = CoreGui
+        elseif gethui then
+            NurkHubUI.Parent = gethui()
+        else
+            NurkHubUI.Parent = CoreGui
+        end
+    end)
+    
+    -- Fallback if parenting fails
+    if not NurkHubUI.Parent then
+        NurkHubUI.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
     end
     
     -- Main Window Frame
@@ -237,7 +240,7 @@ function NurkUI:CreateWindow(title)
             Position = UDim2.new(MainFrame.Position.X.Scale, MainFrame.Position.X.Offset, MainFrame.Position.Y.Scale, MainFrame.Position.Y.Offset + (MainFrame.Size.Y.Offset / 2))
         }):Play()
         
-        wait(0.3)
+        task.wait(0.3)
         NurkHubUI:Destroy()
     end)
     
@@ -448,4 +451,5 @@ function NurkUI:CreateWindow(title)
     return WindowObject
 end
 
+-- Return the module to ensure it's not nil
 return NurkUI
