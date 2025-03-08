@@ -1639,7 +1639,7 @@ function NurkUI:CreateWindow(title)
                 HexLabel.Parent = RGBInfo
                 
                 -- State tracking
-                local HSV = { H = 0, S = 0, V = 1 } -- Default to white
+                local HSV = { H = 0, S = 1, V = 1 } -- Default to red (Hue = 0, full Saturation and Value)
                 local SelectedColor = defaultColor
                 local IsOpen = false
                 
@@ -1735,12 +1735,21 @@ function NurkUI:CreateWindow(title)
                     
                     -- Update Hue slider position
                     HueKnob.Position = UDim2.new(HSV.H, 0, 0.5, 0)
+                    
+                    -- Fixed: Update the SVCanvas background color based on hue
+                    SVCanvas.BackgroundColor3 = HSVtoRGB({ H = HSV.H, S = 1, V = 1 })
                 end
                 
                 -- Toggle popup visibility
                 local function TogglePopup()
                     IsOpen = not IsOpen
                     ColorPickerPopup.Visible = IsOpen
+                    
+                    -- Fixed: Force update the UI when opening popup
+                    if IsOpen then
+                        UpdateInterface()
+                        UpdateColor()
+                    end
                 end
                 
                 -- Handle SV canvas interaction
@@ -1867,7 +1876,13 @@ function NurkUI:CreateWindow(title)
                     end
                 end)
                 
-                -- Initialize display
+                -- Initialize display with proper defaults for red
+                -- Fixed: Initialize HSV to red if the default color is red
+                if defaultColor.R == 1 and defaultColor.G == 0 and defaultColor.B == 0 then
+                    HSV = { H = 0, S = 1, V = 1 } -- Pure red
+                end
+                
+                -- Fixed: Call these after HSV is properly initialized
                 UpdateInterface()
                 UpdateColor()
                 
