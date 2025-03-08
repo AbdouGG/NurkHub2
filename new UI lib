@@ -175,7 +175,7 @@ local function CreateFloatingButton(nurkHubUI, mainFrame)
     ButtonIcon.Name = "ButtonIcon"
     ButtonIcon.BackgroundTransparency = 1
     ButtonIcon.Size = UDim2.fromScale(1, 1)
-    ButtonIcon.Text = "≡" -- Hamburger icon
+    ButtonIcon.Text = "N" -- Hamburger icon
     ButtonIcon.TextColor3 = Color3.fromRGB(255, 255, 255)
     ButtonIcon.TextSize = 24
     ButtonIcon.Font = Enum.Font.GothamBold
