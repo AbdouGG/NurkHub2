@@ -128,124 +128,138 @@ local function CreateShadow(frame, size)
     return shadow
 end
 
--- Add this function to the NurkUI module, before the return statement
-
--- Add this code after the NurkUI module is defined but before returning it
-
-function NurkUI:CreateFloatingButton()
-    -- Create a floating button
-    local FloatingButton = Instance.new("Frame")
-    FloatingButton.Name = "NurkFloatingButton"
-    FloatingButton.Size = UDim2.new(0, 40, 0, 40)
-    FloatingButton.Position = UDim2.new(0, 20, 0.5, -20)
-    FloatingButton.BackgroundColor3 = Settings.Theme.Accent
-    FloatingButton.ZIndex = 10
+-- Create a floating toggle button for the UI
+local function CreateFloatingButton(nurkHubUI, mainFrame)
+    -- Create a separate ScreenGui for the floating button
+    local FloatingButtonGui = Instance.new("ScreenGui")
+    FloatingButtonGui.Name = "NurkHubFloatingButton"
+    FloatingButtonGui.ResetOnSpawn = false
+    FloatingButtonGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     
-    -- Safe parent the button
+    -- Safe parent the GUI
     pcall(function()
         if syn then
-            syn.protect_gui(FloatingButton)
-            FloatingButton.Parent = CoreGui
+            syn.protect_gui(FloatingButtonGui)
+            FloatingButtonGui.Parent = CoreGui
         elseif gethui then
-            FloatingButton.Parent = gethui()
+            FloatingButtonGui.Parent = gethui()
         else
-            FloatingButton.Parent = CoreGui
+            FloatingButtonGui.Parent = CoreGui
         end
     end)
     
     -- Fallback if parenting fails
-    if not FloatingButton.Parent then
-        FloatingButton.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+    if not FloatingButtonGui.Parent then
+        FloatingButtonGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
     end
     
+    -- Create the floating button
+    local FloatingButton = Instance.new("Frame")
+    FloatingButton.Name = "FloatingButton"
+    FloatingButton.BackgroundColor3 = Settings.Theme.Accent
+    FloatingButton.Size = UDim2.new(0, 44, 0, 44)
+    FloatingButton.Position = UDim2.new(0, 20, 0.5, 0) -- Position at the center-left of the screen
+    FloatingButton.AnchorPoint = Vector2.new(0, 0.5)
+    FloatingButton.Parent = FloatingButtonGui
+    
+    -- Circular shape
     local ButtonCorner = Instance.new("UICorner")
-    ButtonCorner.CornerRadius = UDim.new(1, 0)
+    ButtonCorner.CornerRadius = UDim.new(1, 0) -- Make it completely round
     ButtonCorner.Parent = FloatingButton
     
-    -- Button Icon
+    -- Add shadow
+    CreateShadow(FloatingButton, 10)
+    
+    -- Add icon
     local ButtonIcon = Instance.new("TextLabel")
     ButtonIcon.Name = "ButtonIcon"
     ButtonIcon.BackgroundTransparency = 1
     ButtonIcon.Size = UDim2.fromScale(1, 1)
+    ButtonIcon.Text = "≡" -- Hamburger icon
+    ButtonIcon.TextColor3 = Color3.fromRGB(255, 255, 255)
+    ButtonIcon.TextSize = 24
     ButtonIcon.Font = Enum.Font.GothamBold
-    ButtonIcon.Text = "NH"
-    ButtonIcon.TextColor3 = Settings.Theme.Text
-    ButtonIcon.TextSize = 16
-    ButtonIcon.ZIndex = 11
     ButtonIcon.Parent = FloatingButton
     
-    -- Add Shadow
-    CreateShadow(FloatingButton, 8)
-    
-    -- Make button draggable
-    local Dragging = false
-    local DragInput, MousePos, FramePos
-    
-    FloatingButton.InputBegan:Connect(function(Input)
-        if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
-            Dragging = true
-            MousePos = Input.Position
-            FramePos = FloatingButton.Position
-            
-            Input.Changed:Connect(function()
-                if Input.UserInputState == Enum.UserInputState.End then
-                    Dragging = false
-                end
-            end)
-        end
-    end)
-    
-    FloatingButton.InputChanged:Connect(function(Input)
-        if Input.UserInputType == Enum.UserInputType.MouseMovement or Input.UserInputType == Enum.UserInputType.Touch then
-            DragInput = Input
-        end
-    end)
-    
-    UserInputService.InputChanged:Connect(function(Input)
-        if Input == DragInput and Dragging then
-            local Delta = Input.Position - MousePos
-            TweenService:Create(FloatingButton, TweenInfo.new(0.1), {
-                Position = UDim2.new(FramePos.X.Scale, FramePos.X.Offset + Delta.X, FramePos.Y.Scale, FramePos.Y.Offset + Delta.Y)
-            }):Play()
-        end
-    end)
-    
-    -- Create ripple effect
+    -- Add ripple effect
     CreateRipple(FloatingButton)
     
-    -- Toggle functionality
-    local MainGUIFrame = nil
-    local GUIVisible = true
+    -- Make the floating button draggable
+    MakeDraggable(FloatingButton, FloatingButton)
     
-    -- Return the button controller
+    -- UI visibility state
+    local UIVisible = true
+    
+    -- Toggle button functionality
+    FloatingButton.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            UIVisible = not UIVisible
+            
+            -- Handle button visual feedback when clicked
+            TweenService:Create(FloatingButton, TweenInfo.new(0.2), {
+                BackgroundColor3 = UIVisible and Settings.Theme.Accent or Color3.fromRGB(240, 80, 80)
+            }):Play()
+            
+            -- Animate changing the icon
+            TweenService:Create(ButtonIcon, TweenInfo.new(0.2), {
+                Rotation = UIVisible and 0 or 45,
+                TextColor3 = UIVisible and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(255, 255, 255)
+            }):Play()
+            
+            if UIVisible then
+                -- Show UI animation
+                mainFrame.Visible = true
+                TweenService:Create(mainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+                    Size = UDim2.new(0, 500, 0, 350),
+                    Position = UDim2.new(0.5, -250, 0.5, -175),
+                    BackgroundTransparency = 1 - Settings.Transparency
+                }):Play()
+            else
+                -- Hide UI animation
+                TweenService:Create(mainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+                    Size = UDim2.new(0, 500, 0, 0),
+                    Position = UDim2.new(0.5, -250, 0.5, -175 + 175),
+                    BackgroundTransparency = 1
+                }):Play()
+                
+                -- Wait for animation to complete before hiding
+                task.delay(0.3, function()
+                    mainFrame.Visible = false
+                end)
+            end
+        end
+    end)
+    
+    -- Hover effect
+    FloatingButton.MouseEnter:Connect(function()
+        TweenService:Create(FloatingButton, TweenInfo.new(0.2), {
+            BackgroundColor3 = UIVisible and 
+                Color3.fromRGB(Settings.Theme.Accent.R * 255 + 30, Settings.Theme.Accent.G * 255 + 30, Settings.Theme.Accent.B * 255 + 30) 
+                or 
+                Color3.fromRGB(255, 100, 100)
+        }):Play()
+    end)
+    
+    FloatingButton.MouseLeave:Connect(function()
+        TweenService:Create(FloatingButton, TweenInfo.new(0.2), {
+            BackgroundColor3 = UIVisible and Settings.Theme.Accent or Color3.fromRGB(240, 80, 80)
+        }):Play()
+    end)
+    
     return {
         Button = FloatingButton,
-        SetGUI = function(windowObj)
-            -- Store the actual MainFrame from the window object
-            if windowObj and windowObj.Frame then
-                MainGUIFrame = windowObj.Frame
-            end
-        end,
-        Show = function()
-            FloatingButton.Visible = true
-        end,
-        Hide = function()
-            FloatingButton.Visible = false
-        end,
-        Toggle = function()
-            if MainGUIFrame then
-                GUIVisible = not GUIVisible
-                
-                if GUIVisible then
-                    -- Show the UI
-                    MainGUIFrame.Visible = true
-                    ButtonIcon.Text = "NH"
-                else
-                    -- Hide the UI
-                    MainGUIFrame.Visible = false
-                    ButtonIcon.Text = "+"
-                end
-            end
+        Gui = FloatingButtonGui,
+        SetVisible = function(visible)
+            UIVisible = visible
+            mainFrame.Visible = visible
+            
+            TweenService:Create(FloatingButton, TweenInfo.new(0.2), {
+                BackgroundColor3 = UIVisible and Settings.Theme.Accent or Color3.fromRGB(240, 80, 80)
+            }):Play()
+            
+            TweenService:Create(ButtonIcon, TweenInfo.new(0.2), {
+                Rotation = UIVisible and 0 or 45
+            }):Play()
         end
     }
 end
@@ -254,6 +268,9 @@ function NurkUI:CreateWindow(title)
     -- Ensure there's no duplicate UI
     for _, v in pairs(CoreGui:GetChildren()) do
         if v.Name == "NurkHubUI" then
+            v:Destroy()
+        end
+        if v.Name == "NurkHubFloatingButton" then
             v:Destroy()
         end
     end
@@ -458,13 +475,17 @@ function NurkUI:CreateWindow(title)
     ContentContainer.ZIndex = 2
     ContentContainer.Parent = MainFrame
     
+    -- Create floating toggle button
+    local FloatingToggle = CreateFloatingButton(NurkHubUI, MainFrame)
+    
     -- Initialize the Window object
     local WindowObject = {}
     WindowObject.GUI = NurkHubUI
     WindowObject.Frame = MainFrame
     WindowObject.Tabs = {}
     WindowObject.TabCount = 0
-    
+    WindowObject.FloatingButton = FloatingToggle
+
     -- Create a new tab
     function WindowObject:AddTab(tabName)
         WindowObject.TabCount = WindowObject.TabCount + 1
@@ -2228,6 +2249,11 @@ function NurkUI:CreateWindow(title)
         Position = UDim2.new(0.5, -250, 0.5, -175),
         BackgroundTransparency = 1 - Settings.Transparency
     }):Play()
+    
+    -- Make the close button also hide instead of destroy
+    CloseButton.MouseButton1Click:Connect(function()
+        FloatingToggle.SetVisible(false)
+    end)
     
     return WindowObject
 end
