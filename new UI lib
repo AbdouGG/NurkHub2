@@ -359,7 +359,7 @@ function NurkUI:CreateWindow(title)
     CloseButton.Position = UDim2.new(1, -40, 0, 0)
     CloseButton.Size = UDim2.new(0, 40, 0, 40)
     CloseButton.Font = Enum.Font.GothamBold
-    CloseButton.Text = "✕"
+    CloseButton.Text = "X"
     CloseButton.TextColor3 = Settings.Theme.Text
     CloseButton.TextSize = 18
     CloseButton.ZIndex = 2
