@@ -128,6 +128,184 @@ local function CreateShadow(frame, size)
     return shadow
 end
 
+-- Add this function to the NurkUI module, before the return statement
+
+function NurkUI:CreateFloatingButton()
+    -- Create the floating button
+    local FloatingButton = Instance.new("Frame")
+    FloatingButton.Name = "NurkUIFloatingButton"
+    FloatingButton.Size = UDim2.new(0, 50, 0, 50)
+    FloatingButton.Position = UDim2.new(0, 20, 0.5, -25)
+    FloatingButton.BackgroundColor3 = Settings.Theme.Accent
+    FloatingButton.BackgroundTransparency = 0.2
+    FloatingButton.ZIndex = 10
+    
+    -- Use the same parent method as the main UI
+    pcall(function()
+        if syn then
+            syn.protect_gui(FloatingButton)
+            FloatingButton.Parent = CoreGui
+        elseif gethui then
+            FloatingButton.Parent = gethui()
+        else
+            FloatingButton.Parent = CoreGui
+        end
+    end)
+    
+    -- Fallback if parenting fails
+    if not FloatingButton.Parent then
+        FloatingButton.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+    end
+    
+    -- Make it round
+    local FloatingButtonCorner = Instance.new("UICorner")
+    FloatingButtonCorner.CornerRadius = UDim.new(1, 0)
+    FloatingButtonCorner.Parent = FloatingButton
+    
+    -- Add shadow
+    CreateShadow(FloatingButton, 8)
+    
+    -- Button icon
+    local ButtonIcon = Instance.new("TextLabel")
+    ButtonIcon.Name = "ButtonIcon"
+    ButtonIcon.BackgroundTransparency = 1
+    ButtonIcon.Size = UDim2.fromScale(1, 1)
+    ButtonIcon.Font = Enum.Font.GothamBold
+    ButtonIcon.Text = "N"
+    ButtonIcon.TextColor3 = Settings.Theme.Text
+    ButtonIcon.TextSize = 24
+    ButtonIcon.ZIndex = 10
+    ButtonIcon.Parent = FloatingButton
+    
+    -- Add click detection
+    local ButtonDetector = Instance.new("TextButton")
+    ButtonDetector.Name = "ButtonDetector"
+    ButtonDetector.BackgroundTransparency = 1
+    ButtonDetector.Size = UDim2.fromScale(1, 1)
+    ButtonDetector.Text = ""
+    ButtonDetector.ZIndex = 11
+    ButtonDetector.Parent = FloatingButton
+    
+    -- Add ripple effect
+    CreateRipple(ButtonDetector)
+    
+    -- Make the floating button draggable
+    local Dragging = false
+    local DragInput, MousePos, FramePos
+    
+    ButtonDetector.InputBegan:Connect(function(Input)
+        if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
+            Dragging = true
+            MousePos = Input.Position
+            FramePos = FloatingButton.Position
+            
+            Input.Changed:Connect(function()
+                if Input.UserInputState == Enum.UserInputState.End then
+                    Dragging = false
+                end
+            end)
+        end
+    end)
+    
+    ButtonDetector.InputChanged:Connect(function(Input)
+        if Input.UserInputType == Enum.UserInputType.MouseMovement or Input.UserInputType == Enum.UserInputType.Touch then
+            DragInput = Input
+        end
+    end)
+    
+    UserInputService.InputChanged:Connect(function(Input)
+        if Input == DragInput and Dragging then
+            local Delta = Input.Position - MousePos
+            TweenService:Create(FloatingButton, TweenInfo.new(0.1), {
+                Position = UDim2.new(FramePos.X.Scale, FramePos.X.Offset + Delta.X, FramePos.Y.Scale, FramePos.Y.Offset + Delta.Y)
+            }):Play()
+        end
+    end)
+    
+    -- Toggle functionality
+    local UIVisible = true
+    local MainUI = nil
+    
+    -- Store a reference to the MainUI to toggle
+    ButtonDetector.MouseButton1Click:Connect(function()
+        if not MainUI then
+            -- Find the NurkHubUI
+            for _, v in pairs(CoreGui:GetChildren()) do
+                if v.Name == "NurkHubUI" then
+                    MainUI = v
+                    break
+                end
+            end
+            
+            -- Also check PlayerGui as fallback
+            if not MainUI then
+                for _, v in pairs(game.Players.LocalPlayer.PlayerGui:GetChildren()) do
+                    if v.Name == "NurkHubUI" then
+                        MainUI = v
+                        break
+                    end
+                end
+            end
+        end
+        
+        if MainUI then
+            UIVisible = not UIVisible
+            
+            if UIVisible then
+                -- Show UI
+                MainUI.Enabled = true
+                TweenService:Create(ButtonIcon, TweenInfo.new(0.3), {
+                    Rotation = 0
+                }):Play()
+            else
+                -- Hide UI
+                MainUI.Enabled = false
+                TweenService:Create(ButtonIcon, TweenInfo.new(0.3), {
+                    Rotation = 45
+                }):Play()
+            end
+            
+            -- Animate the button
+            TweenService:Create(FloatingButton, TweenInfo.new(0.2), {
+                Size = UDim2.new(0, 45, 0, 45)
+            }):Play()
+            
+            task.wait(0.1)
+            
+            TweenService:Create(FloatingButton, TweenInfo.new(0.2), {
+                Size = UDim2.new(0, 50, 0, 50)
+            }):Play()
+        end
+    end)
+    
+    -- Button hover effects
+    ButtonDetector.MouseEnter:Connect(function()
+        TweenService:Create(FloatingButton, TweenInfo.new(0.2), {
+            BackgroundColor3 = Color3.fromRGB(
+                math.min(Settings.Theme.Accent.R * 1.2 * 255, 255) / 255,
+                math.min(Settings.Theme.Accent.G * 1.2 * 255, 255) / 255,
+                math.min(Settings.Theme.Accent.B * 1.2 * 255, 255) / 255
+            )
+        }):Play()
+    end)
+    
+    ButtonDetector.MouseLeave:Connect(function()
+        TweenService:Create(FloatingButton, TweenInfo.new(0.2), {
+            BackgroundColor3 = Settings.Theme.Accent
+        }):Play()
+    end)
+    
+    -- Update the stored MainUI reference when creating a window
+    local OldCreateWindow = NurkUI.CreateWindow
+    NurkUI.CreateWindow = function(self, title)
+        local Window = OldCreateWindow(self, title)
+        MainUI = Window.GUI
+        return Window
+    end
+    
+    return FloatingButton
+end
+
 function NurkUI:CreateWindow(title)
     -- Ensure there's no duplicate UI
     for _, v in pairs(CoreGui:GetChildren()) do
@@ -1934,7 +2112,7 @@ function NurkUI:CreateWindow(title)
             end
             
             -- Add TextField method for SectionObject
-            function SectionObject:AddAutoFarmField(labelText, defaultText, callback)
+            function SectionObject:AddTextField(labelText, defaultText, callback)
                 labelText = labelText or "Auto Farm"
                 defaultText = defaultText or ""
                 callback = callback or function() end
