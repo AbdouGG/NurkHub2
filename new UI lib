@@ -1933,6 +1933,125 @@ function NurkUI:CreateWindow(title)
                 return ColorPickerObject
             end
             
+            -- Add TextField method for SectionObject
+            function SectionObject:AddTextField(placeholderText, defaultText, callback)
+                placeholderText = placeholderText or "Enter text..."
+                defaultText = defaultText or ""
+                callback = callback or function() end
+                
+                -- Create TextField Container
+                local TextField = Instance.new("Frame")
+                TextField.Name = "TextField_" .. placeholderText
+                TextField.BackgroundColor3 = Settings.Theme.Primary
+                TextField.BackgroundTransparency = 0.4
+                TextField.Size = UDim2.new(1, 0, 0, 36)
+                TextField.ZIndex = 4
+                TextField.Parent = SectionContent
+                
+                local TextFieldCorner = Instance.new("UICorner")
+                TextFieldCorner.CornerRadius = UDim.new(0, 4)
+                TextFieldCorner.Parent = TextField
+                
+                -- Create Input Box
+                local TextBox = Instance.new("TextBox")
+                TextBox.Name = "TextBox"
+                TextBox.BackgroundColor3 = Settings.Theme.Secondary
+                TextBox.BackgroundTransparency = 0.5
+                TextBox.Position = UDim2.new(0, 8, 0.5, -12)
+                TextBox.Size = UDim2.new(1, -16, 0, 24)
+                TextBox.Font = Settings.Font
+                TextBox.PlaceholderText = placeholderText
+                TextBox.Text = defaultText
+                TextBox.TextColor3 = Settings.Theme.Text
+                TextBox.PlaceholderColor3 = Settings.Theme.SubText
+                TextBox.TextSize = 14
+                TextBox.TextXAlignment = Enum.TextXAlignment.Left
+                TextBox.ClearTextOnFocus = false
+                TextBox.ClipsDescendants = true
+                TextBox.ZIndex = 5
+                TextBox.Parent = TextField
+                
+                local TextBoxCorner = Instance.new("UICorner")
+                TextBoxCorner.CornerRadius = UDim.new(0, 4)
+                TextBoxCorner.Parent = TextBox
+                
+                -- Add padding to text
+                local TextBoxPadding = Instance.new("UIPadding")
+                TextBoxPadding.PaddingLeft = UDim.new(0, 6)
+                TextBoxPadding.PaddingRight = UDim.new(0, 6)
+                TextBoxPadding.Parent = TextBox
+                
+                -- Create focus effect
+                TextBox.Focused:Connect(function()
+                    TweenService:Create(TextBox, TweenInfo.new(0.2), {
+                        BackgroundColor3 = Settings.Theme.Accent,
+                        BackgroundTransparency = 0.7
+                    }):Play()
+                end)
+                
+                TextBox.FocusLost:Connect(function(enterPressed)
+                    TweenService:Create(TextBox, TweenInfo.new(0.2), {
+                        BackgroundColor3 = Settings.Theme.Secondary,
+                        BackgroundTransparency = 0.5
+                    }):Play()
+                    
+                    -- Execute callback with text value
+                    task.spawn(function()
+                        callback(TextBox.Text, enterPressed)
+                    end)
+                end)
+                
+                -- Hover effect
+                TextField.MouseEnter:Connect(function()
+                    if not TextBox:IsFocused() then
+                        TweenService:Create(TextBox, TweenInfo.new(0.2), {
+                            BackgroundTransparency = 0.4
+                        }):Play()
+                    end
+                end)
+                
+                TextField.MouseLeave:Connect(function()
+                    if not TextBox:IsFocused() then
+                        TweenService:Create(TextBox, TweenInfo.new(0.2), {
+                            BackgroundTransparency = 0.5
+                        }):Play()
+                    end
+                end)
+                
+                -- Create ripple effect
+                CreateRipple(TextField)
+                
+                -- TextField Object with API
+                local TextFieldObject = {
+                    Instance = TextField,
+                    Get = function()
+                        return TextBox.Text
+                    end,
+                    Set = function(self, text, runCallback)
+                        TextBox.Text = text
+                        if runCallback then
+                            callback(text, false)
+                        end
+                        return self
+                    end,
+                    Clear = function(self)
+                        TextBox.Text = ""
+                        return self
+                    end,
+                    SetPlaceholder = function(self, text)
+                        TextBox.PlaceholderText = text
+                        return self
+                    end,
+                    Focus = function(self)
+                        TextBox:CaptureFocus()
+                        return self
+                    end
+                }
+                
+                table.insert(SectionObject.Elements, TextFieldObject)
+                return TextFieldObject
+            end
+
             -- Add more UI elements here like AddToggle, AddSlider, etc.
 
 
