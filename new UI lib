@@ -776,11 +776,9 @@ function NurkUI:CreateWindow(title)
                 DropdownContent.ClipsDescendants = true
                 DropdownContent.Position = UDim2.new(0, 0, 1, 5)
                 DropdownContent.Size = UDim2.new(1, 0, 0, 0) -- Start closed
-                -- Increase ZIndex significantly to ensure it appears on top
-                DropdownContent.ZIndex = 20
+                DropdownContent.ZIndex = 999999
                 DropdownContent.Visible = false
-                -- Make DropdownContent a child of the main GUI instead of Dropdown to prevent clipping
-                DropdownContent.Parent = MainGui
+                DropdownContent.Parent = Dropdown
                 
                 local ContentCorner = Instance.new("UICorner")
                 ContentCorner.CornerRadius = UDim.new(0, 4)
@@ -817,8 +815,7 @@ function NurkUI:CreateWindow(title)
                     Option.Text = optionText
                     Option.TextColor3 = Settings.Theme.Text
                     Option.TextSize = 14
-                    -- Increase ZIndex to match parent
-                    Option.ZIndex = 21
+                    Option.ZIndex = 5
                     Option.Parent = DropdownContent
                     Option.AutoButtonColor = false
                     
@@ -878,19 +875,10 @@ function NurkUI:CreateWindow(title)
                     end
                     
                     if IsOpen then
-                        -- Update position to match dropdown's position before showing
-                        local dropdownAbsPos = Dropdown.AbsolutePosition
-                        local dropdownAbsSize = Dropdown.AbsoluteSize
-                        DropdownContent.Position = UDim2.fromOffset(
-                            dropdownAbsPos.X, 
-                            dropdownAbsPos.Y + dropdownAbsSize.Y + 5
-                        )
-                        DropdownContent.Size = UDim2.new(0, dropdownAbsSize.X, 0, 0)
-                        
                         -- Show dropdown
                         DropdownContent.Visible = true
                         TweenService:Create(DropdownContent, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
-                            Size = UDim2.new(0, dropdownAbsSize.X, 0, math.min(ContentHeight, 200)) -- Limit max height
+                            Size = UDim2.new(1, 0, 0, math.min(ContentHeight, 200)) -- Limit max height
                         }):Play()
                         
                         -- Rotate arrow
@@ -900,7 +888,7 @@ function NurkUI:CreateWindow(title)
                     else
                         -- Hide dropdown
                         TweenService:Create(DropdownContent, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
-                            Size = UDim2.new(0, DropdownContent.AbsoluteSize.X, 0, 0)
+                            Size = UDim2.new(1, 0, 0, 0)
                         }):Play()
                         
                         -- Rotate arrow back
@@ -976,20 +964,6 @@ function NurkUI:CreateWindow(title)
                     end
                 end)
                 
-                -- Clean up function when the dropdown is destroyed
-                local function CleanUp()
-                    if DropdownContent then
-                        DropdownContent:Destroy()
-                    end
-                end
-                
-                -- Cleanup when dropdown is destroyed
-                Dropdown.AncestryChanged:Connect(function(_, parent)
-                    if not parent then
-                        CleanUp()
-                    end
-                end)
-                
                 -- Dropdown Object with API
                 local DropdownObject = {
                     Instance = Dropdown,
@@ -1061,9 +1035,6 @@ function NurkUI:CreateWindow(title)
                             end
                         end
                         return self
-                    end,
-                    Destroy = function()
-                        CleanUp()
                     end
                 }
                 
