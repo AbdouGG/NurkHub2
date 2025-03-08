@@ -1934,7 +1934,7 @@ function NurkUI:CreateWindow(title)
             end
             
             -- Add TextField method for SectionObject
-            function Library:AddTextOption(name, defaultText, callback)
+            function SectionObject:AddTextOption(name, defaultText, callback)
                 defaultText = defaultText or ""
                 callback = callback or function() end
                 
