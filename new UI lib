@@ -1934,38 +1934,39 @@ function NurkUI:CreateWindow(title)
             end
             
             -- Add TextField method for SectionObject
-            function SectionObject:AddTextOption(name, defaultText, callback)
+            function SectionObject:AddAutoFarmField(labelText, defaultText, callback)
+                labelText = labelText or "Auto Farm"
                 defaultText = defaultText or ""
                 callback = callback or function() end
                 
-                -- Create TextOption Container (similar to your original toggle container)
-                local TextOption = Instance.new("Frame")
-                TextOption.Name = "TextOption_" .. name
-                TextOption.BackgroundColor3 = Settings.Theme.Primary
-                TextOption.BackgroundTransparency = 0.4
-                TextOption.Size = UDim2.new(1, 0, 0, 36)
-                TextOption.ZIndex = 4
-                TextOption.Parent = self.Container -- Assuming you have a container
+                -- Create TextField Container
+                local TextField = Instance.new("Frame")
+                TextField.Name = "AutoFarmField_" .. labelText
+                TextField.BackgroundColor3 = Settings.Theme.Primary
+                TextField.BackgroundTransparency = 0.4
+                TextField.Size = UDim2.new(1, 0, 0, 36)
+                TextField.ZIndex = 4
+                TextField.Parent = SectionContent
                 
-                local TextOptionCorner = Instance.new("UICorner")
-                TextOptionCorner.CornerRadius = UDim.new(0, 4)
-                TextOptionCorner.Parent = TextOption
+                local TextFieldCorner = Instance.new("UICorner")
+                TextFieldCorner.CornerRadius = UDim.new(0, 4)
+                TextFieldCorner.Parent = TextField
                 
-                -- Add the option name/label
-                local OptionLabel = Instance.new("TextLabel")
-                OptionLabel.Name = "OptionLabel"
-                OptionLabel.BackgroundTransparency = 1
-                OptionLabel.Position = UDim2.new(0, 8, 0, 0)
-                OptionLabel.Size = UDim2.new(0.5, -8, 1, 0)
-                OptionLabel.Font = Settings.Font
-                OptionLabel.Text = name
-                OptionLabel.TextColor3 = Settings.Theme.Text
-                OptionLabel.TextSize = 14
-                OptionLabel.TextXAlignment = Enum.TextXAlignment.Left
-                OptionLabel.ZIndex = 5
-                OptionLabel.Parent = TextOption
+                -- Create Label
+                local Label = Instance.new("TextLabel")
+                Label.Name = "Label"
+                Label.BackgroundTransparency = 1
+                Label.Position = UDim2.new(0, 8, 0.5, -8)
+                Label.Size = UDim2.new(0.5, -8, 0, 16)
+                Label.Font = Settings.Font
+                Label.Text = labelText
+                Label.TextColor3 = Settings.Theme.Text
+                Label.TextSize = 14
+                Label.TextXAlignment = Enum.TextXAlignment.Left
+                Label.ZIndex = 5
+                Label.Parent = TextField
                 
-                -- Create Input Box (on the right side)
+                -- Create Input Box
                 local TextBox = Instance.new("TextBox")
                 TextBox.Name = "TextBox"
                 TextBox.BackgroundColor3 = Settings.Theme.Secondary
@@ -1973,7 +1974,7 @@ function NurkUI:CreateWindow(title)
                 TextBox.Position = UDim2.new(0.5, 4, 0.5, -12)
                 TextBox.Size = UDim2.new(0.5, -12, 0, 24)
                 TextBox.Font = Settings.Font
-                TextBox.PlaceholderText = "Enter " .. string.lower(name) .. "..."
+                TextBox.PlaceholderText = "Enter text..."
                 TextBox.Text = defaultText
                 TextBox.TextColor3 = Settings.Theme.Text
                 TextBox.PlaceholderColor3 = Settings.Theme.SubText
@@ -1982,7 +1983,7 @@ function NurkUI:CreateWindow(title)
                 TextBox.ClearTextOnFocus = false
                 TextBox.ClipsDescendants = true
                 TextBox.ZIndex = 5
-                TextBox.Parent = TextOption
+                TextBox.Parent = TextField
                 
                 local TextBoxCorner = Instance.new("UICorner")
                 TextBoxCorner.CornerRadius = UDim.new(0, 4)
@@ -2015,24 +2016,16 @@ function NurkUI:CreateWindow(title)
                 end)
                 
                 -- Hover effect
-                TextOption.MouseEnter:Connect(function()
+                TextField.MouseEnter:Connect(function()
                     if not TextBox:IsFocused() then
-                        TweenService:Create(TextOption, TweenInfo.new(0.2), {
-                            BackgroundTransparency = 0.3
-                        }):Play()
-                        
                         TweenService:Create(TextBox, TweenInfo.new(0.2), {
                             BackgroundTransparency = 0.4
                         }):Play()
                     end
                 end)
                 
-                TextOption.MouseLeave:Connect(function()
+                TextField.MouseLeave:Connect(function()
                     if not TextBox:IsFocused() then
-                        TweenService:Create(TextOption, TweenInfo.new(0.2), {
-                            BackgroundTransparency = 0.4
-                        }):Play()
-                        
                         TweenService:Create(TextBox, TweenInfo.new(0.2), {
                             BackgroundTransparency = 0.5
                         }):Play()
@@ -2040,11 +2033,11 @@ function NurkUI:CreateWindow(title)
                 end)
                 
                 -- Create ripple effect
-                CreateRipple(TextOption)
+                CreateRipple(TextField)
                 
-                -- TextOption Object with API
-                local TextOptionObject = {
-                    Instance = TextOption,
+                -- TextField Object with API
+                local AutoFarmFieldObject = {
+                    Instance = TextField,
                     Get = function()
                         return TextBox.Text
                     end,
@@ -2055,12 +2048,16 @@ function NurkUI:CreateWindow(title)
                         end
                         return self
                     end,
-                    SetName = function(self, newName)
-                        OptionLabel.Text = newName
+                    Clear = function(self)
+                        TextBox.Text = ""
                         return self
                     end,
                     SetPlaceholder = function(self, text)
                         TextBox.PlaceholderText = text
+                        return self
+                    end,
+                    SetLabel = function(self, text)
+                        Label.Text = text
                         return self
                     end,
                     Focus = function(self)
@@ -2069,9 +2066,8 @@ function NurkUI:CreateWindow(title)
                     end
                 }
                 
-                -- Assuming you keep track of elements
-                table.insert(self.Elements, TextOptionObject)
-                return TextOptionObject
+                table.insert(SectionObject.Elements, AutoFarmFieldObject)
+                return AutoFarmFieldObject
             end
 
             -- Add more UI elements here like AddToggle, AddSlider, etc.
