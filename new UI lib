@@ -702,6 +702,345 @@ function NurkUI:CreateWindow(title)
                 table.insert(SectionObject.Elements, ToggleObject)
                 return ToggleObject
             end
+
+            -- Add Dropdown method for SectionObject
+            function SectionObject:AddDropdown(dropdownText, options, default, callback)
+                options = options or {}
+                default = default or options[1] or ""
+                callback = callback or function() end
+                
+                -- Create Dropdown Container
+                local Dropdown = Instance.new("Frame")
+                Dropdown.Name = "Dropdown_" .. dropdownText
+                Dropdown.BackgroundColor3 = Settings.Theme.Primary
+                Dropdown.BackgroundTransparency = 0.4
+                Dropdown.Size = UDim2.new(1, 0, 0, 36)
+                Dropdown.ZIndex = 4
+                Dropdown.Parent = SectionContent
+                
+                local DropdownCorner = Instance.new("UICorner")
+                DropdownCorner.CornerRadius = UDim.new(0, 4)
+                DropdownCorner.Parent = Dropdown
+                
+                -- Dropdown Label
+                local DropdownLabel = Instance.new("TextLabel")
+                DropdownLabel.Name = "DropdownLabel"
+                DropdownLabel.BackgroundTransparency = 1
+                DropdownLabel.Position = UDim2.new(0, 10, 0, 0)
+                DropdownLabel.Size = UDim2.new(0.5, -10, 1, 0)
+                DropdownLabel.Font = Settings.Font
+                DropdownLabel.Text = dropdownText
+                DropdownLabel.TextColor3 = Settings.Theme.Text
+                DropdownLabel.TextSize = 14
+                DropdownLabel.TextXAlignment = Enum.TextXAlignment.Left
+                DropdownLabel.ZIndex = 4
+                DropdownLabel.Parent = Dropdown
+                
+                -- Selected Value Button
+                local SelectedValue = Instance.new("TextButton")
+                SelectedValue.Name = "SelectedValue"
+                SelectedValue.BackgroundColor3 = Settings.Theme.Secondary
+                SelectedValue.BackgroundTransparency = 0.5
+                SelectedValue.Position = UDim2.new(0.5, 5, 0.5, -12)
+                SelectedValue.Size = UDim2.new(0.5, -15, 0, 24)
+                SelectedValue.Font = Settings.Font
+                SelectedValue.Text = default
+                SelectedValue.TextColor3 = Settings.Theme.Text
+                SelectedValue.TextSize = 14
+                SelectedValue.ZIndex = 4
+                SelectedValue.Parent = Dropdown
+                SelectedValue.AutoButtonColor = false
+                
+                local SelectedValueCorner = Instance.new("UICorner")
+                SelectedValueCorner.CornerRadius = UDim.new(0, 4)
+                SelectedValueCorner.Parent = SelectedValue
+                
+                -- Arrow Icon
+                local ArrowIcon = Instance.new("TextLabel")
+                ArrowIcon.Name = "ArrowIcon"
+                ArrowIcon.BackgroundTransparency = 1
+                ArrowIcon.Position = UDim2.new(1, -24, 0, 0)
+                ArrowIcon.Size = UDim2.new(0, 24, 1, 0)
+                ArrowIcon.Font = Enum.Font.GothamBold
+                ArrowIcon.Text = "▼"
+                ArrowIcon.TextColor3 = Settings.Theme.SubText
+                ArrowIcon.TextSize = 12
+                ArrowIcon.ZIndex = 4
+                ArrowIcon.Parent = SelectedValue
+                
+                -- Dropdown Content Container
+                local DropdownContent = Instance.new("Frame")
+                DropdownContent.Name = "DropdownContent"
+                DropdownContent.BackgroundColor3 = Settings.Theme.Secondary
+                DropdownContent.BackgroundTransparency = 0.2
+                DropdownContent.ClipsDescendants = true
+                DropdownContent.Position = UDim2.new(0, 0, 1, 5)
+                DropdownContent.Size = UDim2.new(1, 0, 0, 0) -- Start closed
+                DropdownContent.ZIndex = 5
+                DropdownContent.Visible = false
+                DropdownContent.Parent = Dropdown
+                
+                local ContentCorner = Instance.new("UICorner")
+                ContentCorner.CornerRadius = UDim.new(0, 4)
+                ContentCorner.Parent = DropdownContent
+                
+                -- Shadow for dropdown content
+                CreateShadow(DropdownContent, 8)
+                
+                -- Options Layout
+                local OptionsLayout = Instance.new("UIListLayout")
+                OptionsLayout.Name = "OptionsLayout"
+                OptionsLayout.Padding = UDim.new(0, 2)
+                OptionsLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+                OptionsLayout.Parent = DropdownContent
+                
+                -- Padding at top and bottom
+                local TopPadding = Instance.new("UIPadding")
+                TopPadding.PaddingTop = UDim.new(0, 5)
+                TopPadding.PaddingBottom = UDim.new(0, 5)
+                TopPadding.Parent = DropdownContent
+                
+                -- State tracking
+                local IsOpen = false
+                local SelectedOption = default
+                
+                -- Create Option Button function
+                local function CreateOption(optionText)
+                    local Option = Instance.new("TextButton")
+                    Option.Name = "Option_" .. optionText
+                    Option.BackgroundColor3 = Settings.Theme.Primary
+                    Option.BackgroundTransparency = 0.8
+                    Option.Size = UDim2.new(1, -10, 0, 30)
+                    Option.Font = Settings.Font
+                    Option.Text = optionText
+                    Option.TextColor3 = Settings.Theme.Text
+                    Option.TextSize = 14
+                    Option.ZIndex = 5
+                    Option.Parent = DropdownContent
+                    Option.AutoButtonColor = false
+                    
+                    local OptionCorner = Instance.new("UICorner")
+                    OptionCorner.CornerRadius = UDim.new(0, 4)
+                    OptionCorner.Parent = Option
+                    
+                    -- Create ripple effect
+                    CreateRipple(Option)
+                    
+                    -- Option hover effects
+                    Option.MouseEnter:Connect(function()
+                        TweenService:Create(Option, TweenInfo.new(0.2), {
+                            BackgroundColor3 = Settings.Theme.Accent,
+                            BackgroundTransparency = 0.7
+                        }):Play()
+                    end)
+                    
+                    Option.MouseLeave:Connect(function()
+                        TweenService:Create(Option, TweenInfo.new(0.2), {
+                            BackgroundColor3 = Settings.Theme.Primary,
+                            BackgroundTransparency = 0.8
+                        }):Play()
+                    end)
+                    
+                    -- Option click
+                    Option.MouseButton1Click:Connect(function()
+                        SelectedOption = optionText
+                        SelectedValue.Text = optionText
+                        
+                        -- Close dropdown
+                        ToggleDropdown(false)
+                        
+                        -- Execute callback with selected option
+                        task.spawn(function()
+                            callback(optionText)
+                        end)
+                    end)
+                    
+                    return Option
+                end
+                
+                -- Create option buttons
+                for _, optionText in ipairs(options) do
+                    CreateOption(optionText)
+                end
+                
+                -- Calculate content height based on options
+                local ContentHeight = #options * 32 + 10 -- Each option height + padding
+                
+                -- Toggle dropdown function
+                function ToggleDropdown(forceState)
+                    if forceState ~= nil then
+                        IsOpen = forceState
+                    else
+                        IsOpen = not IsOpen
+                    end
+                    
+                    if IsOpen then
+                        -- Show dropdown
+                        DropdownContent.Visible = true
+                        TweenService:Create(DropdownContent, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+                            Size = UDim2.new(1, 0, 0, math.min(ContentHeight, 200)) -- Limit max height
+                        }):Play()
+                        
+                        -- Rotate arrow
+                        TweenService:Create(ArrowIcon, TweenInfo.new(0.3), {
+                            Rotation = 180
+                        }):Play()
+                    else
+                        -- Hide dropdown
+                        TweenService:Create(DropdownContent, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+                            Size = UDim2.new(1, 0, 0, 0)
+                        }):Play()
+                        
+                        -- Rotate arrow back
+                        TweenService:Create(ArrowIcon, TweenInfo.new(0.3), {
+                            Rotation = 0
+                        }):Play()
+                        
+                        -- Wait for animation to complete before hiding
+                        task.delay(0.3, function()
+                            if not IsOpen then
+                                DropdownContent.Visible = false
+                            end
+                        end)
+                    end
+                end
+                
+                -- Connect selected value click to toggle
+                SelectedValue.MouseButton1Click:Connect(function()
+                    ToggleDropdown()
+                end)
+                
+                -- Create ripple effect for selected value
+                CreateRipple(SelectedValue)
+                
+                -- Hover effects for selected value
+                SelectedValue.MouseEnter:Connect(function()
+                    TweenService:Create(SelectedValue, TweenInfo.new(0.2), {
+                        BackgroundColor3 = Color3.fromRGB(
+                            Settings.Theme.Secondary.R * 1.1,
+                            Settings.Theme.Secondary.G * 1.1,
+                            Settings.Theme.Secondary.B * 1.1
+                        ),
+                        BackgroundTransparency = 0.4
+                    }):Play()
+                end)
+                
+                SelectedValue.MouseLeave:Connect(function()
+                    TweenService:Create(SelectedValue, TweenInfo.new(0.2), {
+                        BackgroundColor3 = Settings.Theme.Secondary,
+                        BackgroundTransparency = 0.5
+                    }):Play()
+                end)
+                
+                -- Close dropdown when clicking outside
+                local function CheckOutsideClick(input)
+                    if not IsOpen then return end
+                    
+                    local clickPos = input.Position
+                    local dropdownPos = Dropdown.AbsolutePosition
+                    local dropdownSize = Dropdown.AbsoluteSize
+                    local contentPos = DropdownContent.AbsolutePosition
+                    local contentSize = DropdownContent.AbsoluteSize
+                    
+                    -- Check if click is outside dropdown and its content
+                    local isOutsideMain = clickPos.X < dropdownPos.X or 
+                                    clickPos.X > dropdownPos.X + dropdownSize.X or
+                                    clickPos.Y < dropdownPos.Y or
+                                    clickPos.Y > dropdownPos.Y + dropdownSize.Y
+                                    
+                    local isOutsideContent = clickPos.X < contentPos.X or 
+                                        clickPos.X > contentPos.X + contentSize.X or
+                                        clickPos.Y < contentPos.Y or
+                                        clickPos.Y > contentPos.Y + contentSize.Y
+                    
+                    if isOutsideMain and isOutsideContent then
+                        ToggleDropdown(false)
+                    end
+                end
+                
+                UserInputService.InputBegan:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                        CheckOutsideClick(input)
+                    end
+                end)
+                
+                -- Dropdown Object with API
+                local DropdownObject = {
+                    Instance = Dropdown,
+                    Get = function()
+                        return SelectedOption
+                    end,
+                    Set = function(self, option)
+                        if table.find(options, option) then
+                            SelectedOption = option
+                            SelectedValue.Text = option
+                            callback(option)
+                        else
+                            warn("Option '" .. tostring(option) .. "' not found in dropdown options")
+                        end
+                        return self
+                    end,
+                    Refresh = function(self, newOptions, keepSelection)
+                        options = newOptions or {}
+                        
+                        -- Clear existing options
+                        for _, child in pairs(DropdownContent:GetChildren()) do
+                            if child:IsA("TextButton") then
+                                child:Destroy()
+                            end
+                        end
+                        
+                        -- Add new options
+                        for _, optionText in ipairs(options) do
+                            CreateOption(optionText)
+                        end
+                        
+                        -- Update content height
+                        ContentHeight = #options * 32 + 10
+                        
+                        -- Update selection
+                        if not keepSelection or not table.find(options, SelectedOption) then
+                            SelectedOption = options[1] or ""
+                            SelectedValue.Text = SelectedOption
+                        end
+                        
+                        return self
+                    end,
+                    AddOption = function(self, optionText)
+                        if not table.find(options, optionText) then
+                            table.insert(options, optionText)
+                            CreateOption(optionText)
+                            ContentHeight = #options * 32 + 10
+                        end
+                        return self
+                    end,
+                    RemoveOption = function(self, optionText)
+                        local index = table.find(options, optionText)
+                        if index then
+                            table.remove(options, index)
+                            
+                            -- Remove option button
+                            local optionButton = DropdownContent:FindFirstChild("Option_" .. optionText)
+                            if optionButton then
+                                optionButton:Destroy()
+                            end
+                            
+                            ContentHeight = #options * 32 + 10
+                            
+                            -- Update selection if removed option was selected
+                            if SelectedOption == optionText then
+                                SelectedOption = options[1] or ""
+                                SelectedValue.Text = SelectedOption
+                                callback(SelectedOption)
+                            end
+                        end
+                        return self
+                    end
+                }
+                
+                table.insert(SectionObject.Elements, DropdownObject)
+                return DropdownObject
+            end
             
             -- Add more UI elements here like AddToggle, AddSlider, etc.
 
