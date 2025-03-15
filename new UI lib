@@ -528,7 +528,6 @@ function NurkUI:CreateWindow(title)
         ContentLayout.Name = "ContentLayout"
         ContentLayout.Padding = UDim.new(0, 10)
         ContentLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-        ContentLayout.SortOrder = Enum.SortOrder.LayoutOrder
         ContentLayout.Parent = TabContent
         
         -- Auto-size the content canvas
@@ -644,13 +643,11 @@ function NurkUI:CreateWindow(title)
             SectionObject.Frame = SectionFrame
             SectionObject.Content = SectionContent
             SectionObject.Elements = {}
-            SectionObject.ElementIndex = 0
-            
             
             -- Add Button method for SectionObject
             function SectionObject:AddButton(buttonText, callback)
                 callback = callback or function() end
-                SectionObject.ElementIndex = SectionObject.ElementIndex + 1
+                
                 -- Create Button
                 local Button = Instance.new("TextButton")
                 Button.Name = "Button_" .. buttonText
@@ -664,8 +661,6 @@ function NurkUI:CreateWindow(title)
                 Button.ZIndex = 4
                 Button.Parent = SectionContent
                 Button.AutoButtonColor = false
-                Button.LayoutOrder = SectionObject.ElementIndex
-                
                 
                 local ButtonCorner = Instance.new("UICorner")
                 ButtonCorner.CornerRadius = UDim.new(0, 4)
@@ -720,7 +715,7 @@ function NurkUI:CreateWindow(title)
             function SectionObject:AddToggle(toggleText, default, callback)
                 default = default or false
                 callback = callback or function() end
-                SectionObject.ElementIndex = SectionObject.ElementIndex + 1
+                
                 -- Create Toggle Container
                 local Toggle = Instance.new("Frame")
                 Toggle.Name = "Toggle_" .. toggleText
@@ -729,7 +724,6 @@ function NurkUI:CreateWindow(title)
                 Toggle.Size = UDim2.new(1, 0, 0, 36)
                 Toggle.ZIndex = 4
                 Toggle.Parent = SectionContent
-                Toggle.LayoutOrder = SectionObject.ElementIndex
                 
                 local ToggleCorner = Instance.new("UICorner")
                 ToggleCorner.CornerRadius = UDim.new(0, 4)
@@ -857,7 +851,7 @@ function NurkUI:CreateWindow(title)
                 options = options or {}
                 default = default or options[1] or ""
                 callback = callback or function() end
-                SectionObject.ElementIndex = SectionObject.ElementIndex + 1
+                
                 -- Create Dropdown Container
                 local Dropdown = Instance.new("Frame")
                 Dropdown.Name = "Dropdown_" .. dropdownText
@@ -866,7 +860,6 @@ function NurkUI:CreateWindow(title)
                 Dropdown.Size = UDim2.new(1, 0, 0, 36)
                 Dropdown.ZIndex = 99999
                 Dropdown.Parent = SectionContent
-                Dropdown.LayoutOrder = SectionObject.ElementIndex
                 
                 local DropdownCorner = Instance.new("UICorner")
                 DropdownCorner.CornerRadius = UDim.new(0, 4)
@@ -1203,8 +1196,6 @@ function NurkUI:CreateWindow(title)
                 -- Ensure default value is within bounds and properly incremented
                 default = math.clamp(default, min, max)
                 default = math.floor((default - min) / increment + 0.5) * increment + min
-
-                SectionObject.ElementIndex = SectionObject.ElementIndex + 1
                 
                 -- Create Slider Container
                 local Slider = Instance.new("Frame")
@@ -1214,7 +1205,6 @@ function NurkUI:CreateWindow(title)
                 Slider.Size = UDim2.new(1, 0, 0, 50)
                 Slider.ZIndex = 4
                 Slider.Parent = SectionContent
-                Slider.LayoutOrder = SectionObject.ElementIndex
                 
                 local SliderCorner = Instance.new("UICorner")
                 SliderCorner.CornerRadius = UDim.new(0, 4)
@@ -1431,8 +1421,6 @@ function NurkUI:CreateWindow(title)
             -- Add Label method for SectionObject
             function SectionObject:AddLabel(labelText, textColor)
                 textColor = textColor or Settings.Theme.Text
-
-                SectionObject.ElementIndex = SectionObject.ElementIndex + 1
                 
                 -- Create Label
                 local Label = Instance.new("Frame")
@@ -1442,7 +1430,6 @@ function NurkUI:CreateWindow(title)
                 Label.Size = UDim2.new(1, 0, 0, 30)
                 Label.ZIndex = 4
                 Label.Parent = SectionContent
-                Label.LayoutOrder = SectionObject.ElementIndex
                 
                 local LabelCorner = Instance.new("UICorner")
                 LabelCorner.CornerRadius = UDim.new(0, 4)
@@ -1482,8 +1469,6 @@ function NurkUI:CreateWindow(title)
             function SectionObject:AddParagraph(title, content)
                 title = title or "Title"
                 content = content or "Content"
-
-                SectionObject.ElementIndex = SectionObject.ElementIndex + 1
                 
                 -- Create Paragraph Container
                 local Paragraph = Instance.new("Frame")
@@ -1494,7 +1479,6 @@ function NurkUI:CreateWindow(title)
                 Paragraph.ZIndex = 4
                 Paragraph.AutomaticSize = Enum.AutomaticSize.Y -- Allow automatic vertical sizing
                 Paragraph.Parent = SectionContent
-                Paragraph.ElementIndex = SectionObject.ElementIndex + 1
                 
                 local ParagraphCorner = Instance.new("UICorner")
                 ParagraphCorner.CornerRadius = UDim.new(0, 4)
@@ -1576,8 +1560,6 @@ function NurkUI:CreateWindow(title)
             function SectionObject:AddColorPicker(pickerText, defaultColor, callback)
                 defaultColor = defaultColor or Color3.fromRGB(255, 255, 255)
                 callback = callback or function() end
-
-                SectionObject.ElementIndex = SectionObject.ElementIndex + 1
                 
                 -- Create ColorPicker Container
                 local ColorPicker = Instance.new("Frame")
@@ -1587,7 +1569,6 @@ function NurkUI:CreateWindow(title)
                 ColorPicker.Size = UDim2.new(1, 0, 0, 36)
                 ColorPicker.ZIndex = 4
                 ColorPicker.Parent = SectionContent
-                ColorPicker.ElementIndex = SectionObject.ElementIndex + 1
                 
                 local ColorPickerCorner = Instance.new("UICorner")
                 ColorPickerCorner.CornerRadius = UDim.new(0, 4)
@@ -2100,7 +2081,6 @@ function NurkUI:CreateWindow(title)
                 labelText = labelText or "Auto Farm"
                 defaultText = defaultText or ""
                 callback = callback or function() end
-                SectionObject.ElementIndex = SectionObject.ElementIndex + 1
                 
                 -- Create TextField Container
                 local TextField = Instance.new("Frame")
@@ -2110,7 +2090,6 @@ function NurkUI:CreateWindow(title)
                 TextField.Size = UDim2.new(1, 0, 0, 36)
                 TextField.ZIndex = 4
                 TextField.Parent = SectionContent
-                TextField.ElementIndex = SectionObject.ElementIndex + 1
                 
                 local TextFieldCorner = Instance.new("UICorner")
                 TextFieldCorner.CornerRadius = UDim.new(0, 4)
