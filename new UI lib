@@ -666,6 +666,9 @@ function NurkUI:CreateWindow(title)
                 ButtonCorner.CornerRadius = UDim.new(0, 4)
                 ButtonCorner.Parent = Button
                 
+                SectionObject.ElementCount = (SectionObject.ElementCount or 0) + 1
+                Button.LayoutOrder = SectionObject.ElementCount
+
                 -- Create ripple effect
                 CreateRipple(Button)
                 
@@ -769,6 +772,9 @@ function NurkUI:CreateWindow(title)
                 local ToggleKnobCorner = Instance.new("UICorner")
                 ToggleKnobCorner.CornerRadius = UDim.new(1, 0)
                 ToggleKnobCorner.Parent = ToggleKnob
+
+                SectionObject.ElementCount = (SectionObject.ElementCount or 0) + 1
+                Toggle.LayoutOrder = SectionObject.ElementCount
                 
                 -- Create ripple effect for the toggle
                 CreateRipple(Toggle)
@@ -926,6 +932,9 @@ function NurkUI:CreateWindow(title)
                 local ContentCorner = Instance.new("UICorner")
                 ContentCorner.CornerRadius = UDim.new(0, 4)
                 ContentCorner.Parent = DropdownContent
+
+                SectionObject.ElementCount = (SectionObject.ElementCount or 0) + 1
+                Dropdown.LayoutOrder = SectionObject.ElementCount
                 
                 -- Shadow for dropdown content
                 CreateShadow(DropdownContent, 8)
@@ -1276,6 +1285,9 @@ function NurkUI:CreateWindow(title)
                 local SliderKnobCorner = Instance.new("UICorner")
                 SliderKnobCorner.CornerRadius = UDim.new(1, 0)
                 SliderKnobCorner.Parent = SliderKnob
+
+                SectionObject.ElementCount = (SectionObject.ElementCount or 0) + 1
+                Slider.LayoutOrder = SectionObject.ElementCount
                 
                 -- Shadow effect for the knob
                 CreateShadow(SliderKnob, 4)
@@ -1448,6 +1460,9 @@ function NurkUI:CreateWindow(title)
                 LabelText.TextWrapped = true
                 LabelText.ZIndex = 4
                 LabelText.Parent = Label
+
+                SectionObject.ElementCount = (SectionObject.ElementCount or 0) + 1
+                Label.LayoutOrder = SectionObject.ElementCount
                 
                 -- Label Object with API
                 local LabelObject = {
@@ -1521,6 +1536,9 @@ function NurkUI:CreateWindow(title)
                 local BottomPadding = Instance.new("UIPadding")
                 BottomPadding.PaddingBottom = UDim.new(0, 10)
                 BottomPadding.Parent = Paragraph
+
+                SectionObject.ElementCount = (SectionObject.ElementCount or 0) + 1
+                Paragraph.LayoutOrder = SectionObject.ElementCount
                 
                 -- Paragraph Object with API
                 local ParagraphObject = {
@@ -1603,6 +1621,9 @@ function NurkUI:CreateWindow(title)
                 local ColorDisplayCorner = Instance.new("UICorner")
                 ColorDisplayCorner.CornerRadius = UDim.new(0, 4)
                 ColorDisplayCorner.Parent = ColorDisplay
+
+                SectionObject.ElementCount = (SectionObject.ElementCount or 0) + 1
+                ColorPicker.LayoutOrder = SectionObject.ElementCount
                 
                 -- Color Display Shadow
                 CreateShadow(ColorDisplay, 6)
@@ -2131,6 +2152,9 @@ function NurkUI:CreateWindow(title)
                 local TextBoxCorner = Instance.new("UICorner")
                 TextBoxCorner.CornerRadius = UDim.new(0, 4)
                 TextBoxCorner.Parent = TextBox
+
+                SectionObject.ElementCount = (SectionObject.ElementCount or 0) + 1
+                TextField.LayoutOrder = SectionObject.ElementCount
                 
                 -- Add padding to text
                 local TextBoxPadding = Instance.new("UIPadding")
