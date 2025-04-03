@@ -1,0 +1,792 @@
+-- Modern UI Library for Script Hub
+-- Usage: local UIWindow = loadstring(game:HttpGet("YOUR_RAW_URL"))()
+-- Then create windows and elements as shown in the example
+
+local ModernUI = {}
+ModernUI.__index = ModernUI
+
+-- Color palette
+local colors = {
+    primary = Color3.fromRGB(45, 125, 255),
+    secondary = Color3.fromRGB(35, 35, 45),
+    background = Color3.fromRGB(25, 25, 35),
+    text = Color3.fromRGB(240, 240, 240),
+    accent = Color3.fromRGB(65, 165, 255),
+    success = Color3.fromRGB(65, 225, 105),
+    warning = Color3.fromRGB(255, 165, 65),
+    danger = Color3.fromRGB(255, 75, 75)
+}
+
+-- Utility functions
+local function tween(obj, props, duration, style, direction)
+    style = style or Enum.EasingStyle.Quad
+    direction = direction or Enum.EasingDirection.Out
+    game:GetService("TweenService"):Create(obj, TweenInfo.new(duration or 0.25, style, direction), props):Play()
+end
+
+local function create(class, props)
+    local instance = Instance.new(class)
+    for prop, value in pairs(props) do
+        if prop ~= "Parent" then
+            if pcall(function() return instance[prop] end) then
+                instance[prop] = value
+            end
+        end
+    end
+    if props.Parent then
+        instance.Parent = props.Parent
+    end
+    return instance
+end
+
+-- Main window creation
+function ModernUI:CreateWindow(title)
+    local screenGui = create("ScreenGui", {
+        Name = "ModernUILib",
+        ResetOnSpawn = false
+    })
+    
+    if gethui then
+        screenGui.Parent = gethui()
+    elseif syn and syn.protect_gui then
+        syn.protect_gui(screenGui)
+        screenGui.Parent = game:GetService("CoreGui")
+    else
+        screenGui.Parent = game:GetService("CoreGui")
+    end
+    
+    local mainFrame = create("Frame", {
+        Name = "MainFrame",
+        Parent = screenGui,
+        BackgroundColor3 = colors.background,
+        Position = UDim2.new(0.5, -200, 0.5, -150),
+        Size = UDim2.new(0, 400, 0, 350),
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        ClipsDescendants = true
+    })
+    
+    create("UICorner", {
+        CornerRadius = UDim.new(0, 8),
+        Parent = mainFrame
+    })
+    
+    create("UIStroke", {
+        Parent = mainFrame,
+        Color = Color3.fromRGB(60, 60, 70),
+        Thickness = 2
+    })
+    
+    local titleBar = create("Frame", {
+        Name = "TitleBar",
+        Parent = mainFrame,
+        BackgroundColor3 = colors.secondary,
+        Size = UDim2.new(1, 0, 0, 40),
+        ZIndex = 2
+    })
+    
+    create("UICorner", {
+        CornerRadius = UDim.new(0, 8),
+        Parent = titleBar
+    })
+    
+    create("UIStroke", {
+        Parent = titleBar,
+        Color = Color3.fromRGB(60, 60, 70),
+        Thickness = 1
+    })
+    
+    create("TextLabel", {
+        Name = "Title",
+        Parent = titleBar,
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0, 15, 0, 0),
+        Size = UDim2.new(1, -30, 1, 0),
+        Font = Enum.Font.GothamSemibold,
+        Text = title or "Modern UI",
+        TextColor3 = colors.text,
+        TextSize = 16,
+        TextXAlignment = Enum.TextXAlignment.Left
+    })
+    
+    local tabContainer = create("Frame", {
+        Name = "TabContainer",
+        Parent = mainFrame,
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0, 0, 0, 40),
+        Size = UDim2.new(1, 0, 0, 40)
+    })
+    
+    local tabList = create("UIListLayout", {
+        Parent = tabContainer,
+        FillDirection = Enum.FillDirection.Horizontal,
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        Padding = UDim.new(0, 5)
+    })
+    
+    local contentContainer = create("Frame", {
+        Name = "ContentContainer",
+        Parent = mainFrame,
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0, 15, 0, 85),
+        Size = UDim2.new(1, -30, 1, -100)
+    })
+    
+    create("UIListLayout", {
+        Parent = contentContainer,
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        Padding = UDim.new(0, 15)
+    })
+    
+    create("UIPadding", {
+        Parent = contentContainer,
+        PaddingTop = UDim.new(0, 5),
+        PaddingBottom = UDim.new(0, 5)
+    })
+    
+    -- Make window draggable
+    local dragging
+    local dragInput
+    local dragStart
+    local startPos
+    
+    titleBar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            dragStart = input.Position
+            startPos = mainFrame.Position
+            
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+    
+    titleBar.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement then
+            dragInput = input
+        end
+    end)
+    
+    game:GetService("UserInputService").InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            local delta = input.Position - dragStart
+            mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+    
+    -- Window methods
+    local window = {
+        gui = screenGui,
+        mainFrame = mainFrame,
+        tabs = {},
+        currentTab = nil
+    }
+    
+    function window:AddTab(name)
+        local tabButton = create("TextButton", {
+            Name = "TabButton_"..name,
+            Parent = tabContainer,
+            BackgroundColor3 = colors.secondary,
+            BackgroundTransparency = 0.8,
+            Size = UDim2.new(0, 80, 0, 30),
+            Font = Enum.Font.Gotham,
+            Text = name,
+            TextColor3 = colors.text,
+            TextSize = 14,
+            AutoButtonColor = false
+        })
+        
+        create("UICorner", {
+            CornerRadius = UDim.new(0, 6),
+            Parent = tabButton
+        })
+        
+        create("UIStroke", {
+            Parent = tabButton,
+            Color = Color3.fromRGB(60, 60, 70),
+            Thickness = 1
+        })
+        
+        local tabContent = create("ScrollingFrame", {
+            Name = "TabContent_"..name,
+            Parent = contentContainer,
+            BackgroundTransparency = 1,
+            Size = UDim2.new(1, 0, 1, 0),
+            ScrollBarThickness = 3,
+            ScrollBarImageColor3 = colors.primary,
+            Visible = false
+        })
+        
+        create("UIListLayout", {
+            Parent = tabContent,
+            SortOrder = Enum.SortOrder.LayoutOrder,
+            Padding = UDim.new(0, 15)
+        })
+        
+        create("UIPadding", {
+            Parent = tabContent,
+            PaddingTop = UDim.new(0, 5),
+            PaddingBottom = UDim.new(0, 5)
+        })
+        
+        local tab = {
+            name = name,
+            button = tabButton,
+            content = tabContent,
+            elements = {}
+        }
+        
+        table.insert(self.tabs, tab)
+        
+        if #self.tabs == 1 then
+            self:SwitchTab(tab)
+        end
+        
+        tabButton.MouseButton1Click:Connect(function()
+            self:SwitchTab(tab)
+        end)
+        
+        -- Tab methods
+        local tabMethods = {}
+        
+        function tabMethods:AddButton(options)
+            local button = create("TextButton", {
+                Name = "Button_"..options.text,
+                Parent = tab.content,
+                BackgroundColor3 = colors.primary,
+                Size = UDim2.new(1, 0, 0, 35),
+                Font = Enum.Font.GothamSemibold,
+                Text = options.text or "Button",
+                TextColor3 = Color3.new(1, 1, 1),
+                TextSize = 14,
+                AutoButtonColor = false
+            })
+            
+            create("UICorner", {
+                CornerRadius = UDim.new(0, 6),
+                Parent = button
+            })
+            
+            create("UIStroke", {
+                Parent = button,
+                Color = Color3.fromRGB(60, 60, 70),
+                Thickness = 1
+            })
+            
+            local buttonHighlight = create("Frame", {
+                Name = "Highlight",
+                Parent = button,
+                BackgroundColor3 = Color3.new(1, 1, 1),
+                BackgroundTransparency = 0.9,
+                Size = UDim2.new(1, 0, 1, 0),
+                ZIndex = 2
+            })
+            
+            create("UICorner", {
+                CornerRadius = UDim.new(0, 6),
+                Parent = buttonHighlight
+            })
+            
+            button.MouseEnter:Connect(function()
+                tween(buttonHighlight, {BackgroundTransparency = 0.85})
+                tween(button, {BackgroundColor3 = colors.accent})
+            end)
+            
+            button.MouseLeave:Connect(function()
+                tween(buttonHighlight, {BackgroundTransparency = 0.9})
+                tween(button, {BackgroundColor3 = colors.primary})
+            end)
+            
+            button.MouseButton1Down:Connect(function()
+                tween(button, {Size = UDim2.new(0.98, 0, 0, 33)})
+            end)
+            
+            button.MouseButton1Up:Connect(function()
+                tween(button, {Size = UDim2.new(1, 0, 0, 35)})
+                if options.callback then
+                    options.callback()
+                end
+            end)
+            
+            table.insert(tab.elements, button)
+            return button
+        end
+        
+        function tabMethods:AddToggle(options)
+            local toggleFrame = create("Frame", {
+                Name = "Toggle_"..options.text,
+                Parent = tab.content,
+                BackgroundTransparency = 1,
+                Size = UDim2.new(1, 0, 0, 30)
+            })
+            
+            local toggleLabel = create("TextLabel", {
+                Name = "Label",
+                Parent = toggleFrame,
+                BackgroundTransparency = 1,
+                Size = UDim2.new(0.7, 0, 1, 0),
+                Font = Enum.Font.Gotham,
+                Text = options.text or "Toggle",
+                TextColor3 = colors.text,
+                TextSize = 14,
+                TextXAlignment = Enum.TextXAlignment.Left
+            })
+            
+            local toggleButton = create("TextButton", {
+                Name = "ToggleButton",
+                Parent = toggleFrame,
+                BackgroundColor3 = colors.secondary,
+                Position = UDim2.new(0.7, 0, 0, 0),
+                Size = UDim2.new(0.3, 0, 1, 0),
+                Text = "",
+                AutoButtonColor = false
+            })
+            
+            create("UICorner", {
+                CornerRadius = UDim.new(0, 15),
+                Parent = toggleButton
+            })
+            
+            create("UIStroke", {
+                Parent = toggleButton,
+                Color = Color3.fromRGB(60, 60, 70),
+                Thickness = 1
+            })
+            
+            local toggleSwitch = create("Frame", {
+                Name = "Switch",
+                Parent = toggleButton,
+                BackgroundColor3 = colors.text,
+                Position = UDim2.new(0, 2, 0.1, 0),
+                Size = UDim2.new(0, 24, 0, 24),
+                AnchorPoint = Vector2.new(0, 0.1)
+            })
+            
+            create("UICorner", {
+                CornerRadius = UDim.new(0, 12),
+                Parent = toggleSwitch
+            })
+            
+            local state = options.default or false
+            
+            local function updateToggle()
+                if state then
+                    tween(toggleSwitch, {Position = UDim2.new(1, -26, 0.1, 0)})
+                    tween(toggleButton, {BackgroundColor3 = colors.primary})
+                else
+                    tween(toggleSwitch, {Position = UDim2.new(0, 2, 0.1, 0)})
+                    tween(toggleButton, {BackgroundColor3 = colors.secondary})
+                end
+                
+                if options.callback then
+                    options.callback(state)
+                end
+            end
+            
+            toggleButton.MouseButton1Click:Connect(function()
+                state = not state
+                updateToggle()
+            end)
+            
+            updateToggle()
+            
+            table.insert(tab.elements, toggleFrame)
+            
+            local toggleMethods = {}
+            
+            function toggleMethods:SetValue(newState)
+                state = newState
+                updateToggle()
+            end
+            
+            function toggleMethods:GetValue()
+                return state
+            end
+            
+            return toggleMethods
+        end
+        
+        function tabMethods:AddCheckbox(options)
+            local checkboxFrame = create("Frame", {
+                Name = "Checkbox_"..options.text,
+                Parent = tab.content,
+                BackgroundTransparency = 1,
+                Size = UDim2.new(1, 0, 0, 30)
+            })
+            
+            local checkboxButton = create("TextButton", {
+                Name = "CheckboxButton",
+                Parent = checkboxFrame,
+                BackgroundColor3 = colors.secondary,
+                Position = UDim2.new(0, 0, 0, 0),
+                Size = UDim2.new(0, 24, 0, 24),
+                Text = "",
+                AutoButtonColor = false
+            })
+            
+            create("UICorner", {
+                CornerRadius = UDim.new(0, 6),
+                Parent = checkboxButton
+            })
+            
+            create("UIStroke", {
+                Parent = checkboxButton,
+                Color = Color3.fromRGB(60, 60, 70),
+                Thickness = 1
+            })
+            
+            local checkIcon = create("ImageLabel", {
+                Name = "CheckIcon",
+                Parent = checkboxButton,
+                BackgroundTransparency = 1,
+                Position = UDim2.new(0.5, 0, 0.5, 0),
+                Size = UDim2.new(0, 16, 0, 16),
+                AnchorPoint = Vector2.new(0.5, 0.5),
+                Image = "rbxassetid://3926305904",
+                ImageRectOffset = Vector2.new(564, 284),
+                ImageRectSize = Vector2.new(36, 36),
+                ImageColor3 = colors.primary,
+                Visible = false
+            })
+            
+            local checkboxLabel = create("TextLabel", {
+                Name = "Label",
+                Parent = checkboxFrame,
+                BackgroundTransparency = 1,
+                Position = UDim2.new(0, 34, 0, 0),
+                Size = UDim2.new(1, -34, 1, 0),
+                Font = Enum.Font.Gotham,
+                Text = options.text or "Checkbox",
+                TextColor3 = colors.text,
+                TextSize = 14,
+                TextXAlignment = Enum.TextXAlignment.Left
+            })
+            
+            local state = options.default or false
+            
+            local function updateCheckbox()
+                checkIcon.Visible = state
+                if state then
+                    tween(checkboxButton, {BackgroundColor3 = colors.primary})
+                else
+                    tween(checkboxButton, {BackgroundColor3 = colors.secondary})
+                end
+                
+                if options.callback then
+                    options.callback(state)
+                end
+            end
+            
+            checkboxButton.MouseButton1Click:Connect(function()
+                state = not state
+                updateCheckbox()
+            end)
+            
+            updateCheckbox()
+            
+            table.insert(tab.elements, checkboxFrame)
+            
+            local checkboxMethods = {}
+            
+            function checkboxMethods:SetValue(newState)
+                state = newState
+                updateCheckbox()
+            end
+            
+            function checkboxMethods:GetValue()
+                return state
+            end
+            
+            return checkboxMethods
+        end
+        
+        function tabMethods:AddSlider(options)
+            local sliderFrame = create("Frame", {
+                Name = "Slider_"..options.text,
+                Parent = tab.content,
+                BackgroundTransparency = 1,
+                Size = UDim2.new(1, 0, 0, 60)
+            })
+            
+            local sliderLabel = create("TextLabel", {
+                Name = "Label",
+                Parent = sliderFrame,
+                BackgroundTransparency = 1,
+                Size = UDim2.new(1, 0, 0, 20),
+                Font = Enum.Font.Gotham,
+                Text = options.text or "Slider",
+                TextColor3 = colors.text,
+                TextSize = 14,
+                TextXAlignment = Enum.TextXAlignment.Left
+            })
+            
+            local sliderValue = create("TextLabel", {
+                Name = "Value",
+                Parent = sliderFrame,
+                BackgroundTransparency = 1,
+                Position = UDim2.new(0, 0, 0, 20),
+                Size = UDim2.new(1, 0, 0, 20),
+                Font = Enum.Font.Gotham,
+                Text = tostring(options.default or options.min or 0),
+                TextColor3 = colors.text,
+                TextSize = 14,
+                TextXAlignment = Enum.TextXAlignment.Right
+            })
+            
+            local sliderTrack = create("Frame", {
+                Name = "Track",
+                Parent = sliderFrame,
+                BackgroundColor3 = colors.secondary,
+                Position = UDim2.new(0, 0, 0, 45),
+                Size = UDim2.new(1, 0, 0, 10)
+            })
+            
+            create("UICorner", {
+                CornerRadius = UDim.new(0, 5),
+                Parent = sliderTrack
+            })
+            
+            create("UIStroke", {
+                Parent = sliderTrack,
+                Color = Color3.fromRGB(60, 60, 70),
+                Thickness = 1
+            })
+            
+            local sliderFill = create("Frame", {
+                Name = "Fill",
+                Parent = sliderTrack,
+                BackgroundColor3 = colors.primary,
+                Size = UDim2.new(0, 0, 1, 0)
+            })
+            
+            create("UICorner", {
+                CornerRadius = UDim.new(0, 5),
+                Parent = sliderFill
+            })
+            
+            local sliderHandle = create("TextButton", {
+                Name = "Handle",
+                Parent = sliderTrack,
+                BackgroundColor3 = colors.text,
+                Position = UDim2.new(0, 0, 0, -5),
+                Size = UDim2.new(0, 20, 0, 20),
+                Text = "",
+                AutoButtonColor = false,
+                ZIndex = 2
+            })
+            
+            create("UICorner", {
+                CornerRadius = UDim.new(0, 10),
+                Parent = sliderHandle
+            })
+            
+            create("UIStroke", {
+                Parent = sliderHandle,
+                Color = Color3.fromRGB(60, 60, 70),
+                Thickness = 1
+            })
+            
+            local min = options.min or 0
+            local max = options.max or 100
+            local default = options.default or min
+            local value = math.clamp(default, min, max)
+            local decimals = options.decimals or 0
+            
+            local function updateSlider(newValue, callback)
+                value = math.clamp(newValue, min, max)
+                local percent = (value - min) / (max - min)
+                
+                sliderFill.Size = UDim2.new(percent, 0, 1, 0)
+                sliderHandle.Position = UDim2.new(percent, -10, 0, -5)
+                
+                if decimals > 0 then
+                    sliderValue.Text = string.format("%."..decimals.."f", value)
+                else
+                    sliderValue.Text = tostring(math.floor(value))
+                end
+                
+                if callback and options.callback then
+                    options.callback(value)
+                end
+            end
+            
+            local dragging = false
+            
+            sliderHandle.MouseButton1Down:Connect(function()
+                dragging = true
+            end)
+            
+            game:GetService("UserInputService").InputEnded:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    dragging = false
+                end
+            end)
+            
+            game:GetService("UserInputService").InputChanged:Connect(function(input)
+                if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+                    local mousePos = game:GetService("Players").LocalPlayer:GetMouse().X
+                    local relativePos = mousePos - sliderTrack.AbsolutePosition.X
+                    local percent = math.clamp(relativePos / sliderTrack.AbsoluteSize.X, 0, 1)
+                    local newValue = min + (max - min) * percent
+                    updateSlider(newValue, true)
+                end
+            end)
+            
+            sliderTrack.MouseButton1Down:Connect(function(x, y)
+                local relativePos = x - sliderTrack.AbsolutePosition.X
+                local percent = math.clamp(relativePos / sliderTrack.AbsoluteSize.X, 0, 1)
+                local newValue = min + (max - min) * percent
+                updateSlider(newValue, true)
+            end)
+            
+            updateSlider(value)
+            
+            table.insert(tab.elements, sliderFrame)
+            
+            local sliderMethods = {}
+            
+            function sliderMethods:SetValue(newValue)
+                updateSlider(newValue, false)
+            end
+            
+            function sliderMethods:GetValue()
+                return value
+            end
+            
+            return sliderMethods
+        end
+        
+        function tabMethods:AddTextbox(options)
+            local textboxFrame = create("Frame", {
+                Name = "Textbox_"..options.text,
+                Parent = tab.content,
+                BackgroundTransparency = 1,
+                Size = UDim2.new(1, 0, 0, 50)
+            })
+            
+            local textboxLabel = create("TextLabel", {
+                Name = "Label",
+                Parent = textboxFrame,
+                BackgroundTransparency = 1,
+                Size = UDim2.new(1, 0, 0, 20),
+                Font = Enum.Font.Gotham,
+                Text = options.text or "Textbox",
+                TextColor3 = colors.text,
+                TextSize = 14,
+                TextXAlignment = Enum.TextXAlignment.Left
+            })
+            
+            local textboxInput = create("TextBox", {
+                Name = "Input",
+                Parent = textboxFrame,
+                BackgroundColor3 = colors.secondary,
+                Position = UDim2.new(0, 0, 0, 25),
+                Size = UDim2.new(1, 0, 0, 30),
+                Font = Enum.Font.Gotham,
+                PlaceholderText = options.placeholder or "Enter text...",
+                PlaceholderColor3 = Color3.fromRGB(150, 150, 150),
+                Text = options.default or "",
+                TextColor3 = colors.text,
+                TextSize = 14,
+                ClearTextOnFocus = false
+            })
+            
+            create("UICorner", {
+                CornerRadius = UDim.new(0, 6),
+                Parent = textboxInput
+            })
+            
+            create("UIStroke", {
+                Parent = textboxInput,
+                Color = Color3.fromRGB(60, 60, 70),
+                Thickness = 1
+            })
+            
+            local function updateTextbox()
+                if options.callback then
+                    options.callback(textboxInput.Text)
+                end
+            end
+            
+            textboxInput.FocusLost:Connect(function()
+                updateTextbox()
+            end)
+            
+            table.insert(tab.elements, textboxFrame)
+            
+            local textboxMethods = {}
+            
+            function textboxMethods:SetValue(newText)
+                textboxInput.Text = newText
+                updateTextbox()
+            end
+            
+            function textboxMethods:GetValue()
+                return textboxInput.Text
+            end
+            
+            return textboxMethods
+        end
+        
+        function tabMethods:AddLabel(text)
+            local label = create("TextLabel", {
+                Name = "Label_"..text,
+                Parent = tab.content,
+                BackgroundTransparency = 1,
+                Size = UDim2.new(1, 0, 0, 20),
+                Font = Enum.Font.Gotham,
+                Text = text or "Label",
+                TextColor3 = colors.text,
+                TextSize = 14,
+                TextXAlignment = Enum.TextXAlignment.Left
+            })
+            
+            table.insert(tab.elements, label)
+            return label
+        end
+        
+        function tabMethods:AddDivider()
+            local divider = create("Frame", {
+                Name = "Divider",
+                Parent = tab.content,
+                BackgroundColor3 = Color3.fromRGB(60, 60, 70),
+                Size = UDim2.new(1, 0, 0, 1),
+                BorderSizePixel = 0
+            })
+            
+            table.insert(tab.elements, divider)
+            return divider
+        end
+        
+        setmetatable(tabMethods, {
+            __index = function(self, key)
+                return function(...)
+                    return tabMethods[key](...)
+                end
+            end
+        })
+        
+        return tabMethods
+    end
+    
+    function window:SwitchTab(tab)
+        if self.currentTab then
+            self.currentTab.content.Visible = false
+            tween(self.currentTab.button, {BackgroundTransparency = 0.8})
+        end
+        
+        self.currentTab = tab
+        tab.content.Visible = true
+        tween(tab.button, {BackgroundTransparency = 0})
+    end
+    
+    function window:Destroy()
+        self.gui:Destroy()
+    end
+    
+    return window
+end
+
+return ModernUI
