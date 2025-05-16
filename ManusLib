@@ -531,7 +531,7 @@ function OrionLib:MakeWindow(options)
             local callback = options.Callback or function() end
             
             local Dropdown = Instance.new("Frame")
-            Dropdown.Name = dropdownName
+            Dropdown.Name = "Dropdown_"..dropdownName
             Dropdown.BackgroundTransparency = 1
             Dropdown.Size = UDim2.new(1, -10, 0, 35)
             Dropdown.ClipsDescendants = true
@@ -568,14 +568,16 @@ function OrionLib:MakeWindow(options)
             DropdownArrow.ImageColor3 = Color3.fromRGB(255, 255, 255)
             DropdownArrow.Parent = DropdownButton
             
-            local DropdownList = Instance.new("Frame")
+            local DropdownList = Instance.new("ScrollingFrame")
             DropdownList.Name = "DropdownList"
             DropdownList.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
             DropdownList.BorderSizePixel = 0
-            DropdownList.Position = UDim2.new(0, 0, 0, 35)
+            DropdownList.Position = UDim2.new(0, 0, 0, 40)
             DropdownList.Size = UDim2.new(1, 0, 0, 0)
             DropdownList.ClipsDescendants = true
+            DropdownList.ScrollBarThickness = 3
             DropdownList.Visible = false
+            DropdownList.AutomaticCanvasSize = Enum.AutomaticSize.Y
             DropdownList.Parent = Dropdown
             
             local DropdownListCorner = Instance.new("UICorner")
@@ -592,6 +594,8 @@ function OrionLib:MakeWindow(options)
             DropdownListPadding.Name = "DropdownListPadding"
             DropdownListPadding.PaddingTop = UDim.new(0, 5)
             DropdownListPadding.PaddingBottom = UDim.new(0, 5)
+            DropdownListPadding.PaddingLeft = UDim.new(0, 5)
+            DropdownListPadding.PaddingRight = UDim.new(0, 5)
             DropdownListPadding.Parent = DropdownList
             
             local opened = false
@@ -603,8 +607,9 @@ function OrionLib:MakeWindow(options)
                 if opened then
                     DropdownList.Visible = true
                     local contentSize = DropdownListLayout.AbsoluteContentSize.Y
+                    local maxHeight = math.min(contentSize + 10, 200) -- Limit max height
                     TweenService:Create(DropdownList, TweenInfo.new(0.2), {
-                        Size = UDim2.new(1, 0, 0, contentSize + 10)
+                        Size = UDim2.new(1, 0, 0, maxHeight)
                     }):Play()
                     TweenService:Create(DropdownArrow, TweenInfo.new(0.2), {
                         Rotation = 180
@@ -616,7 +621,7 @@ function OrionLib:MakeWindow(options)
                     TweenService:Create(DropdownArrow, TweenInfo.new(0.2), {
                         Rotation = 0
                     }):Play()
-                    wait(0.2)
+                    task.wait(0.2)
                     DropdownList.Visible = false
                 end
             end
@@ -638,19 +643,15 @@ function OrionLib:MakeWindow(options)
                 OptionButton.Size = UDim2.new(1, -10, 0, 30)
                 OptionButton.AutoButtonColor = false
                 OptionButton.Font = Enum.Font.Gotham
-                OptionButton.Text = option
+                OptionButton.Text = "   " .. option
                 OptionButton.TextColor3 = Color3.fromRGB(255, 255, 255)
                 OptionButton.TextSize = 14
+                OptionButton.TextXAlignment = Enum.TextXAlignment.Left
                 OptionButton.Parent = DropdownList
                 
                 local OptionButtonCorner = Instance.new("UICorner")
                 OptionButtonCorner.CornerRadius = UDim.new(0, 6)
                 OptionButtonCorner.Parent = OptionButton
-                
-                local OptionButtonPadding = Instance.new("UIPadding")
-                OptionButtonPadding.Name = "OptionButtonPadding"
-                OptionButtonPadding.PaddingLeft = UDim.new(0, 10)
-                OptionButtonPadding.Parent = OptionButton
                 
                 OptionButton.MouseButton1Click:Connect(function()
                     selected = option
@@ -670,6 +671,17 @@ function OrionLib:MakeWindow(options)
             end
             
             updateDropdown()
+            
+            -- Close dropdown when clicking outside
+            local function onInputBegan(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                    if opened and not Dropdown:IsAncestorOf(input:GetMouseTarget()) then
+                        toggleDropdown()
+                    end
+                end
+            end
+            
+            UserInputService.InputBegan:Connect(onInputBegan)
             
             local dropdownFunctions = {}
             
