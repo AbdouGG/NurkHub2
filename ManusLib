@@ -1,40 +1,53 @@
 --[[
-    ProUI - A Modern, Smooth UI Library for Roblox Executors
+    MercUI - A Premium UI Library for Roblox Executors
     
     Features:
-    - Clean, modern design
-    - Mobile friendly
+    - Modern gaming UI design with sidebar navigation
+    - Tab system for organized content
+    - Mobile friendly with responsive layout
     - Toggleable UI with outside button
+    - Beautiful animations and effects
     - Easy-to-use API
-    - Smooth animations
 ]]
 
-local ProUI = {}
-ProUI.__index = ProUI
+local MercUI = {}
+MercUI.__index = MercUI
 
 -- Configuration
 local config = {
     colors = {
-        background = Color3.fromRGB(30, 30, 35),
-        accent = Color3.fromRGB(90, 120, 255),
-        text = Color3.fromRGB(255, 255, 255),
-        button = Color3.fromRGB(45, 45, 50),
-        buttonHover = Color3.fromRGB(55, 55, 60),
-        shadow = Color3.fromRGB(15, 15, 20),
-        success = Color3.fromRGB(70, 200, 120),
-        error = Color3.fromRGB(255, 80, 80),
-        warning = Color3.fromRGB(255, 180, 70)
+        background = Color3.fromRGB(30, 30, 35),        -- Main background
+        sidebar = Color3.fromRGB(20, 20, 25),           -- Sidebar background
+        topbar = Color3.fromRGB(25, 25, 30),            -- Top bar background
+        content = Color3.fromRGB(35, 35, 40),           -- Content background
+        accent = Color3.fromRGB(90, 120, 255),          -- Primary accent color
+        text = Color3.fromRGB(255, 255, 255),           -- Main text
+        textDim = Color3.fromRGB(175, 175, 185),        -- Dimmed text
+        buttonNormal = Color3.fromRGB(55, 55, 65),      -- Normal button
+        buttonHover = Color3.fromRGB(65, 65, 75),       -- Button hover
+        buttonActive = Color3.fromRGB(90, 120, 255),    -- Button active
+        shadow = Color3.fromRGB(10, 10, 15),            -- Shadows
+        success = Color3.fromRGB(70, 200, 120),         -- Success color
+        error = Color3.fromRGB(255, 80, 80),            -- Error color
+        warning = Color3.fromRGB(255, 180, 70)          -- Warning color
     },
-    cornerRadius = UDim.new(0, 6),
-    padding = UDim.new(0, 10),
+    cornerRadius = UDim.new(0, 8),                      -- Default corner radius
+    padding = UDim.new(0, 12),                          -- Default padding
     fonts = {
-        title = Enum.Font.GothamBold,
-        regular = Enum.Font.Gotham,
-        light = Enum.Font.GothamMedium
+        title = Enum.Font.GothamBold,                   -- Title text font
+        regular = Enum.Font.Gotham,                     -- Regular text font
+        light = Enum.Font.GothamMedium                  -- Light text font
     },
     animation = {
-        duration = 0.3,
-        easing = Enum.EasingStyle.Quint
+        duration = 0.3,                                 -- Default animation duration
+        easing = Enum.EasingStyle.Quint                 -- Default easing style
+    },
+    icons = {
+        close = "✕",
+        minimize = "―",
+        maximize = "□",
+        rightArrow = "❯",
+        star = "★"
     }
 }
 
@@ -96,22 +109,38 @@ local function createRipple(button)
     )
 end
 
+local function createIcon(iconType, size, color)
+    local icon = Instance.new("TextLabel")
+    icon.Size = UDim2.fromOffset(size, size)
+    icon.BackgroundTransparency = 1
+    icon.Text = config.icons[iconType] or "?"
+    icon.TextColor3 = color or config.colors.text
+    icon.Font = config.fonts.title
+    icon.TextSize = size * 0.7
+    icon.TextXAlignment = Enum.TextXAlignment.Center
+    icon.TextYAlignment = Enum.TextYAlignment.Center
+    
+    return icon
+end
+
 -- Create new UI library instance
-function ProUI.new(title)
-    local self = setmetatable({}, ProUI)
+function MercUI.new(title)
+    local self = setmetatable({}, MercUI)
     
     -- Main instances
     self.connections = {}
-    self.title = title or "ProUI"
+    self.title = title or "MercUI"
     self.visible = true
     self.dragging = false
     self.dragInput = nil
     self.dragStart = nil
     self.startPos = nil
+    self.tabs = {}
+    self.activeTab = nil
     
     -- Create ScreenGui
     self.screenGui = Instance.new("ScreenGui")
-    self.screenGui.Name = "ProUI"
+    self.screenGui.Name = "MercUI"
     self.screenGui.ResetOnSpawn = false
     self.screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     
@@ -155,11 +184,880 @@ function ProUI.new(title)
     -- Main panel
     self.mainFrame = Instance.new("Frame")
     self.mainFrame.Name = "MainPanel"
-    self.mainFrame.Size = UDim2.fromOffset(300, 350)
-    self.mainFrame.Position = UDim2.new(0, 100, 0.5, -175)
+    self.mainFrame.Size = UDim2.fromOffset(600, 400)
+    self.mainFrame.Position = UDim2.new(0.5, -300, 0.5, -200)
     self.mainFrame.BackgroundColor3 = config.colors.background
     self.mainFrame.BorderSizePixel = 0
     self.mainFrame.ZIndex = 100
+    
+    local mainCorner = Instance.new("UICorner")
+    mainCorner.CornerRadius = config.cornerRadius
+    mainCorner.Parent = self.mainFrame
+    
+    createShadow(self.mainFrame, self.mainFrame.Size, self.mainFrame.Position, config.cornerRadius)
+    
+    -- Top bar
+    self.topBar = Instance.new("Frame")
+    self.topBar.Name = "TopBar"
+    self.topBar.Size = UDim2.new(1, 0, 0, 40)
+    self.topBar.Position = UDim2.fromOffset(0, 0)
+    self.topBar.BackgroundColor3 = config.colors.topbar
+    self.topBar.BorderSizePixel = 0
+    self.topBar.ZIndex = 101
+    
+    local topCorner = Instance.new("UICorner")
+    topCorner.CornerRadius = config.cornerRadius
+    topCorner.Parent = self.topBar
+    
+    -- Fix corners
+    local topCornerFix = Instance.new("Frame")
+    topCornerFix.Name = "CornerFix"
+    topCornerFix.Size = UDim2.new(1, 0, 0, 10)
+    topCornerFix.Position = UDim2.new(0, 0, 1, -10)
+    topCornerFix.BackgroundColor3 = config.colors.topbar
+    topCornerFix.BorderSizePixel = 0
+    topCornerFix.ZIndex = 101
+    topCornerFix.Parent = self.topBar
+    
+    -- Title with icon
+    local titleContainer = Instance.new("Frame")
+    titleContainer.Name = "TitleContainer"
+    titleContainer.Size = UDim2.new(0, 200, 1, 0)
+    titleContainer.Position = UDim2.fromOffset(10, 0)
+    titleContainer.BackgroundTransparency = 1
+    titleContainer.ZIndex = 102
+    
+    self.titleIcon = Instance.new("ImageLabel")
+    self.titleIcon.Name = "TitleIcon"
+    self.titleIcon.Size = UDim2.fromOffset(24, 24)
+    self.titleIcon.Position = UDim2.new(0, 5, 0.5, -12)
+    self.titleIcon.BackgroundTransparency = 1
+    self.titleIcon.Image = "rbxassetid://7072706318" -- Default icon, can be changed
+    self.titleIcon.ZIndex = 103
+    self.titleIcon.Parent = titleContainer
+    
+    self.titleText = Instance.new("TextLabel")
+    self.titleText.Name = "Title"
+    self.titleText.Size = UDim2.new(1, -40, 1, 0)
+    self.titleText.Position = UDim2.fromOffset(35, 0)
+    self.titleText.BackgroundTransparency = 1
+    self.titleText.Font = config.fonts.title
+    self.titleText.Text = self.title
+    self.titleText.TextColor3 = config.colors.text
+    self.titleText.TextSize = 18
+    self.titleText.TextXAlignment = Enum.TextXAlignment.Left
+    self.titleText.ZIndex = 103
+    self.titleText.Parent = titleContainer
+    
+    titleContainer.Parent = self.topBar
+    
+    -- Window buttons
+    local windowButtonsContainer = Instance.new("Frame")
+    windowButtonsContainer.Name = "WindowButtons"
+    windowButtonsContainer.Size = UDim2.new(0, 100, 1, 0)
+    windowButtonsContainer.Position = UDim2.new(1, -100, 0, 0)
+    windowButtonsContainer.BackgroundTransparency = 1
+    windowButtonsContainer.ZIndex = 102
+    
+    -- Minimize button
+    self.minimizeButton = Instance.new("TextButton")
+    self.minimizeButton.Name = "MinimizeButton"
+    self.minimizeButton.Size = UDim2.fromOffset(30, 30)
+    self.minimizeButton.Position = UDim2.new(0, 5, 0, 5)
+    self.minimizeButton.BackgroundTransparency = 0.9
+    self.minimizeButton.BackgroundColor3 = config.colors.warning
+    self.minimizeButton.Font = config.fonts.title
+    self.minimizeButton.Text = config.icons.minimize
+    self.minimizeButton.TextColor3 = config.colors.text
+    self.minimizeButton.TextSize = 16
+    self.minimizeButton.AutoButtonColor = false
+    self.minimizeButton.ZIndex = 103
+    
+    local minButtonCorner = Instance.new("UICorner")
+    minButtonCorner.CornerRadius = UDim.new(0, 6)
+    minButtonCorner.Parent = self.minimizeButton
+    
+    self.minimizeButton.MouseButton1Click:Connect(function()
+        createRipple(self.minimizeButton)
+        self:Minimize()
+    end)
+    self.minimizeButton.Parent = windowButtonsContainer
+    
+    -- Maximize button
+    self.maximizeButton = Instance.new("TextButton")
+    self.maximizeButton.Name = "MaximizeButton"
+    self.maximizeButton.Size = UDim2.fromOffset(30, 30)
+    self.maximizeButton.Position = UDim2.new(0, 40, 0, 5)
+    self.maximizeButton.BackgroundTransparency = 0.9
+    self.maximizeButton.BackgroundColor3 = config.colors.success
+    self.maximizeButton.Font = config.fonts.title
+    self.maximizeButton.Text = config.icons.maximize
+    self.maximizeButton.TextColor3 = config.colors.text
+    self.maximizeButton.TextSize = 16
+    self.maximizeButton.AutoButtonColor = false
+    self.maximizeButton.ZIndex = 103
+    
+    local maxButtonCorner = Instance.new("UICorner")
+    maxButtonCorner.CornerRadius = UDim.new(0, 6)
+    maxButtonCorner.Parent = self.maximizeButton
+    
+    self.maximizeButton.MouseButton1Click:Connect(function()
+        createRipple(self.maximizeButton)
+        self:Maximize()
+    end)
+    self.maximizeButton.Parent = windowButtonsContainer
+    
+    -- Close button
+    self.closeButton = Instance.new("TextButton")
+    self.closeButton.Name = "CloseButton"
+    self.closeButton.Size = UDim2.fromOffset(30, 30)
+    self.closeButton.Position = UDim2.new(0, 75, 0, 5)
+    self.closeButton.BackgroundTransparency = 0.9
+    self.closeButton.BackgroundColor3 = config.colors.error
+    self.closeButton.Font = config.fonts.title
+    self.closeButton.Text = config.icons.close
+    self.closeButton.TextColor3 = config.colors.text
+    self.closeButton.TextSize = 16
+    self.closeButton.AutoButtonColor = false
+    self.closeButton.ZIndex = 103
+    
+    local closeCorner = Instance.new("UICorner")
+    closeCorner.CornerRadius = UDim.new(0, 6)
+    closeCorner.Parent = self.closeButton
+    
+    self.closeButton.MouseButton1Click:Connect(function()
+        createRipple(self.closeButton)
+        self:Destroy()
+    end)
+    self.closeButton.Parent = windowButtonsContainer
+    
+    windowButtonsContainer.Parent = self.topBar
+    self.topBar.Parent = self.mainFrame
+    
+    -- Sidebar
+    self.sidebar = Instance.new("Frame")
+    self.sidebar.Name = "Sidebar"
+    self.sidebar.Size = UDim2.new(0, 180, 1, -40)
+    self.sidebar.Position = UDim2.new(0, 0, 0, 40)
+    self.sidebar.BackgroundColor3 = config.colors.sidebar
+    self.sidebar.BorderSizePixel = 0
+    self.sidebar.ZIndex = 101
+    
+    -- Fix sidebar corners
+    local sidebarBottomCorner = Instance.new("Frame")
+    sidebarBottomCorner.Name = "BottomCornerFix"
+    sidebarBottomCorner.Size = UDim2.new(1, 0, 0, 10)
+    sidebarBottomCorner.Position = UDim2.new(0, 0, 1, -10)
+    sidebarBottomCorner.BackgroundColor3 = config.colors.sidebar
+    sidebarBottomCorner.BorderSizePixel = 0
+    sidebarBottomCorner.ZIndex = 101
+    sidebarBottomCorner.Parent = self.sidebar
+    
+    -- Sidebar tabs container
+    self.tabList = Instance.new("ScrollingFrame")
+    self.tabList.Name = "TabList"
+    self.tabList.Size = UDim2.new(1, 0, 1, -60) -- Leave space for user info
+    self.tabList.Position = UDim2.fromOffset(0, 0)
+    self.tabList.BackgroundTransparency = 1
+    self.tabList.ScrollBarThickness = 2
+    self.tabList.ScrollBarImageColor3 = config.colors.accent
+    self.tabList.CanvasSize = UDim2.fromScale(0, 0)
+    self.tabList.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    self.tabList.ZIndex = 102
+    
+    local tabListLayout = Instance.new("UIListLayout")
+    tabListLayout.Padding = UDim.new(0, 5)
+    tabListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    tabListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    tabListLayout.Parent = self.tabList
+    
+    local tabListPadding = Instance.new("UIPadding")
+    tabListPadding.PaddingTop = UDim.new(0, 10)
+    tabListPadding.PaddingBottom = UDim.new(0, 10)
+    tabListPadding.Parent = self.tabList
+    
+    self.tabList.Parent = self.sidebar
+    
+    -- User info at bottom of sidebar
+    self.userInfo = Instance.new("Frame")
+    self.userInfo.Name = "UserInfo"
+    self.userInfo.Size = UDim2.new(1, 0, 0, 60)
+    self.userInfo.Position = UDim2.new(0, 0, 1, -60)
+    self.userInfo.BackgroundColor3 = config.colors.sidebar
+    self.userInfo.BorderSizePixel = 0
+    self.userInfo.ZIndex = 102
+    
+    -- User icon (circle)
+    self.userIcon = Instance.new("ImageLabel")
+    self.userIcon.Name = "UserIcon"
+    self.userIcon.Size = UDim2.fromOffset(40, 40)
+    self.userIcon.Position = UDim2.new(0, 10, 0.5, -20)
+    self.userIcon.BackgroundTransparency = 1
+    self.userIcon.Image = "rbxassetid://7072724538" -- Default user icon
+    self.userIcon.ZIndex = 103
+    
+    local userIconMask = Instance.new("UICorner")
+    userIconMask.CornerRadius = UDim.new(1, 0)
+    userIconMask.Parent = self.userIcon
+    
+    self.userIcon.Parent = self.userInfo
+    
+    -- Username
+    self.username = Instance.new("TextLabel")
+    self.username.Name = "Username"
+    self.username.Size = UDim2.new(1, -60, 0, 20)
+    self.username.Position = UDim2.new(0, 55, 0, 10)
+    self.username.BackgroundTransparency = 1
+    self.username.Font = config.fonts.regular
+    self.username.Text = "Anonymous"
+    self.username.TextColor3 = config.colors.text
+    self.username.TextSize = 14
+    self.username.TextXAlignment = Enum.TextXAlignment.Left
+    self.username.ZIndex = 103
+    self.username.Parent = self.userInfo
+    
+    -- User status
+    self.userStatus = Instance.new("TextLabel")
+    self.userStatus.Name = "UserStatus"
+    self.userStatus.Size = UDim2.new(1, -60, 0, 18)
+    self.userStatus.Position = UDim2.new(0, 55, 0, 30)
+    self.userStatus.BackgroundTransparency = 1
+    self.userStatus.Font = config.fonts.light
+    self.userStatus.Text = "@anonymous"
+    self.userStatus.TextColor3 = config.colors.textDim
+    self.userStatus.TextSize = 12
+    self.userStatus.TextXAlignment = Enum.TextXAlignment.Left
+    self.userStatus.ZIndex = 103
+    self.userStatus.Parent = self.userInfo
+    
+    self.userInfo.Parent = self.sidebar
+    self.sidebar.Parent = self.mainFrame
+    
+    -- Content container (where tabs content goes)
+    self.contentContainer = Instance.new("Frame")
+    self.contentContainer.Name = "ContentContainer"
+    self.contentContainer.Size = UDim2.new(1, -180, 1, -40)
+    self.contentContainer.Position = UDim2.new(0, 180, 0, 40)
+    self.contentContainer.BackgroundColor3 = config.colors.background
+    self.contentContainer.BorderSizePixel = 0
+    self.contentContainer.ZIndex = 101
+    
+    -- Fix content container corners
+    local contentBottomCorner = Instance.new("Frame")
+    contentBottomCorner.Name = "BottomCornerFix"
+    contentBottomCorner.Size = UDim2.new(1, 0, 0, 10)
+    contentBottomCorner.Position = UDim2.new(0, 0, 1, -10)
+    contentBottomCorner.BackgroundColor3 = config.colors.background
+    contentBottomCorner.BorderSizePixel = 0
+    contentBottomCorner.ZIndex = 101
+    contentBottomCorner.Parent = self.contentContainer
+    
+    local contentRightCorner = Instance.new("Frame")
+    contentRightCorner.Name = "RightCornerFix"
+    contentRightCorner.Size = UDim2.new(0, 10, 1, 0)
+    contentRightCorner.Position = UDim2.new(1, -10, 0, 0)
+    contentRightCorner.BackgroundColor3 = config.colors.background
+    contentRightCorner.BorderSizePixel = 0
+    contentRightCorner.ZIndex = 101
+    contentRightCorner.Parent = self.contentContainer
+    
+    self.contentContainer.Parent = self.mainFrame
+    
+    -- Make UI draggable
+    self:MakeDraggable(self.topBar)
+    
+    self.mainFrame.Parent = self.screenGui
+    
+    return self
+end
+
+-- Make an object draggable
+function MercUI:MakeDraggable(frame)
+    local function update(input)
+        local delta = input.Position - self.dragStart
+        self.mainFrame.Position = UDim2.new(
+            self.startPos.X.Scale,
+            self.startPos.X.Offset + delta.X,
+            self.startPos.Y.Scale,
+            self.startPos.Y.Offset + delta.Y
+        )
+    end
+    
+    table.insert(self.connections, frame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            self.dragging = true
+            self.dragStart = input.Position
+            self.startPos = self.mainFrame.Position
+            
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    self.dragging = false
+                end
+            end)
+        end
+    end))
+    
+    table.insert(self.connections, frame.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            self.dragInput = input
+        end
+    end))
+    
+    table.insert(self.connections, game:GetService("UserInputService").InputChanged:Connect(function(input)
+        if input == self.dragInput and self.dragging then
+            update(input)
+        end
+    end))
+end
+
+-- Toggle UI visibility
+function MercUI:Toggle()
+    self.visible = not self.visible
+    self.mainFrame.Visible = self.visible
+end
+
+-- Minimize the UI
+function MercUI:Minimize()
+    if self.minimized then
+        -- Restore
+        self.mainFrame:TweenSize(
+            UDim2.fromOffset(600, 400),
+            Enum.EasingDirection.Out,
+            config.animation.easing,
+            config.animation.duration,
+            true
+        )
+        
+        self.contentContainer.Visible = true
+        self.sidebar.Visible = true
+    else
+        -- Minimize
+        self.mainFrame:TweenSize(
+            UDim2.fromOffset(600, 40),
+            Enum.EasingDirection.Out,
+            config.animation.easing,
+            config.animation.duration,
+            true
+        )
+        
+        self.contentContainer.Visible = false
+        self.sidebar.Visible = false
+    end
+    
+    self.minimized = not self.minimized
+end
+
+-- Maximize the UI
+function MercUI:Maximize()
+    if self.maximized then
+        -- Restore
+        self.mainFrame:TweenSize(
+            UDim2.fromOffset(600, 400),
+            Enum.EasingDirection.Out,
+            config.animation.easing,
+            config.animation.duration,
+            true
+        )
+        
+        self.mainFrame:TweenPosition(
+            UDim2.new(0.5, -300, 0.5, -200),
+            Enum.EasingDirection.Out,
+            config.animation.easing,
+            config.animation.duration,
+            true
+        )
+    else
+        -- Maximize
+        local viewportSize = workspace.CurrentCamera.ViewportSize
+        self.mainFrame:TweenSize(
+            UDim2.fromOffset(viewportSize.X - 20, viewportSize.Y - 20),
+            Enum.EasingDirection.Out,
+            config.animation.easing,
+            config.animation.duration,
+            true
+        )
+        
+        self.mainFrame:TweenPosition(
+            UDim2.new(0, 10, 0, 10),
+            Enum.EasingDirection.Out,
+            config.animation.easing,
+            config.animation.duration,
+            true
+        )
+    end
+    
+    self.maximized = not self.maximized
+end
+
+-- Create a new tab
+function MercUI:AddTab(name, icon)
+    if self.tabs[name] then
+        warn("Tab '" .. name .. "' already exists!")
+        return self.tabs[name]
+    end
+    
+    -- Tab button in sidebar
+    local tabButton = Instance.new("TextButton")
+    tabButton.Name = "Tab_" .. name
+    tabButton.Size = UDim2.new(1, -20, 0, 40)
+    tabButton.Position = UDim2.fromOffset(0, 0)
+    tabButton.BackgroundColor3 = config.colors.buttonNormal
+    tabButton.BackgroundTransparency = 1
+    tabButton.Font = config.fonts.regular
+    tabButton.Text = ""
+    tabButton.AutoButtonColor = false
+    tabButton.ZIndex = 103
+    
+    local tabButtonCorner = Instance.new("UICorner")
+    tabButtonCorner.CornerRadius = UDim.new(0, 6)
+    tabButtonCorner.Parent = tabButton
+    
+    -- Icon
+    local tabIcon
+    if icon then
+        tabIcon = Instance.new("ImageLabel")
+        tabIcon.Name = "Icon"
+        tabIcon.Size = UDim2.fromOffset(20, 20)
+        tabIcon.Position = UDim2.new(0, 10, 0.5, -10)
+        tabIcon.BackgroundTransparency = 1
+        tabIcon.Image = icon
+        tabIcon.ZIndex = 104
+        tabIcon.Parent = tabButton
+    else
+        tabIcon = Instance.new("TextLabel")
+        tabIcon.Name = "IconText"
+        tabIcon.Size = UDim2.fromOffset(20, 20)
+        tabIcon.Position = UDim2.new(0, 10, 0.5, -10)
+        tabIcon.BackgroundTransparency = 1
+        tabIcon.Font = config.fonts.title
+        tabIcon.Text = string.sub(name, 1, 1)
+        tabIcon.TextColor3 = config.colors.text
+        tabIcon.TextSize = 14
+        tabIcon.ZIndex = 104
+        tabIcon.Parent = tabButton
+    end
+    
+    -- Tab label
+    local tabLabel = Instance.new("TextLabel")
+    tabLabel.Name = "Label"
+    tabLabel.Size = UDim2.new(1, -70, 1, 0)
+    tabLabel.Position = UDim2.new(0, 40, 0, 0)
+    tabLabel.BackgroundTransparency = 1
+    tabLabel.Font = config.fonts.regular
+    tabLabel.Text = name
+    tabLabel.TextColor3 = config.colors.textDim
+    tabLabel.TextSize = 14
+    tabLabel.TextXAlignment = Enum.TextXAlignment.Left
+    tabLabel.ZIndex = 104
+    tabLabel.Parent = tabButton
+    
+    -- Tab content container
+    local tabContent = Instance.new("ScrollingFrame")
+    tabContent.Name = "Content_" .. name
+    tabContent.Size = UDim2.new(1, -20, 1, -20)
+    tabContent.Position = UDim2.fromOffset(10, 10)
+    tabContent.BackgroundTransparency = 1
+    tabContent.ScrollBarThickness = 4
+    tabContent.ScrollBarImageColor3 = config.colors.accent
+    tabContent.CanvasSize = UDim2.fromScale(0, 0)
+    tabContent.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    tabContent.Visible = false
+    tabContent.ZIndex = 102
+    
+    local contentLayout = Instance.new("UIListLayout")
+    contentLayout.Padding = UDim.new(0, 10)
+    contentLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    contentLayout.Parent = tabContent
+    
+    local contentPadding = Instance.new("UIPadding")
+    contentPadding.PaddingTop = UDim.new(0, 10)
+    contentPadding.PaddingBottom = UDim.new(0, 10)
+    contentPadding.Parent = tabContent
+    
+    tabContent.Parent = self.contentContainer
+    
+    tabButton.MouseButton1Click:Connect(function()
+        createRipple(tabButton)
+        self:SelectTab(name)
+    end)
+    
+    tabButton.MouseEnter:Connect(function()
+        if self.activeTab ~= name then
+            tabButton:TweenProperty(
+                "BackgroundTransparency",
+                0.9,
+                Enum.EasingDirection.Out,
+                config.animation.easing,
+                0.2,
+                true
+            )
+        end
+    end)
+    
+    tabButton.MouseLeave:Connect(function()
+        if self.activeTab ~= name then
+            tabButton:TweenProperty(
+                "BackgroundTransparency",
+                1,
+                Enum.EasingDirection.Out,
+                config.animation.easing,
+                0.2,
+                true
+            )
+        end
+    end)
+    
+    tabButton.Parent = self.tabList
+    
+    -- Store tab information
+    self.tabs[name] = {
+        button = tabButton,
+        label = tabLabel,
+        icon = tabIcon,
+        content = tabContent,
+        sections = {}
+    }
+    
+    -- If this is the first tab, select it
+    if not self.activeTab then
+        self:SelectTab(name)
+    end
+    
+    return self.tabs[name]
+end
+
+-- Add a section to a tab
+function MercUI:AddSection(tab, title)
+    if not self.tabs[tab] then
+        warn("Tab '" .. tab .. "' does not exist!")
+        return nil
+    end
+    
+    local tabInfo = self.tabs[tab]
+    
+    if tabInfo.sections[title] then
+        warn("Section '" .. title .. "' already exists in tab '" .. tab .. "'!")
+        return tabInfo.sections[title]
+    end
+    
+    -- Create section container
+    local section = Instance.new("Frame")
+    section.Name = "Section_" .. title
+    section.Size = UDim2.new(1, 0, 0, 40)  -- Will auto-size based on content
+    section.BackgroundColor3 = config.colors.content
+    section.BorderSizePixel = 0
+    section.AutomaticSize = Enum.AutomaticSize.Y
+    section.ZIndex = 103
+    
+    local sectionCorner = Instance.new("UICorner")
+    sectionCorner.CornerRadius = config.cornerRadius
+    sectionCorner.Parent = section
+    
+    -- Section title
+    local sectionTitle = Instance.new("TextLabel")
+    sectionTitle.Name = "Title"
+    sectionTitle.Size = UDim2.new(1, -20, 0, 30)
+    sectionTitle.Position = UDim2.fromOffset(10, 5)
+    sectionTitle.BackgroundTransparency = 1
+    sectionTitle.Font = config.fonts.title
+    sectionTitle.Text = title
+    sectionTitle.TextColor3 = config.colors.text
+    sectionTitle.TextSize = 16
+    sectionTitle.TextXAlignment = Enum.TextXAlignment.Left
+    sectionTitle.ZIndex = 104
+    sectionTitle.Parent = section
+    
+    -- Section content
+    local sectionContent = Instance.new("Frame")
+    sectionContent.Name = "Content"
+    sectionContent.Size = UDim2.new(1, -20, 0, 0)
+    sectionContent.Position = UDim2.fromOffset(10, 40)
+    sectionContent.BackgroundTransparency = 1
+    sectionContent.ZIndex = 104
+    sectionContent.AutomaticSize = Enum.AutomaticSize.Y
+    
+    local contentLayout = Instance.new("UIListLayout")
+    contentLayout.Padding = UDim.new(0, 8)
+    contentLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    contentLayout.Parent = sectionContent
+    
+    local contentPadding = Instance.new("UIPadding")
+    contentPadding.PaddingBottom = UDim.new(0, 10)
+    contentPadding.Parent = sectionContent
+    
+    sectionContent.Parent = section
+    
+    section.Parent = tabInfo.content
+    
+    -- Store section information
+    tabInfo.sections[title] = {
+        frame = section,
+        content = sectionContent
+    }
+    
+    return tabInfo.sections[title]
+end
+
+-- Add a button to a section
+function MercUI:AddButton(tab, section, text, callback)
+    if not self.tabs[tab] then
+        warn("Tab '" .. tab .. "' does not exist!")
+        return nil
+    end
+    
+    local tabInfo = self.tabs[tab]
+    
+    if not tabInfo.sections[section] then
+        warn("Section '" .. section .. "' does not exist in tab '" .. tab .. "'!")
+        return nil
+    end
+    
+    local sectionInfo = tabInfo.sections[section]
+    callback = callback or function() end
+    
+    -- Create button
+    local button = Instance.new("TextButton")
+    button.Name = "Button_" .. text
+    button.Size = UDim2.new(1, 0, 0, 36)
+    button.BackgroundColor3 = config.colors.buttonNormal
+    button.Font = config.fonts.regular
+    button.Text = ""
+    button.AutoButtonColor = false
+    button.ZIndex = 105
+    
+    local buttonCorner = Instance.new("UICorner")
+    buttonCorner.CornerRadius = UDim.new(0, 6)
+    buttonCorner.Parent = button
+    
+    -- Button text
+    local buttonText = Instance.new("TextLabel")
+    buttonText.Name = "Text"
+    buttonText.Size = UDim2.new(1, -20, 1, 0)
+    buttonText.Position = UDim2.fromOffset(10, 0)
+    buttonText.BackgroundTransparency = 1
+    buttonText.Font = config.fonts.regular
+    buttonText.Text = text
+    buttonText.TextColor3 = config.colors.text
+    buttonText.TextSize = 14
+    buttonText.TextXAlignment = Enum.TextXAlignment.Left
+    buttonText.ZIndex = 106
+    buttonText.Parent = button
+    
+    -- Action icon
+    local actionIcon = Instance.new("TextLabel")
+    actionIcon.Name = "Icon"
+    actionIcon.Size = UDim2.fromOffset(20, 20)
+    actionIcon.Position = UDim2.new(1, -30, 0.5, -10)
+    actionIcon.BackgroundTransparency = 1
+    actionIcon.Font = config.fonts.regular
+    actionIcon.Text = config.icons.rightArrow
+    actionIcon.TextColor3 = config.colors.accent
+    actionIcon.TextSize = 14
+    actionIcon.ZIndex = 106
+    actionIcon.Parent = button
+    
+    -- Button hover/click effects
+    button.MouseEnter:Connect(function()
+        button:TweenProperty(
+            "BackgroundColor3",
+            config.colors.buttonHover,
+            Enum.EasingDirection.Out,
+            config.animation.easing,
+            0.2,
+            true
+        )
+    end)
+    
+    button.MouseLeave:Connect(function()
+        button:TweenProperty(
+            "BackgroundColor3",
+            config.colors.buttonNormal,
+            Enum.EasingDirection.Out,
+            config.animation.easing,
+            0.2,
+            true
+        )
+    end)
+    
+    button.MouseButton1Click:Connect(function()
+        createRipple(button)
+        
+        -- Visual feedback
+        button:TweenProperty(
+            "BackgroundColor3",
+            config.colors.accent,
+            Enum.EasingDirection.Out,
+            config.animation.easing,
+            0.1,
+            true,
+            function()
+                button:TweenProperty(
+                    "BackgroundColor3",
+                    config.colors.buttonNormal,
+                    Enum.EasingDirection.Out,
+                    config.animation.easing,
+                    0.2,
+                    true
+                )
+            end
+        )
+        
+        -- Call the callback
+        callback()
+    end)
+    
+    button.Parent = sectionInfo.content
+    
+    return button
+end
+
+-- Add a colored button to a section
+function MercUI:AddColoredButton(tab, section, text, color, callback)
+    local button = self:AddButton(tab, section, text, callback)
+    
+    if not button then return nil end
+    
+    button.BackgroundColor3 = color
+    
+    -- Update hover effect for colored button
+    local colorConn1, colorConn2
+    
+    colorConn1 = button.MouseEnter:Connect(function()
+        button:TweenProperty(
+            "BackgroundColor3",
+            Color3.new(
+                math.min(color.R * 1.1, 1),
+                math.min(color.G * 1.1, 1),
+                math.min(color.B * 1.1, 1)
+            ),
+            Enum.EasingDirection.Out,
+            config.animation.easing,
+            0.2,
+            true
+        )
+    end)
+    
+    colorConn2 = button.MouseLeave:Connect(function()
+        button:TweenProperty(
+            "BackgroundColor3",
+            color,
+            Enum.EasingDirection.Out,
+            config.animation.easing,
+            0.2,
+            true
+        )
+    end)
+    
+    table.insert(self.connections, colorConn1)
+    table.insert(self.connections, colorConn2)
+    
+    return button
+end
+
+-- Add a success button (green)
+function MercUI:AddSuccessButton(tab, section, text, callback)
+    return self:AddColoredButton(tab, section, text, config.colors.success, callback)
+end
+
+-- Add an error button (red)
+function MercUI:AddErrorButton(tab, section, text, callback)
+    return self:AddColoredButton(tab, section, text, config.colors.error, callback)
+end
+
+-- Add a warning button (yellow/orange)
+function MercUI:AddWarningButton(tab, section, text, callback)
+    return self:AddColoredButton(tab, section, text, config.colors.warning, callback)
+end
+
+-- Add a primary button (accent color)
+function MercUI:AddPrimaryButton(tab, section, text, callback)
+    return self:AddColoredButton(tab, section, text, config.colors.accent, callback)
+end
+
+-- Add star button (for favorites)
+function MercUI:AddStarButton(tab, section, text, starred, callback)
+    local button = self:AddButton(tab, section, text, callback)
+    
+    if not button then return nil end
+    
+    -- Replace the right arrow with a star
+    local starIcon = button:FindFirstChild("Icon")
+    if starIcon then
+        starIcon.Text = config.icons.star
+        
+        -- Set initial state
+        if starred then
+            starIcon.TextColor3 = config.colors.warning
+        else
+            starIcon.TextColor3 = config.colors.textDim
+        end
+        
+        -- Add toggle functionality
+        local isStarred = starred
+        
+        -- Add separate click handler for the star
+        local clickArea = Instance.new("TextButton")
+        clickArea.Name = "StarClickArea"
+        clickArea.Size = UDim2.fromOffset(30, 30)
+        clickArea.Position = UDim2.new(1, -35, 0.5, -15)
+        clickArea.BackgroundTransparency = 1
+        clickArea.Text = ""
+        clickArea.ZIndex = 107
+        clickArea.Parent = button
+        
+        clickArea.MouseButton1Click:Connect(function()
+            isStarred = not isStarred
+            
+            if isStarred then
+                starIcon:TweenProperty(
+                    "TextColor3",
+                    config.colors.warning,
+                    Enum.EasingDirection.Out,
+                    config.animation.easing,
+                    0.2,
+                    true
+                )
+            else
+                starIcon:TweenProperty(
+                    "TextColor3",
+                    config.colors.textDim,
+                    Enum.EasingDirection.Out,
+                    config.animation.easing,
+                    0.2,
+                    true
+                )
+            end
+        end)
+    end
+    
+    return button
+end
+
+-- Set user information
+function MercUI:SetUser(name, status, icon)
+    self.username.Text = name or "Anonymous"
+    self.userStatus.Text = status or "@anonymous"
+    
+    if icon then
+        self.userIcon.Image = icon
+    end
+end
+
+-- Destroy the UI library instance
+function MercUI:Destroy()
+    -- Clean up connections
+    for _, connection in ipairs(self.connections) do
+        connection:Disconnect()
+    end
+    
+    -- Remove the UI
+    self.screenGui:Destroy()
+end
+
+-- Return the library
+return MercUI = 100
     
     local mainCorner = Instance.new("UICorner")
     mainCorner.CornerRadius = config.cornerRadius
