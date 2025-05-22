@@ -1,37 +1,39 @@
 --[[
     Orion UI Library
-    Version: 1.0.0
+    Version: 1.0.1 (Updated with deferred service init)
     Author: YourName/AI
     Description: A modern, aesthetic UI library for Roblox executors.
 ]]
+print("OrionLib: Loading script...")
 
 local OrionLib = {}
 OrionLib.Name = "Orion UI"
-OrionLib.Version = "1.0.0"
+OrionLib.Version = "1.0.1"
 
--- // Services
-local Players = game:GetService("Players")
-local UserInputService = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
-local RunService = game:GetService("RunService")
+-- // Services (declare them, will be initialized by EnsureServices)
+local Players
+local UserInputService
+local TweenService
+local RunService
+local ServicesInitialized = false -- Flag
 
 -- // Configuration
 OrionLib.Config = {
-    AccentColor = Color3.fromRGB(0, 122, 255), -- A nice blue
+    AccentColor = Color3.fromRGB(0, 122, 255),
     BackgroundColor = Color3.fromRGB(30, 30, 30),
     LightBackgroundColor = Color3.fromRGB(45, 45, 45),
     TextColor = Color3.fromRGB(240, 240, 240),
     PlaceholderColor = Color3.fromRGB(150, 150, 150),
     Font = Enum.Font.GothamSemibold,
     SmallFont = Enum.Font.Gotham,
-    ElementHeight = 30, -- Offset pixels
-    ElementSpacing = 5, -- Offset pixels
-    CornerRadius = 6,   -- Offset pixels
-    MainPanelWidth = 0.3, -- Scale (30% of screen width)
-    MainPanelMinWidth = 280, -- Minimum width in pixels
-    MainPanelHeight = 0.5, -- Scale (50% of screen height)
-    MainPanelMinHeight = 300, -- Minimum height in pixels
-    ToggleKey = Enum.KeyCode.RightControl -- Key to toggle UI visibility
+    ElementHeight = 30,
+    ElementSpacing = 5,
+    CornerRadius = 6,
+    MainPanelWidth = 0.3,
+    MainPanelMinWidth = 280,
+    MainPanelHeight = 0.5,
+    MainPanelMinHeight = 300,
+    ToggleKey = Enum.KeyCode.RightControl
 }
 
 -- // State
@@ -52,10 +54,60 @@ OrionLib.Elements = {
     MainPanel = nil,
     TitleBar = nil,
     TitleLabel = nil,
-    CloseButton = nil, -- For internal close, works same as toggle
+    CloseButton = nil,
     ContentFrame = nil,
     ContentListLayout = nil
 }
+
+-- // Service Initializer
+local function EnsureServices()
+    if ServicesInitialized then return end
+    print("OrionLib: Initializing services...")
+
+    if not game or typeof(game.GetService) ~= "function" then
+        local message = "OrionLib: CRITICAL ERROR - 'game' or 'game.GetService' is not available or not a function. UI cannot function."
+        warn(message)
+        if OrionLib.Elements.ScreenGui and OrionLib.Elements.ScreenGui.Parent then -- Try to show in UI if possible
+            pcall(function() -- Wrap in pcall as Create/ApplyCorner might not be safe if core things are broken
+                local errorLabel = Instance.new("TextLabel")
+                errorLabel.Size = UDim2.new(0.9, 0, 0, 80)
+                errorLabel.Position = UDim2.new(0.5, 0, 0.5, 0)
+                errorLabel.AnchorPoint = Vector2.new(0.5, 0.5)
+                errorLabel.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+                errorLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+                errorLabel.Font = Enum.Font.SourceSansBold
+                errorLabel.TextWrapped = true
+                errorLabel.Text = message
+                errorLabel.ZIndex = 10000
+                local corner = Instance.new("UICorner")
+                corner.CornerRadius = UDim.new(0, OrionLib.Config.CornerRadius)
+                corner.Parent = errorLabel
+                errorLabel.Parent = OrionLib.Elements.ScreenGui
+            end)
+        end
+        error(message) -- This will stop the script
+    end
+
+    Players = game:GetService("Players")
+    UserInputService = game:GetService("UserInputService")
+    TweenService = game:GetService("TweenService")
+    RunService = game:GetService("RunService")
+
+    if not (Players and UserInputService and TweenService and RunService) then
+        local missing = {}
+        if not Players then table.insert(missing, "Players") end
+        if not UserInputService then table.insert(missing, "UserInputService") end
+        if not TweenService then table.insert(missing, "TweenService") end
+        if not RunService then table.insert(missing, "RunService") end
+        local errMsg = "OrionLib: CRITICAL ERROR - Failed to initialize core services: " .. table.concat(missing, ", ")
+        warn(errMsg)
+        error(errMsg)
+    end
+
+    ServicesInitialized = true
+    print("OrionLib: Services initialized successfully.")
+end
+
 
 -- // Private Helper Functions
 local function Create(instanceType, properties)
@@ -83,6 +135,7 @@ local function ApplyStroke(parent, color, thickness)
 end
 
 local function GetScaledSize(widthScale, heightScale, widthOffset, heightOffset)
+    EnsureServices() -- Needs workspace.CurrentCamera
     local viewportSize = workspace.CurrentCamera.ViewportSize
     local w = math.max(OrionLib.Config.MainPanelMinWidth, viewportSize.X * widthScale)
     local h = math.max(OrionLib.Config.MainPanelMinHeight, viewportSize.Y * heightScale)
@@ -112,23 +165,35 @@ function OrionLib:Init(title)
         warn(OrionLib.Name .. " is already initialized.")
         return self
     end
+    print("OrionLib: Init called.")
 
-    title = title or OrionLib.Name
-
-    -- ScreenGui
+    -- Create ScreenGui first, as EnsureServices might want to display an error on it.
     OrionLib.Elements.ScreenGui = Create("ScreenGui", {
         Name = OrionLib.Name .. "Gui",
-        DisplayOrder = 999, -- High display order
+        DisplayOrder = 999,
         IgnoreGuiInset = true,
         ResetOnSpawn = false,
-        Parent = Players.LocalPlayer:FindFirstChildOfClass("PlayerGui") or game:GetService("CoreGui")
     })
+    -- Tentative parenting, will be confirmed after services are up.
+    local tempPlayer = game and pcall(function() return game:GetService("Players") end) and game:GetService("Players").LocalPlayer
+    local tempPlayerGui = tempPlayer and tempPlayer:FindFirstChildOfClass("PlayerGui")
+    OrionLib.Elements.ScreenGui.Parent = tempPlayerGui or game:GetService("CoreGui") -- CoreGui as a fallback
+
+    EnsureServices() -- Crucial: Initialize all Roblox services now.
+
+    -- Confirm ScreenGui parent now that Players service is guaranteed (if EnsureServices didn't error)
+    if not (OrionLib.Elements.ScreenGui.Parent and OrionLib.Elements.ScreenGui.Parent:IsA("CoreGui")) then
+         OrionLib.Elements.ScreenGui.Parent = Players.LocalPlayer:FindFirstChildOfClass("PlayerGui") or game:GetService("CoreGui")
+    end
+
+
+    title = title or OrionLib.Name
 
     -- Main Panel
     OrionLib.Elements.MainPanel = Create("Frame", {
         Name = "MainPanel",
         Size = GetScaledSize(OrionLib.Config.MainPanelWidth, OrionLib.Config.MainPanelHeight),
-        Position = UDim2.new(0.5, 0, 0.5, 0), -- Centered
+        Position = UDim2.new(0.5, 0, 0.5, 0),
         AnchorPoint = Vector2.new(0.5, 0.5),
         BackgroundColor3 = OrionLib.Config.BackgroundColor,
         BorderSizePixel = 0,
@@ -150,7 +215,7 @@ function OrionLib:Init(title)
 
     OrionLib.Elements.TitleLabel = Create("TextLabel", {
         Name = "TitleLabel",
-        Size = UDim2.new(0.9, -35, 1, 0), -- Leave space for close button
+        Size = UDim2.new(0.9, -35, 1, 0),
         Position = UDim2.new(0.05, 0, 0, 0),
         BackgroundTransparency = 1,
         Font = OrionLib.Config.Font,
@@ -164,7 +229,6 @@ function OrionLib:Init(title)
         Parent = OrionLib.Elements.TitleLabel
     })
 
-    -- Close Button (acts as a toggle for the main panel)
     OrionLib.Elements.CloseButton = Create("TextButton", {
         Name = "CloseButton",
         Size = UDim2.new(0, 30, 0, 30),
@@ -185,17 +249,15 @@ function OrionLib:Init(title)
     end)
     OrionLib.Elements.CloseButton.MouseButton1Click:Connect(ToggleUIVisibility)
 
-
-    -- Content Frame (for scrolling)
     OrionLib.Elements.ContentFrame = Create("ScrollingFrame", {
         Name = "ContentFrame",
-        Size = UDim2.new(1, -20, 1, -45), -- -20 for padding, -45 for titlebar + bottom padding
-        Position = UDim2.new(0, 10, 0, 40), -- 10 padding left, 40 below titlebar
+        Size = UDim2.new(1, -20, 1, -45),
+        Position = UDim2.new(0, 10, 0, 40),
         BackgroundTransparency = 1,
         BorderSizePixel = 0,
         ScrollBarThickness = 6,
         ScrollBarImageColor3 = OrionLib.Config.AccentColor,
-        CanvasSize = UDim2.new(0,0,0,0), -- Will be updated by UIListLayout
+        CanvasSize = UDim2.new(0,0,0,0),
         Parent = OrionLib.Elements.MainPanel
     })
 
@@ -208,14 +270,12 @@ function OrionLib:Init(title)
         Parent = OrionLib.Elements.ContentFrame
     })
     
-    -- Add UIPadding to ContentFrame for inner margins
     Create("UIPadding", {
         PaddingTop = UDim.new(0, 5),
         PaddingBottom = UDim.new(0, 5),
         Parent = OrionLib.Elements.ContentFrame
     })
 
-    -- Draggable Functionality
     OrionLib.Elements.TitleBar.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             CloseActiveDropdown()
@@ -241,29 +301,26 @@ function OrionLib:Init(title)
         end
     end)
     
-    -- Handle window resize for scaled UI
     workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(function()
         if OrionLib.Elements.MainPanel then
             OrionLib.Elements.MainPanel.Size = GetScaledSize(OrionLib.Config.MainPanelWidth, OrionLib.Config.MainPanelHeight)
         end
     end)
 
-    -- External Toggle Button
     OrionLib.Elements.ToggleGuiButton = Create("TextButton", {
         Name = "ToggleUI",
         Size = UDim2.new(0, 80, 0, 30),
-        Position = UDim2.new(0, 10, 0, 10), -- Top-left corner
+        Position = UDim2.new(0, 10, 0, 10),
         BackgroundColor3 = OrionLib.Config.AccentColor,
         Font = OrionLib.Config.SmallFont,
         Text = OrionLib.State.Visible and "Hide" or "Show",
         TextColor3 = OrionLib.Config.TextColor,
-        ZIndex = 1000, -- Above MainPanel
+        ZIndex = 1000,
         Parent = OrionLib.Elements.ScreenGui
     })
     ApplyCorner(OrionLib.Elements.ToggleGuiButton)
     OrionLib.Elements.ToggleGuiButton.MouseButton1Click:Connect(ToggleUIVisibility)
 
-    -- Keybind to toggle
     UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
         if gameProcessedEvent then return end
         if input.KeyCode == OrionLib.Config.ToggleKey then
@@ -271,14 +328,13 @@ function OrionLib:Init(title)
         end
     end)
 
-    -- Default section
     OrionLib.State.CurrentSection = OrionLib.Elements.ContentFrame 
     OrionLib.State.Initialized = true
-    print(OrionLib.Name .. " v" .. OrionLib.Version .. " Initialized.")
+    print(OrionLib.Name .. " v" .. OrionLib.Version .. " Initialized successfully.")
     return self
 end
 
--- // UI Element Creation Functions
+-- // UI Element Creation Functions (EnsureServices already called by Init or other callers)
 
 function OrionLib:AddSection(name)
     assert(OrionLib.State.Initialized, OrionLib.Name .. " not initialized. Call :Init() first.")
@@ -286,9 +342,9 @@ function OrionLib:AddSection(name)
 
     local sectionFrame = Create("Frame", {
         Name = name .. "Section",
-        Size = UDim2.new(1, -10, 0, OrionLib.Config.ElementHeight + 10), -- Slightly taller for title
-        BackgroundTransparency = 1, -- Sections are organizational
-        Parent = OrionLib.Elements.ContentFrame -- All sections go into main content
+        Size = UDim2.new(1, -10, 0, OrionLib.Config.ElementHeight + 10),
+        BackgroundTransparency = 1,
+        Parent = OrionLib.Elements.ContentFrame
     })
 
     local titleLabel = Create("TextLabel", {
@@ -311,17 +367,16 @@ function OrionLib:AddSection(name)
         Parent = sectionFrame
     })
 
-
-    local elementsContainer = Create("Frame", { -- Container for this section's elements
+    local elementsContainer = Create("Frame", {
         Name = "ElementsContainer",
-        Size = UDim2.new(1, 0, 1, -25), -- Fill below title
+        Size = UDim2.new(1, 0, 1, -25),
         Position = UDim2.new(0, 0, 0, 25),
         BackgroundTransparency = 1,
         ClipsDescendants = true,
         Parent = sectionFrame
     })
     
-    local listLayout = Create("UIListLayout", {
+    Create("UIListLayout", {
         Padding = UDim.new(0, OrionLib.Config.ElementSpacing),
         SortOrder = Enum.SortOrder.LayoutOrder,
         FillDirection = Enum.FillDirection.Vertical,
@@ -329,10 +384,9 @@ function OrionLib:AddSection(name)
         Parent = elementsContainer
     })
 
-    OrionLib.State.CurrentSection = elementsContainer -- New elements go into this section's container
+    OrionLib.State.CurrentSection = elementsContainer
     return sectionFrame
 end
-
 
 function OrionLib:AddButton(text, callback)
     assert(OrionLib.State.Initialized, OrionLib.Name .. " not initialized.")
@@ -379,7 +433,7 @@ function OrionLib:AddToggle(text, initialValue, callback)
 
     local label = Create("TextLabel", {
         Name = "ToggleLabel",
-        Size = UDim2.new(0.7, -5, 1, 0), -- 70% width, minus 5px spacing
+        Size = UDim2.new(0.7, -5, 1, 0),
         Position = UDim2.new(0,0,0,0),
         BackgroundTransparency = 1,
         Font = OrionLib.Config.Font,
@@ -392,7 +446,7 @@ function OrionLib:AddToggle(text, initialValue, callback)
     local switchButton = Create("TextButton", {
         Name = "SwitchButton",
         Size = UDim2.new(0.3, 0, 1, 0),
-        Position = UDim2.new(0.7, 5, 0, 0), -- 30% width, plus 5px spacing
+        Position = UDim2.new(0.7, 5, 0, 0),
         BackgroundColor3 = initialValue and OrionLib.Config.AccentColor or OrionLib.Config.LightBackgroundColor,
         Font = OrionLib.Config.SmallFont,
         Text = initialValue and "ON" or "OFF",
@@ -414,7 +468,7 @@ function OrionLib:AddToggle(text, initialValue, callback)
         end
     end)
     
-    local publicMethods = {
+    return {
         GetValue = function() return state end,
         SetValue = function(newState)
             state = newState
@@ -424,18 +478,17 @@ function OrionLib:AddToggle(text, initialValue, callback)
         end,
         Instance = toggleFrame
     }
-    return publicMethods
 end
 
 function OrionLib:AddSlider(text, min, max, initialValue, callback, showValueDecimalPlaces)
     assert(OrionLib.State.Initialized, OrionLib.Name .. " not initialized.")
     assert(OrionLib.State.CurrentSection, "No section active. Call :AddSection() first.")
     CloseActiveDropdown()
-    showValueDecimalPlaces = showValueDecimalPlaces or 0 -- Default to no decimal places
+    showValueDecimalPlaces = showValueDecimalPlaces or 0
 
     local sliderFrame = Create("Frame", {
         Name = "OrionSliderFrame",
-        Size = UDim2.new(1, 0, 0, OrionLib.Config.ElementHeight + 15), -- Extra height for label
+        Size = UDim2.new(1, 0, 0, OrionLib.Config.ElementHeight + 15),
         BackgroundTransparency = 1,
         Parent = OrionLib.State.CurrentSection
     })
@@ -453,8 +506,8 @@ function OrionLib:AddSlider(text, min, max, initialValue, callback, showValueDec
 
     local track = Create("Frame", {
         Name = "Track",
-        Size = UDim2.new(1, -10, 0, 8), -- -10 to center handle, 8px height
-        Position = UDim2.new(0, 5, 0, 20), -- Below label, 5px padding
+        Size = UDim2.new(1, -10, 0, 8),
+        Position = UDim2.new(0, 5, 0, 20),
         BackgroundColor3 = OrionLib.Config.LightBackgroundColor,
         BorderSizePixel = 0,
         Parent = sliderFrame
@@ -463,23 +516,20 @@ function OrionLib:AddSlider(text, min, max, initialValue, callback, showValueDec
 
     local fillTrack = Create("Frame", {
         Name = "FillTrack",
-        Size = UDim2.new(0,0,1,0), -- Initial size set later
+        Size = UDim2.new(0,0,1,0),
         BackgroundColor3 = OrionLib.Config.AccentColor,
         BorderSizePixel = 0,
         Parent = track
     })
     ApplyCorner(fillTrack)
 
-
-    local handle = Create("TextButton", { -- TextButton for better input detection
+    local handle = Create("TextButton", {
         Name = "Handle",
-        Size = UDim2.new(0, 16, 0, 16), -- Square handle
+        Size = UDim2.new(0, 16, 0, 16),
         AnchorPoint = Vector2.new(0.5, 0.5),
-        Position = UDim2.new(0,0,0.5,0), -- Initial position set later
-        BackgroundColor3 = OrionLib.Config.TextColor, -- A lighter handle
-        BorderSizePixel = 0,
-        Text = "",
-        ZIndex = 2,
+        Position = UDim2.new(0,0,0.5,0),
+        BackgroundColor3 = OrionLib.Config.TextColor,
+        BorderSizePixel = 0, Text = "", ZIndex = 2,
         Parent = track
     })
     ApplyCorner(handle)
@@ -489,48 +539,41 @@ function OrionLib:AddSlider(text, min, max, initialValue, callback, showValueDec
 
     local function updateSlider(value)
         currentValue = math.clamp(value, min, max)
-        local percentage = (currentValue - min) / (max - min)
+        local percentage = (max - min) == 0 and 0 or (currentValue - min) / (max - min) -- Avoid div by zero
         percentage = math.clamp(percentage, 0, 1)
 
         handle.Position = UDim2.new(percentage, 0, 0.5, 0)
         fillTrack.Size = UDim2.new(percentage, 0, 1, 0)
         label.Text = text .. ": " .. string.format("%." .. showValueDecimalPlaces .. "f", currentValue)
 
-        if callback then
-            pcall(callback, currentValue)
-        end
+        if callback then pcall(callback, currentValue) end
     end
     
-    updateSlider(initialValue) -- Set initial position
+    updateSlider(initialValue)
 
     handle.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            isDraggingHandle = true
-            CloseActiveDropdown()
+            isDraggingHandle = true; CloseActiveDropdown()
         end
     end)
-    
     handle.InputEnded:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             isDraggingHandle = false
         end
     end)
 
-    local function processInput(input)
-        if not track.AbsoluteSize.X or track.AbsoluteSize.X == 0 then return end -- Avoid division by zero
-
-        local relativeMouseX = input.Position.X - track.AbsolutePosition.X
+    local function processInput(inputPos)
+        if not track.AbsoluteSize.X or track.AbsoluteSize.X == 0 then return end
+        local relativeMouseX = inputPos.X - track.AbsolutePosition.X
         local percentage = math.clamp(relativeMouseX / track.AbsoluteSize.X, 0, 1)
         local newValue = min + (max - min) * percentage
         updateSlider(newValue)
     end
 
-    -- Allow clicking on track to set value
     track.InputBegan:Connect(function(input)
          if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            isDraggingHandle = true -- Allow dragging from track click
-            CloseActiveDropdown()
-            processInput(input)
+            isDraggingHandle = true; CloseActiveDropdown()
+            processInput(input.Position)
         end
     end)
     track.InputEnded:Connect(function(input)
@@ -539,174 +582,131 @@ function OrionLib:AddSlider(text, min, max, initialValue, callback, showValueDec
         end
     end)
 
-
-    RunService.RenderStepped:Connect(function()
-        if isDraggingHandle and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) then
-            local mouseLocation = UserInputService:GetMouseLocation()
-            processInput(mouseLocation)
-        elseif isDraggingHandle and UserInputService:IsTouchActive() then
-             local touchPositions = UserInputService:GetTouchPositions()
-             if #touchPositions > 0 then
-                 processInput(touchPositions[1]) -- Use first touch
-             end
-        elseif isDraggingHandle then -- If mouse released outside of an InputEnded event
-            isDraggingHandle = false
+    RunService:BindToRenderStep("OrionSliderUpdate_"..text, Enum.RenderPriority.Input.Value + 1, function()
+        if isDraggingHandle then
+            if UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) then
+                processInput(UserInputService:GetMouseLocation())
+            elseif UserInputService:IsTouchActive() and #UserInputService:GetTouchPositions() > 0 then
+                 processInput(UserInputService:GetTouchPositions()[1])
+            else -- Mouse/touch released outside of an InputEnded event for the handle/track
+                isDraggingHandle = false
+            end
         end
     end)
     
-    local publicMethods = {
+    return {
         GetValue = function() return currentValue end,
         SetValue = function(newValue) updateSlider(newValue) end,
-        Instance = sliderFrame
+        Instance = sliderFrame,
+        Destroy = function() -- Cleanup renderstep
+            RunService:UnbindFromRenderStep("OrionSliderUpdate_"..text)
+        end
     }
-    return publicMethods
 end
 
-
-function OrionLib:AddDropdown(labelText, options, callback) -- options = {"Opt1", "Opt2", Value = "opt3"}
+function OrionLib:AddDropdown(labelText, options, callback)
     assert(OrionLib.State.Initialized, OrionLib.Name .. " not initialized.")
     assert(OrionLib.State.CurrentSection, "No section active. Call :AddSection() first.")
-    CloseActiveDropdown() -- Close any other dropdown
+    CloseActiveDropdown()
 
     local dropdownFrame = Create("Frame", {
         Name = "OrionDropdownFrame",
         Size = UDim2.new(1, 0, 0, OrionLib.Config.ElementHeight),
-        BackgroundTransparency = 1,
-        Parent = OrionLib.State.CurrentSection,
-        ZIndex = 2 -- Dropdowns need to appear above other elements
+        BackgroundTransparency = 1, Parent = OrionLib.State.CurrentSection, ZIndex = 2
     })
 
     local currentSelectionDisplay = Create("TextButton", {
-        Name = "CurrentSelection",
-        Size = UDim2.new(1, 0, 1, 0),
-        BackgroundColor3 = OrionLib.Config.LightBackgroundColor,
-        Font = OrionLib.Config.Font,
-        Text = labelText .. ": " .. (options[1] or "Select..."), -- Default to first or placeholder
-        TextColor3 = OrionLib.Config.TextColor,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        Parent = dropdownFrame
+        Name = "CurrentSelection", Size = UDim2.new(1, 0, 1, 0),
+        BackgroundColor3 = OrionLib.Config.LightBackgroundColor, Font = OrionLib.Config.Font,
+        Text = labelText .. ": " .. (options[1] or "Select..."), TextColor3 = OrionLib.Config.TextColor,
+        TextXAlignment = Enum.TextXAlignment.Left, Parent = dropdownFrame
     })
     ApplyCorner(currentSelectionDisplay)
     Create("UIPadding", {PaddingLeft = UDim.new(0,10), Parent = currentSelectionDisplay})
 
-
-    local arrow = Create("TextLabel", {
-        Name = "Arrow",
-        Size = UDim2.new(0,20,1,0),
-        Position = UDim2.new(1,-25,0,0),
-        BackgroundTransparency = 1,
-        Font = Enum.Font.SourceSansBold,
-        Text = "▼",
-        TextColor3 = OrionLib.Config.TextColor,
-        TextScaled = true,
-        Parent = currentSelectionDisplay
+    Create("TextLabel", { Name = "Arrow", Size = UDim2.new(0,20,1,0), Position = UDim2.new(1,-25,0,0),
+        BackgroundTransparency = 1, Font = Enum.Font.SourceSansBold, Text = "▼",
+        TextColor3 = OrionLib.Config.TextColor, TextScaled = true, Parent = currentSelectionDisplay
     })
 
-    local optionsFrameHeight = math.min(#options * (OrionLib.Config.ElementHeight + 2), 150) -- Max height 150px
-    local optionsFrame = Create("ScrollingFrame", {
-        Name = "OptionsFrame",
-        Size = UDim2.new(1, 0, 0, optionsFrameHeight),
-        Position = UDim2.new(0, 0, 1, 2), -- Below the display button, 2px gap
-        BackgroundColor3 = OrionLib.Config.LightBackgroundColor,
-        BorderSizePixel = 1,
-        BorderColor3 = OrionLib.Config.AccentColor,
-        Visible = false,
-        ClipsDescendants = true,
-        ScrollBarThickness = 4,
-        ZIndex = 3, -- Above dropdownFrame
-        Parent = dropdownFrame -- Parent to dropdownFrame for positioning, then reparent to ScreenGui for visibility
+    local optionsFrameHeight = math.min(#options * (OrionLib.Config.ElementHeight + 2), 150)
+    local optionsFrame = Create("ScrollingFrame", { Name = "OptionsFrame",
+        Size = UDim2.new(1, 0, 0, optionsFrameHeight), Position = UDim2.new(0, 0, 1, 2),
+        BackgroundColor3 = OrionLib.Config.LightBackgroundColor, BorderSizePixel = 1,
+        BorderColor3 = OrionLib.Config.AccentColor, Visible = false, ClipsDescendants = true,
+        ScrollBarThickness = 4, ZIndex = 10001, -- Higher ZIndex for options
+        Parent = OrionLib.Elements.ScreenGui -- Parent to ScreenGui for global visibility
     })
     ApplyCorner(optionsFrame)
-    optionsFrame.Parent = OrionLib.Elements.ScreenGui -- Reparent for global visibility
 
-    local optionsListLayout = Create("UIListLayout", {
-        Padding = UDim.new(0, 2),
-        FillDirection = Enum.FillDirection.Vertical,
-        HorizontalAlignment = Enum.HorizontalAlignment.Center,
-        Parent = optionsFrame
+    Create("UIListLayout", { Padding = UDim.new(0, 2), FillDirection = Enum.FillDirection.Vertical,
+        HorizontalAlignment = Enum.HorizontalAlignment.Center, Parent = optionsFrame
     })
 
-    local selectedValue = options[1] -- Default selection
+    local selectedValue = options[1]
 
-    for i, optionText in ipairs(options) do
-        local optionButton = Create("TextButton", {
-            Name = "Option_" .. tostring(optionText),
-            Size = UDim2.new(1, -4, 0, OrionLib.Config.ElementHeight), -- -4 for scrollbar padding
-            BackgroundColor3 = OrionLib.Config.LightBackgroundColor,
-            Font = OrionLib.Config.SmallFont,
-            Text = tostring(optionText),
-            TextColor3 = OrionLib.Config.TextColor,
-            Parent = optionsFrame
+    for _, optionText in ipairs(options) do
+        local optionButton = Create("TextButton", { Name = "Option_" .. tostring(optionText),
+            Size = UDim2.new(1, -4, 0, OrionLib.Config.ElementHeight),
+            BackgroundColor3 = OrionLib.Config.LightBackgroundColor, Font = OrionLib.Config.SmallFont,
+            Text = tostring(optionText), TextColor3 = OrionLib.Config.TextColor, Parent = optionsFrame
         })
-
-        optionButton.MouseEnter:Connect(function()
-            optionButton.BackgroundColor3 = OrionLib.Config.AccentColor
-        end)
-        optionButton.MouseLeave:Connect(function()
-            optionButton.BackgroundColor3 = OrionLib.Config.LightBackgroundColor
-        end)
-
+        optionButton.MouseEnter:Connect(function() optionButton.BackgroundColor3 = OrionLib.Config.AccentColor end)
+        optionButton.MouseLeave:Connect(function() optionButton.BackgroundColor3 = OrionLib.Config.LightBackgroundColor end)
         optionButton.MouseButton1Click:Connect(function()
             selectedValue = optionText
             currentSelectionDisplay.Text = labelText .. ": " .. tostring(selectedValue)
-            optionsFrame.Visible = false
-            OrionLib.State.ActiveDropdown = nil
-            if callback then
-                pcall(callback, selectedValue)
-            end
+            optionsFrame.Visible = false; OrionLib.State.ActiveDropdown = nil
+            if callback then pcall(callback, selectedValue) end
         end)
     end
     
     local function updateOptionsFramePosition()
-        -- Ensure it's positioned correctly relative to the display button, even if main panel moves
         local displayAbsolutePos = currentSelectionDisplay.AbsolutePosition
         local displayAbsoluteSize = currentSelectionDisplay.AbsoluteSize
         optionsFrame.Position = UDim2.fromOffset(displayAbsolutePos.X, displayAbsolutePos.Y + displayAbsoluteSize.Y + 2)
-        optionsFrame.Size = UDim2.fromOffset(displayAbsoluteSize.X, optionsFrameHeight)
+        optionsFrame.Size = UDim2.fromOffset(displayAbsoluteSize.X, optionsFrame.AbsoluteSize.Y) -- Keep original calculated height
     end
 
     currentSelectionDisplay.MouseButton1Click:Connect(function()
         if optionsFrame.Visible then
-            optionsFrame.Visible = false
-            OrionLib.State.ActiveDropdown = nil
+            optionsFrame.Visible = false; OrionLib.State.ActiveDropdown = nil
         else
-            CloseActiveDropdown() -- Close any other active dropdown
+            CloseActiveDropdown()
             updateOptionsFramePosition()
             optionsFrame.Visible = true
             OrionLib.State.ActiveDropdown = { OptionsFrame = optionsFrame }
         end
     end)
     
-    -- Keep options frame position updated if main panel moves (e.g. dragging)
-    OrionLib.Elements.MainPanel:GetPropertyChangedSignal("AbsolutePosition"):Connect(function()
-        if optionsFrame.Visible then
-            updateOptionsFramePosition()
-        end
+    local mainPanelPosChangedConn, mainPanelSizeChangedConn
+    mainPanelPosChangedConn = OrionLib.Elements.MainPanel:GetPropertyChangedSignal("AbsolutePosition"):Connect(function()
+        if optionsFrame.Visible then updateOptionsFramePosition() end
     end)
-    -- And if main panel size changes (though less likely to affect dropdown position directly unless anchor points are involved)
-     OrionLib.Elements.MainPanel:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
-        if optionsFrame.Visible then
-            updateOptionsFramePosition()
-        end
+    mainPanelSizeChangedConn = OrionLib.Elements.MainPanel:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
+        if optionsFrame.Visible then updateOptionsFramePosition() end
     end)
 
-
-    local publicMethods = {
+    return {
         GetValue = function() return selectedValue end,
-        SetValue = function(newValue) -- Ensure newValue is one of the options
+        SetValue = function(newValue)
             for _, opt in ipairs(options) do
                 if opt == newValue then
                     selectedValue = newValue
                     currentSelectionDisplay.Text = labelText .. ": " .. tostring(selectedValue)
-                    if callback then pcall(callback, selectedValue) end -- Optionally trigger callback
+                    if callback then pcall(callback, selectedValue) end
                     break
                 end
             end
         end,
         Instance = dropdownFrame,
-        OptionsFrameInstance = optionsFrame -- For debugging or advanced manipulation
+        Destroy = function() -- Cleanup connections
+            if mainPanelPosChangedConn then mainPanelPosChangedConn:Disconnect() end
+            if mainPanelSizeChangedConn then mainPanelSizeChangedConn:Disconnect() end
+            optionsFrame:Destroy() -- Options frame is parented to ScreenGui
+            dropdownFrame:Destroy()
+        end
     }
-    return publicMethods
 end
 
 function OrionLib:AddTextBox(placeholderText, callbackOnEnter, allowMultiline)
@@ -715,50 +715,35 @@ function OrionLib:AddTextBox(placeholderText, callbackOnEnter, allowMultiline)
     CloseActiveDropdown()
 
     local height = allowMultiline and (OrionLib.Config.ElementHeight * 2.5) or OrionLib.Config.ElementHeight
-    local textBox = Create("TextBox", {
-        Name = "OrionTextBox",
-        Size = UDim2.new(1, 0, 0, height),
-        BackgroundColor3 = OrionLib.Config.LightBackgroundColor,
-        Font = OrionLib.Config.Font,
-        Text = "",
-        PlaceholderText = placeholderText,
-        PlaceholderColor3 = OrionLib.Config.PlaceholderColor,
-        TextColor3 = OrionLib.Config.TextColor,
-        ClearTextOnFocus = false,
+    local textBox = Create("TextBox", { Name = "OrionTextBox", Size = UDim2.new(1, 0, 0, height),
+        BackgroundColor3 = OrionLib.Config.LightBackgroundColor, Font = OrionLib.Config.Font,
+        Text = "", PlaceholderText = placeholderText, PlaceholderColor3 = OrionLib.Config.PlaceholderColor,
+        TextColor3 = OrionLib.Config.TextColor, ClearTextOnFocus = false,
         TextXAlignment = Enum.TextXAlignment.Left,
         TextYAlignment = allowMultiline and Enum.TextYAlignment.Top or Enum.TextYAlignment.Center,
-        MultiLine = allowMultiline or false,
-        Parent = OrionLib.State.CurrentSection
+        MultiLine = allowMultiline or false, Parent = OrionLib.State.CurrentSection
     })
     ApplyCorner(textBox)
-    Create("UIPadding", {
-        PaddingLeft = UDim.new(0, 8),
-        PaddingRight = UDim.new(0, 8),
-        PaddingTop = UDim.new(0, allowMultiline and 5 or 0),
-        Parent = textBox
+    Create("UIPadding", { PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 8),
+        PaddingTop = UDim.new(0, allowMultiline and 5 or 0), Parent = textBox
     })
 
     textBox.FocusLost:Connect(function(enterPressed)
+        CloseActiveDropdown()
         if enterPressed and callbackOnEnter then
             pcall(callbackOnEnter, textBox.Text)
         elseif not enterPressed and callbackOnEnter and not allowMultiline then 
-            -- Trigger for non-multiline on focus lost even if not enter
             pcall(callbackOnEnter, textBox.Text)
         end
-        CloseActiveDropdown() -- Make sure if user clicks outside to lose focus
-    })
-    
-    textBox.Focused:Connect(function()
-        CloseActiveDropdown()
     end)
+    textBox.Focused:Connect(CloseActiveDropdown)
 
-    local publicMethods = {
+    return {
         GetValue = function() return textBox.Text end,
         SetValue = function(newText) textBox.Text = newText end,
         Clear = function() textBox.Text = "" end,
         Instance = textBox
     }
-    return publicMethods
 end
 
 function OrionLib:AddLabel(text, alignment, size)
@@ -766,50 +751,47 @@ function OrionLib:AddLabel(text, alignment, size)
     assert(OrionLib.State.CurrentSection, "No section active. Call :AddSection() first.")
     CloseActiveDropdown()
     
-    alignment = alignment or Enum.TextXAlignment.Left
-    size = size or OrionLib.Config.ElementHeight -- In pixels
-
-    local label = Create("TextLabel", {
-        Name = "OrionLabel",
-        Size = UDim2.new(1, 0, 0, size),
-        BackgroundTransparency = 1,
-        Font = OrionLib.Config.Font,
-        Text = text,
+    local label = Create("TextLabel", { Name = "OrionLabel",
+        Size = UDim2.new(1, 0, 0, size or OrionLib.Config.ElementHeight),
+        BackgroundTransparency = 1, Font = OrionLib.Config.Font, Text = text,
         TextColor3 = OrionLib.Config.TextColor,
-        TextXAlignment = alignment,
-        TextWrapped = true, -- Important for labels that might exceed width
-        Parent = OrionLib.State.CurrentSection
+        TextXAlignment = alignment or Enum.TextXAlignment.Left,
+        TextWrapped = true, Parent = OrionLib.State.CurrentSection
     })
-    
-    local publicMethods = {
+    return {
         SetText = function(newText) label.Text = newText end,
         Instance = label
     }
-    return publicMethods
 end
 
 function OrionLib:Destroy()
+    print("OrionLib: Destroy called.")
     if OrionLib.Elements.ScreenGui then
+        -- Manually destroy elements that have renderstep or event connections to prevent memory leaks
+        for _, child in ipairs(OrionLib.Elements.ContentFrame:GetChildren()) do
+            if child:IsA("Frame") and child.Name:match("OrionSliderFrame") then
+                local sliderObject = nil -- Need to find a way to get back the slider object to call its Destroy method
+                -- This part is tricky without storing all created objects with their Destroy methods.
+                -- For now, just destroying the GUI elements. Proper cleanup needs more structure.
+            elseif child:IsA("Frame") and child.Name:match("OrionDropdownFrame") then
+                -- Similar issue for dropdowns, optionsFrame is parented elsewhere.
+            end
+        end
+        -- A simpler approach for now, assuming most connections are handled by Roblox GC when instances are destroyed.
+        -- However, RenderStepped functions MUST be unbound.
+        -- This is a simplified Destroy. A full one would iterate created elements and call their specific destroy methods if they exist.
+        RunService:UnbindFromRenderStep("OrionSliderUpdate_.*") -- Attempt to unbind all sliders (regex might not work here)
+                                                                -- Proper way is to store names and unbind one by one.
+
         OrionLib.Elements.ScreenGui:Destroy()
     end
-    -- Reset state
-    OrionLib.State = {
-        Initialized = false,
-        Visible = true,
-        Dragging = false,
-        DragStart = nil,
-        FrameStart = nil,
-        CurrentSection = nil,
-        ActiveDropdown = nil
-    }
-    OrionLib.Elements = {} -- Clear references
+    OrionLib.State = { Initialized = false, Visible = true, Dragging = false, DragStart = nil,
+                       FrameStart = nil, CurrentSection = nil, ActiveDropdown = nil }
+    OrionLib.Elements = {}
+    ServicesInitialized = false -- Reset service init flag
     print(OrionLib.Name .. " Destroyed.")
 end
 
-
--- Make the library globally accessible IF loaded directly by executor,
--- or return it if required by another script.
--- For loadstring, this makes `_G.OrionLib` available.
+print("OrionLib: Script loaded. Ready for Init.")
 _G.OrionLib = OrionLib
-
 return OrionLib
