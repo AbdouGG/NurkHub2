@@ -1,796 +1,350 @@
---[[
-    Orion UI Library - FIXED VERSION
-    Version: 1.1.0 (Completely rewritten and fixed)
-    Author: Fixed by AI Assistant
-    Description: A modern, aesthetic UI library for Roblox executors - NOW WORKING!
-]]
+-- Modern UI Library for Roblox
+-- Load with: loadstring(game:HttpGet("your-github-raw-url"))()
 
-local OrionLib = {}
-OrionLib.Name = "Orion UI"
-OrionLib.Version = "1.1.0"
+local UILibrary = {}
 
 -- Services
-local Players = game:GetService("Players")
-local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
-local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Players = game:GetService("Players")
 local CoreGui = game:GetService("CoreGui")
 
--- Configuration
-OrionLib.Config = {
-    AccentColor = Color3.fromRGB(0, 122, 255),
-    BackgroundColor = Color3.fromRGB(25, 25, 25),
-    LightBackgroundColor = Color3.fromRGB(40, 40, 40),
-    TextColor = Color3.fromRGB(255, 255, 255),
-    PlaceholderColor = Color3.fromRGB(150, 150, 150),
-    Font = Enum.Font.Gotham,
-    SmallFont = Enum.Font.Gotham,
-    ElementHeight = 35,
-    ElementSpacing = 8,
-    CornerRadius = 8,
-    ToggleKey = Enum.KeyCode.RightControl
-}
+-- Variables
+local Player = Players.LocalPlayer
+local PlayerGui = Player:WaitForChild("PlayerGui")
 
--- State
-OrionLib.State = {
-    Initialized = false,
-    Visible = true,
-    Dragging = false,
-    DragStart = nil,
-    FrameStart = nil,
-    CurrentSection = nil,
-    ActiveDropdown = nil,
-    SliderConnections = {}
-}
-
--- UI Elements
-OrionLib.Elements = {}
-
--- Helper Functions
-local function Create(instanceType, properties)
-    local inst = Instance.new(instanceType)
-    for prop, val in pairs(properties or {}) do
-        pcall(function()
-            inst[prop] = val
-        end)
-    end
-    return inst
-end
-
-local function ApplyCorner(parent, radius)
-    Create("UICorner", {
-        CornerRadius = UDim.new(0, radius or OrionLib.Config.CornerRadius),
-        Parent = parent
-    })
-end
-
-local function ApplyStroke(parent, color, thickness)
-    Create("UIStroke", {
-        Color = color or OrionLib.Config.AccentColor,
-        Thickness = thickness or 1,
-        ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
-        Parent = parent
-    })
-end
-
-local function UpdateCanvasSize(scrollingFrame)
-    local listLayout = scrollingFrame:FindFirstChild("UIListLayout")
-    if listLayout then
-        local contentSize = listLayout.AbsoluteContentSize
-        scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, contentSize.Y + 10)
-    end
-end
-
-local function CloseActiveDropdown()
-    if OrionLib.State.ActiveDropdown then
-        OrionLib.State.ActiveDropdown.Visible = false
-        OrionLib.State.ActiveDropdown = nil
-    end
-end
-
--- Main Functions
-function OrionLib:Init(title)
-    if OrionLib.State.Initialized then
-        warn("OrionLib is already initialized!")
-        return self
+-- Main UI Creation
+function UILibrary:CreateUI(title)
+    local UI = {}
+    
+    -- Cleanup existing UI
+    if PlayerGui:FindFirstChild("ModernUILib") then
+        PlayerGui:FindFirstChild("ModernUILib"):Destroy()
     end
     
-    title = title or "Orion UI"
+    -- Main ScreenGui
+    local ScreenGui = Instance.new("ScreenGui")
+    ScreenGui.Name = "ModernUILib"
+    ScreenGui.ResetOnSpawn = false
+    ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     
-    -- Create ScreenGui
-    OrionLib.Elements.ScreenGui = Create("ScreenGui", {
-        Name = "OrionLib",
-        Parent = CoreGui,
-        ResetOnSpawn = false,
-        DisplayOrder = 999
-    })
+    -- Try to parent to CoreGui first, fallback to PlayerGui
+    local success = pcall(function()
+        ScreenGui.Parent = CoreGui
+    end)
+    if not success then
+        ScreenGui.Parent = PlayerGui
+    end
+    
+    -- Toggle Button (Always visible)
+    local ToggleButton = Instance.new("TextButton")
+    ToggleButton.Name = "ToggleButton"
+    ToggleButton.Size = UDim2.new(0, 60, 0, 60)
+    ToggleButton.Position = UDim2.new(0, 20, 0, 20)
+    ToggleButton.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+    ToggleButton.BorderSizePixel = 0
+    ToggleButton.Text = "☰"
+    ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    ToggleButton.TextScaled = true
+    ToggleButton.Font = Enum.Font.GothamBold
+    ToggleButton.Parent = ScreenGui
+    ToggleButton.ZIndex = 1000
+    
+    -- Toggle Button Corner
+    local ToggleCorner = Instance.new("UICorner")
+    ToggleCorner.CornerRadius = UDim.new(0, 12)
+    ToggleCorner.Parent = ToggleButton
+    
+    -- Toggle Button Shadow
+    local ToggleShadow = Instance.new("Frame")
+    ToggleShadow.Name = "Shadow"
+    ToggleShadow.Size = UDim2.new(1, 6, 1, 6)
+    ToggleShadow.Position = UDim2.new(0, -3, 0, -3)
+    ToggleShadow.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    ToggleShadow.BackgroundTransparency = 0.7
+    ToggleShadow.BorderSizePixel = 0
+    ToggleShadow.ZIndex = ToggleButton.ZIndex - 1
+    ToggleShadow.Parent = ToggleButton
+    
+    local ToggleShadowCorner = Instance.new("UICorner")
+    ToggleShadowCorner.CornerRadius = UDim.new(0, 12)
+    ToggleShadowCorner.Parent = ToggleShadow
     
     -- Main Frame
-    OrionLib.Elements.MainFrame = Create("Frame", {
-        Name = "MainFrame",
-        Size = UDim2.new(0, 450, 0, 500),
-        Position = UDim2.new(0.5, -225, 0.5, -250),
-        BackgroundColor3 = OrionLib.Config.BackgroundColor,
-        BorderSizePixel = 0,
-        Active = true,
-        Draggable = false,
-        Parent = OrionLib.Elements.ScreenGui
-    })
-    ApplyCorner(OrionLib.Elements.MainFrame)
-    ApplyStroke(OrionLib.Elements.MainFrame, OrionLib.Config.LightBackgroundColor, 2)
+    local MainFrame = Instance.new("Frame")
+    MainFrame.Name = "MainFrame"
+    MainFrame.Size = UDim2.new(0, 400, 0, 500)
+    MainFrame.Position = UDim2.new(0.5, -200, 0.5, -250)
+    MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+    MainFrame.BorderSizePixel = 0
+    MainFrame.Parent = ScreenGui
+    MainFrame.ClipsDescendants = true
+    
+    -- Main Frame Corner
+    local MainCorner = Instance.new("UICorner")
+    MainCorner.CornerRadius = UDim.new(0, 16)
+    MainCorner.Parent = MainFrame
+    
+    -- Main Frame Shadow
+    local MainShadow = Instance.new("Frame")
+    MainShadow.Name = "Shadow"
+    MainShadow.Size = UDim2.new(1, 20, 1, 20)
+    MainShadow.Position = UDim2.new(0, -10, 0, -10)
+    MainShadow.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    MainShadow.BackgroundTransparency = 0.5
+    MainShadow.BorderSizePixel = 0
+    MainShadow.ZIndex = MainFrame.ZIndex - 1
+    MainShadow.Parent = MainFrame
+    
+    local MainShadowCorner = Instance.new("UICorner")
+    MainShadowCorner.CornerRadius = UDim.new(0, 16)
+    MainShadowCorner.Parent = MainShadow
+    
+    -- Gradient Background
+    local Gradient = Instance.new("UIGradient")
+    Gradient.Color = ColorSequence.new{
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(35, 35, 45)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 20, 25))
+    }
+    Gradient.Rotation = 45
+    Gradient.Parent = MainFrame
     
     -- Title Bar
-    OrionLib.Elements.TitleBar = Create("Frame", {
-        Name = "TitleBar",
-        Size = UDim2.new(1, 0, 0, 40),
-        BackgroundColor3 = OrionLib.Config.LightBackgroundColor,
-        BorderSizePixel = 0,
-        Parent = OrionLib.Elements.MainFrame
-    })
-    ApplyCorner(OrionLib.Elements.TitleBar)
+    local TitleBar = Instance.new("Frame")
+    TitleBar.Name = "TitleBar"
+    TitleBar.Size = UDim2.new(1, 0, 0, 50)
+    TitleBar.Position = UDim2.new(0, 0, 0, 0)
+    TitleBar.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+    TitleBar.BorderSizePixel = 0
+    TitleBar.Parent = MainFrame
     
-    -- Title Label
-    OrionLib.Elements.TitleLabel = Create("TextLabel", {
-        Name = "TitleLabel",
-        Size = UDim2.new(1, -50, 1, 0),
-        Position = UDim2.new(0, 15, 0, 0),
-        BackgroundTransparency = 1,
-        Font = OrionLib.Config.Font,
-        Text = title,
-        TextColor3 = OrionLib.Config.TextColor,
-        TextSize = 16,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        Parent = OrionLib.Elements.TitleBar
-    })
+    local TitleCorner = Instance.new("UICorner")
+    TitleCorner.CornerRadius = UDim.new(0, 16)
+    TitleCorner.Parent = TitleBar
     
-    -- Close Button
-    OrionLib.Elements.CloseButton = Create("TextButton", {
-        Name = "CloseButton",
-        Size = UDim2.new(0, 30, 0, 30),
-        Position = UDim2.new(1, -35, 0, 5),
-        BackgroundColor3 = Color3.fromRGB(255, 85, 85),
-        Font = OrionLib.Config.Font,
-        Text = "×",
-        TextColor3 = Color3.fromRGB(255, 255, 255),
-        TextSize = 18,
-        Parent = OrionLib.Elements.TitleBar
-    })
-    ApplyCorner(OrionLib.Elements.CloseButton, 4)
+    -- Title Corner Fix
+    local TitleFix = Instance.new("Frame")
+    TitleFix.Size = UDim2.new(1, 0, 0, 16)
+    TitleFix.Position = UDim2.new(0, 0, 1, -16)
+    TitleFix.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+    TitleFix.BorderSizePixel = 0
+    TitleFix.Parent = TitleBar
+    
+    -- Title Text
+    local TitleLabel = Instance.new("TextLabel")
+    TitleLabel.Name = "TitleLabel"
+    TitleLabel.Size = UDim2.new(1, -20, 1, 0)
+    TitleLabel.Position = UDim2.new(0, 20, 0, 0)
+    TitleLabel.BackgroundTransparency = 1
+    TitleLabel.Text = title or "Modern UI Library"
+    TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    TitleLabel.TextScaled = true
+    TitleLabel.Font = Enum.Font.GothamBold
+    TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    TitleLabel.Parent = TitleBar
     
     -- Content Frame
-    OrionLib.Elements.ContentFrame = Create("ScrollingFrame", {
-        Name = "ContentFrame",
-        Size = UDim2.new(1, -20, 1, -60),
-        Position = UDim2.new(0, 10, 0, 50),
-        BackgroundTransparency = 1,
-        BorderSizePixel = 0,
-        ScrollBarThickness = 6,
-        ScrollBarImageColor3 = OrionLib.Config.AccentColor,
-        CanvasSize = UDim2.new(0, 0, 0, 0),
-        Parent = OrionLib.Elements.MainFrame
-    })
+    local ContentFrame = Instance.new("ScrollingFrame")
+    ContentFrame.Name = "ContentFrame"
+    ContentFrame.Size = UDim2.new(1, -20, 1, -70)
+    ContentFrame.Position = UDim2.new(0, 10, 0, 60)
+    ContentFrame.BackgroundTransparency = 1
+    ContentFrame.BorderSizePixel = 0
+    ContentFrame.ScrollBarThickness = 6
+    ContentFrame.ScrollBarImageColor3 = Color3.fromRGB(80, 80, 90)
+    ContentFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+    ContentFrame.Parent = MainFrame
     
-    Create("UIListLayout", {
-        Name = "ContentLayout",
-        Padding = UDim.new(0, OrionLib.Config.ElementSpacing),
-        SortOrder = Enum.SortOrder.LayoutOrder,
-        FillDirection = Enum.FillDirection.Vertical,
-        HorizontalAlignment = Enum.HorizontalAlignment.Center,
-        Parent = OrionLib.Elements.ContentFrame
-    })
+    -- Content Layout
+    local ContentLayout = Instance.new("UIListLayout")
+    ContentLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    ContentLayout.Padding = UDim.new(0, 10)
+    ContentLayout.Parent = ContentFrame
     
-    -- Toggle Button
-    OrionLib.Elements.ToggleButton = Create("TextButton", {
-        Name = "ToggleButton",
-        Size = UDim2.new(0, 80, 0, 30),
-        Position = UDim2.new(0, 10, 0, 10),
-        BackgroundColor3 = OrionLib.Config.AccentColor,
-        Font = OrionLib.Config.SmallFont,
-        Text = "Hide",
-        TextColor3 = Color3.fromRGB(255, 255, 255),
-        TextSize = 14,
-        Parent = OrionLib.Elements.ScreenGui
-    })
-    ApplyCorner(OrionLib.Elements.ToggleButton)
-    
-    -- Event Connections
-    OrionLib.Elements.CloseButton.MouseButton1Click:Connect(function()
-        OrionLib:Toggle()
+    -- Auto-resize content
+    ContentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        ContentFrame.CanvasSize = UDim2.new(0, 0, 0, ContentLayout.AbsoluteContentSize.Y + 20)
     end)
     
-    OrionLib.Elements.ToggleButton.MouseButton1Click:Connect(function()
-        OrionLib:Toggle()
-    end)
+    -- UI State
+    local UIVisible = true
     
-    -- Dragging functionality
-    local dragging = false
+    -- Mobile Detection
+    local function isMobile()
+        return UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+    end
+    
+    -- Responsive Design
+    local function updateSize()
+        if isMobile() then
+            MainFrame.Size = UDim2.new(0.9, 0, 0.8, 0)
+            MainFrame.Position = UDim2.new(0.05, 0, 0.1, 0)
+            ToggleButton.Size = UDim2.new(0, 70, 0, 70)
+        else
+            MainFrame.Size = UDim2.new(0, 400, 0, 500)
+            MainFrame.Position = UDim2.new(0.5, -200, 0.5, -250)
+            ToggleButton.Size = UDim2.new(0, 60, 0, 60)
+        end
+    end
+    
+    updateSize()
+    
+    -- Toggle Animation
+    local function toggleUI()
+        UIVisible = not UIVisible
+        
+        local targetPosition = UIVisible and 
+            (isMobile() and UDim2.new(0.05, 0, 0.1, 0) or UDim2.new(0.5, -200, 0.5, -250)) or
+            UDim2.new(0.5, -200, 1.5, 0)
+        
+        local tween = TweenService:Create(
+            MainFrame,
+            TweenInfo.new(0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
+            {Position = targetPosition}
+        )
+        
+        local buttonTween = TweenService:Create(
+            ToggleButton,
+            TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+            {Rotation = UIVisible and 0 or 180}
+        )
+        
+        tween:Play()
+        buttonTween:Play()
+    end
+    
+    -- Toggle Button Event
+    ToggleButton.MouseButton1Click:Connect(toggleUI)
+    
+    -- Touch support for mobile
+    ToggleButton.TouchTap:Connect(toggleUI)
+    
+    -- Dragging System
     local dragStart = nil
     local startPos = nil
     
-    OrionLib.Elements.TitleBar.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            dragStart = input.Position
-            startPos = OrionLib.Elements.MainFrame.Position
-            CloseActiveDropdown()
-        end
-    end)
-    
-    OrionLib.Elements.TitleBar.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
-        end
-    end)
-    
-    UserInputService.InputChanged:Connect(function(input)
-        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+    local function updateDrag(input)
+        if dragStart and startPos then
             local delta = input.Position - dragStart
-            OrionLib.Elements.MainFrame.Position = UDim2.new(
+            local newPos = UDim2.new(
                 startPos.X.Scale,
                 startPos.X.Offset + delta.X,
                 startPos.Y.Scale,
                 startPos.Y.Offset + delta.Y
             )
+            MainFrame.Position = newPos
+        end
+    end
+    
+    TitleBar.InputBegan:connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragStart = input.Position
+            startPos = MainFrame.Position
         end
     end)
     
-    -- Keyboard toggle
-    UserInputService.InputBegan:Connect(function(input, gameProcessed)
-        if not gameProcessed and input.KeyCode == OrionLib.Config.ToggleKey then
-            OrionLib:Toggle()
+    UserInputService.InputChanged:connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            updateDrag(input)
         end
     end)
     
-    -- Update canvas size when content changes
-    local function updateCanvas()
-        UpdateCanvasSize(OrionLib.Elements.ContentFrame)
-    end
-    
-    OrionLib.Elements.ContentFrame.ChildAdded:Connect(updateCanvas)
-    OrionLib.Elements.ContentFrame.ChildRemoved:Connect(updateCanvas)
-    
-    OrionLib.State.CurrentSection = OrionLib.Elements.ContentFrame
-    OrionLib.State.Initialized = true
-    
-    print("OrionLib v" .. OrionLib.Version .. " initialized successfully!")
-    return self
-end
-
-function OrionLib:Toggle()
-    OrionLib.State.Visible = not OrionLib.State.Visible
-    OrionLib.Elements.MainFrame.Visible = OrionLib.State.Visible
-    OrionLib.Elements.ToggleButton.Text = OrionLib.State.Visible and "Hide" or "Show"
-end
-
-function OrionLib:AddSection(name)
-    if not OrionLib.State.Initialized then
-        error("OrionLib not initialized! Call OrionLib:Init() first.")
-    end
-    
-    CloseActiveDropdown()
-    
-    local sectionFrame = Create("Frame", {
-        Name = name .. "Section",
-        Size = UDim2.new(1, 0, 0, 40),
-        BackgroundTransparency = 1,
-        Parent = OrionLib.Elements.ContentFrame
-    })
-    
-    local sectionLabel = Create("TextLabel", {
-        Name = "SectionLabel",
-        Size = UDim2.new(1, 0, 1, 0),
-        BackgroundTransparency = 1,
-        Font = OrionLib.Config.Font,
-        Text = ":: " .. name .. " ::",
-        TextColor3 = OrionLib.Config.AccentColor,
-        TextSize = 16,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        Parent = sectionFrame
-    })
-    
-    local line = Create("Frame", {
-        Name = "SectionLine",
-        Size = UDim2.new(1, 0, 0, 1),
-        Position = UDim2.new(0, 0, 1, -5),
-        BackgroundColor3 = OrionLib.Config.LightBackgroundColor,
-        BorderSizePixel = 0,
-        Parent = sectionFrame
-    })
-    
-    UpdateCanvasSize(OrionLib.Elements.ContentFrame)
-    return sectionFrame
-end
-
-function OrionLib:AddButton(text, callback)
-    if not OrionLib.State.Initialized then
-        error("OrionLib not initialized!")
-    end
-    
-    CloseActiveDropdown()
-    
-    local button = Create("TextButton", {
-        Name = "Button",
-        Size = UDim2.new(1, 0, 0, OrionLib.Config.ElementHeight),
-        BackgroundColor3 = OrionLib.Config.LightBackgroundColor,
-        Font = OrionLib.Config.Font,
-        Text = text,
-        TextColor3 = OrionLib.Config.TextColor,
-        TextSize = 14,
-        Parent = OrionLib.State.CurrentSection
-    })
-    ApplyCorner(button)
-    
-    -- Hover effects
-    button.MouseEnter:Connect(function()
-        TweenService:Create(button, TweenInfo.new(0.2), {
-            BackgroundColor3 = OrionLib.Config.AccentColor
-        }):Play()
-    end)
-    
-    button.MouseLeave:Connect(function()
-        TweenService:Create(button, TweenInfo.new(0.2), {
-            BackgroundColor3 = OrionLib.Config.LightBackgroundColor
-        }):Play()
-    end)
-    
-    button.MouseButton1Click:Connect(function()
-        if callback then
-            pcall(callback)
+    UserInputService.InputEnded:connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragStart = nil
+            startPos = nil
         end
     end)
     
-    UpdateCanvasSize(OrionLib.Elements.ContentFrame)
-    return button
-end
-
-function OrionLib:AddToggle(text, default, callback)
-    if not OrionLib.State.Initialized then
-        error("OrionLib not initialized!")
-    end
-    
-    CloseActiveDropdown()
-    default = default or false
-    
-    local toggleFrame = Create("Frame", {
-        Name = "ToggleFrame",
-        Size = UDim2.new(1, 0, 0, OrionLib.Config.ElementHeight),
-        BackgroundTransparency = 1,
-        Parent = OrionLib.State.CurrentSection
-    })
-    
-    local toggleLabel = Create("TextLabel", {
-        Name = "ToggleLabel",
-        Size = UDim2.new(0.7, 0, 1, 0),
-        BackgroundTransparency = 1,
-        Font = OrionLib.Config.Font,
-        Text = text,
-        TextColor3 = OrionLib.Config.TextColor,
-        TextSize = 14,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        Parent = toggleFrame
-    })
-    
-    local toggleButton = Create("TextButton", {
-        Name = "ToggleButton",
-        Size = UDim2.new(0.25, 0, 0.8, 0),
-        Position = UDim2.new(0.73, 0, 0.1, 0),
-        BackgroundColor3 = default and OrionLib.Config.AccentColor or OrionLib.Config.LightBackgroundColor,
-        Font = OrionLib.Config.Font,
-        Text = default and "ON" or "OFF",
-        TextColor3 = OrionLib.Config.TextColor,
-        TextSize = 12,
-        Parent = toggleFrame
-    })
-    ApplyCorner(toggleButton)
-    
-    local state = default
-    
-    toggleButton.MouseButton1Click:Connect(function()
-        state = not state
-        toggleButton.Text = state and "ON" or "OFF"
+    -- Button Creation Function
+    function UI:CreateButton(text, callback)
+        local Button = Instance.new("TextButton")
+        Button.Name = "Button_" .. text
+        Button.Size = UDim2.new(1, 0, 0, 45)
+        Button.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
+        Button.BorderSizePixel = 0
+        Button.Text = text
+        Button.TextColor3 = Color3.fromRGB(255, 255, 255)
+        Button.TextScaled = true
+        Button.Font = Enum.Font.Gotham
+        Button.Parent = ContentFrame
         
-        TweenService:Create(toggleButton, TweenInfo.new(0.2), {
-            BackgroundColor3 = state and OrionLib.Config.AccentColor or OrionLib.Config.LightBackgroundColor
-        }):Play()
+        -- Button Corner
+        local ButtonCorner = Instance.new("UICorner")
+        ButtonCorner.CornerRadius = UDim.new(0, 8)
+        ButtonCorner.Parent = Button
         
-        if callback then
-            pcall(callback, state)
-        end
-    end)
-    
-    UpdateCanvasSize(OrionLib.Elements.ContentFrame)
-    
-    return {
-        SetValue = function(value)
-            state = value
-            toggleButton.Text = state and "ON" or "OFF"
-            toggleButton.BackgroundColor3 = state and OrionLib.Config.AccentColor or OrionLib.Config.LightBackgroundColor
-        end,
-        GetValue = function()
-            return state
-        end
-    }
-end
-
-function OrionLib:AddSlider(text, min, max, default, callback)
-    if not OrionLib.State.Initialized then
-        error("OrionLib not initialized!")
-    end
-    
-    CloseActiveDropdown()
-    min = min or 0
-    max = max or 100
-    default = default or min
-    
-    local sliderFrame = Create("Frame", {
-        Name = "SliderFrame",
-        Size = UDim2.new(1, 0, 0, OrionLib.Config.ElementHeight + 10),
-        BackgroundTransparency = 1,
-        Parent = OrionLib.State.CurrentSection
-    })
-    
-    local sliderLabel = Create("TextLabel", {
-        Name = "SliderLabel",
-        Size = UDim2.new(1, 0, 0, 20),
-        BackgroundTransparency = 1,
-        Font = OrionLib.Config.Font,
-        Text = text .. ": " .. tostring(default),
-        TextColor3 = OrionLib.Config.TextColor,
-        TextSize = 14,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        Parent = sliderFrame
-    })
-    
-    local sliderTrack = Create("Frame", {
-        Name = "SliderTrack",
-        Size = UDim2.new(1, -10, 0, 6),
-        Position = UDim2.new(0, 5, 0, 25),
-        BackgroundColor3 = OrionLib.Config.LightBackgroundColor,
-        BorderSizePixel = 0,
-        Parent = sliderFrame
-    })
-    ApplyCorner(sliderTrack, 3)
-    
-    local sliderFill = Create("Frame", {
-        Name = "SliderFill",
-        Size = UDim2.new(0, 0, 1, 0),
-        BackgroundColor3 = OrionLib.Config.AccentColor,
-        BorderSizePixel = 0,
-        Parent = sliderTrack
-    })
-    ApplyCorner(sliderFill, 3)
-    
-    local sliderHandle = Create("TextButton", {
-        Name = "SliderHandle",
-        Size = UDim2.new(0, 16, 0, 16),
-        Position = UDim2.new(0, 0, 0.5, -8),
-        AnchorPoint = Vector2.new(0.5, 0.5),
-        BackgroundColor3 = Color3.fromRGB(255, 255, 255),
-        BorderSizePixel = 0,
-        Text = "",
-        Parent = sliderTrack
-    })
-    ApplyCorner(sliderHandle, 8)
-    
-    local currentValue = default
-    local dragging = false
-    
-    local function updateSlider(value)
-        currentValue = math.clamp(value, min, max)
-        local percent = (currentValue - min) / (max - min)
+        -- Button Gradient
+        local ButtonGradient = Instance.new("UIGradient")
+        ButtonGradient.Color = ColorSequence.new{
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(55, 55, 70)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(35, 35, 45))
+        }
+        ButtonGradient.Rotation = 90
+        ButtonGradient.Parent = Button
         
-        sliderFill.Size = UDim2.new(percent, 0, 1, 0)
-        sliderHandle.Position = UDim2.new(percent, 0, 0.5, 0)
-        sliderLabel.Text = text .. ": " .. tostring(math.floor(currentValue + 0.5))
+        -- Hover Effects
+        local originalColor = Button.BackgroundColor3
         
-        if callback then
-            pcall(callback, currentValue)
-        end
-    end
-    
-    local function getValueFromPosition(x)
-        local relativeX = x - sliderTrack.AbsolutePosition.X
-        local percent = math.clamp(relativeX / sliderTrack.AbsoluteSize.X, 0, 1)
-        return min + (max - min) * percent
-    end
-    
-    sliderHandle.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-        end
-    end)
-    
-    sliderHandle.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
-        end
-    end)
-    
-    sliderTrack.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            local newValue = getValueFromPosition(input.Position.X)
-            updateSlider(newValue)
-        end
-    end)
-    
-    local connection = UserInputService.InputChanged:Connect(function(input)
-        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-            local newValue = getValueFromPosition(input.Position.X)
-            updateSlider(newValue)
-        end
-    end)
-    
-    local endConnection = UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
-        end
-    end)
-    
-    table.insert(OrionLib.State.SliderConnections, connection)
-    table.insert(OrionLib.State.SliderConnections, endConnection)
-    
-    updateSlider(default)
-    UpdateCanvasSize(OrionLib.Elements.ContentFrame)
-    
-    return {
-        SetValue = function(value)
-            updateSlider(value)
-        end,
-        GetValue = function()
-            return currentValue
-        end
-    }
-end
-
-function OrionLib:AddDropdown(text, options, callback)
-    if not OrionLib.State.Initialized then
-        error("OrionLib not initialized!")
-    end
-    
-    CloseActiveDropdown()
-    options = options or {}
-    
-    local dropdownFrame = Create("Frame", {
-        Name = "DropdownFrame",
-        Size = UDim2.new(1, 0, 0, OrionLib.Config.ElementHeight),
-        BackgroundTransparency = 1,
-        Parent = OrionLib.State.CurrentSection
-    })
-    
-    local dropdownButton = Create("TextButton", {
-        Name = "DropdownButton",
-        Size = UDim2.new(1, 0, 1, 0),
-        BackgroundColor3 = OrionLib.Config.LightBackgroundColor,
-        Font = OrionLib.Config.Font,
-        Text = text .. ": " .. (options[1] or "None"),
-        TextColor3 = OrionLib.Config.TextColor,
-        TextSize = 14,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        Parent = dropdownFrame
-    })
-    ApplyCorner(dropdownButton)
-    
-    Create("UIPadding", {
-        PaddingLeft = UDim.new(0, 10),
-        Parent = dropdownButton
-    })
-    
-    local arrow = Create("TextLabel", {
-        Name = "Arrow",
-        Size = UDim2.new(0, 20, 1, 0),
-        Position = UDim2.new(1, -25, 0, 0),
-        BackgroundTransparency = 1,
-        Font = OrionLib.Config.Font,
-        Text = "▼",
-        TextColor3 = OrionLib.Config.TextColor,
-        TextSize = 12,
-        Parent = dropdownButton
-    })
-    
-    local optionsFrame = Create("Frame", {
-        Name = "OptionsFrame",
-        Size = UDim2.new(1, 0, 0, math.min(#options * 30, 150)),
-        Position = UDim2.new(0, 0, 1, 2),
-        BackgroundColor3 = OrionLib.Config.LightBackgroundColor,
-        BorderSizePixel = 0,
-        Visible = false,
-        ZIndex = 10,
-        Parent = OrionLib.Elements.ScreenGui
-    })
-    ApplyCorner(optionsFrame)
-    ApplyStroke(optionsFrame, OrionLib.Config.AccentColor, 1)
-    
-    local optionsScroll = Create("ScrollingFrame", {
-        Name = "OptionsScroll",
-        Size = UDim2.new(1, 0, 1, 0),
-        BackgroundTransparency = 1,
-        BorderSizePixel = 0,
-        ScrollBarThickness = 4,
-        ScrollBarImageColor3 = OrionLib.Config.AccentColor,
-        CanvasSize = UDim2.new(0, 0, 0, #options * 30),
-        Parent = optionsFrame
-    })
-    
-    Create("UIListLayout", {
-        Padding = UDim.new(0, 2),
-        SortOrder = Enum.SortOrder.LayoutOrder,
-        Parent = optionsScroll
-    })
-    
-    local selectedValue = options[1]
-    
-    for i, option in ipairs(options) do
-        local optionButton = Create("TextButton", {
-            Name = "Option" .. i,
-            Size = UDim2.new(1, -4, 0, 28),
-            BackgroundColor3 = OrionLib.Config.LightBackgroundColor,
-            Font = OrionLib.Config.Font,
-            Text = tostring(option),
-            TextColor3 = OrionLib.Config.TextColor,
-            TextSize = 12,
-            Parent = optionsScroll
-        })
-        
-        optionButton.MouseEnter:Connect(function()
-            optionButton.BackgroundColor3 = OrionLib.Config.AccentColor
+        Button.MouseEnter:Connect(function()
+            local tween = TweenService:Create(
+                Button,
+                TweenInfo.new(0.2, Enum.EasingStyle.Quad),
+                {BackgroundColor3 = Color3.fromRGB(60, 60, 75)}
+            )
+            tween:Play()
         end)
         
-        optionButton.MouseLeave:Connect(function()
-            optionButton.BackgroundColor3 = OrionLib.Config.LightBackgroundColor
+        Button.MouseLeave:Connect(function()
+            local tween = TweenService:Create(
+                Button,
+                TweenInfo.new(0.2, Enum.EasingStyle.Quad),
+                {BackgroundColor3 = originalColor}
+            )
+            tween:Play()
         end)
         
-        optionButton.MouseButton1Click:Connect(function()
-            selectedValue = option
-            dropdownButton.Text = text .. ": " .. tostring(option)
-            optionsFrame.Visible = false
-            OrionLib.State.ActiveDropdown = nil
-            
+        -- Click Animation
+        Button.MouseButton1Down:Connect(function()
+            local scale = TweenService:Create(
+                Button,
+                TweenInfo.new(0.1, Enum.EasingStyle.Quad),
+                {Size = UDim2.new(0.98, 0, 0, 43)}
+            )
+            scale:Play()
+        end)
+        
+        Button.MouseButton1Up:Connect(function()
+            local scale = TweenService:Create(
+                Button,
+                TweenInfo.new(0.1, Enum.EasingStyle.Quad),
+                {Size = UDim2.new(1, 0, 0, 45)}
+            )
+            scale:Play()
+        end)
+        
+        -- Button Click Event
+        Button.MouseButton1Click:Connect(function()
             if callback then
-                pcall(callback, option)
+                callback()
             end
         end)
-    end
-    
-    local function updateOptionsPosition()
-        local buttonPos = dropdownButton.AbsolutePosition
-        local buttonSize = dropdownButton.AbsoluteSize
-        optionsFrame.Position = UDim2.fromOffset(buttonPos.X, buttonPos.Y + buttonSize.Y + 2)
-        optionsFrame.Size = UDim2.fromOffset(buttonSize.X, math.min(#options * 30, 150))
-    end
-    
-    dropdownButton.MouseButton1Click:Connect(function()
-        if optionsFrame.Visible then
-            optionsFrame.Visible = false
-            OrionLib.State.ActiveDropdown = nil
-        else
-            CloseActiveDropdown()
-            updateOptionsPosition()
-            optionsFrame.Visible = true
-            OrionLib.State.ActiveDropdown = optionsFrame
-        end
-    end)
-    
-    UpdateCanvasSize(OrionLib.Elements.ContentFrame)
-    
-    return {
-        SetValue = function(value)
-            for _, option in ipairs(options) do
-                if option == value then
-                    selectedValue = value
-                    dropdownButton.Text = text .. ": " .. tostring(value)
-                    break
-                end
+        
+        -- Touch support
+        Button.TouchTap:Connect(function()
+            if callback then
+                callback()
             end
-        end,
-        GetValue = function()
-            return selectedValue
-        end
-    }
-end
-
-function OrionLib:AddTextBox(placeholder, callback)
-    if not OrionLib.State.Initialized then
-        error("OrionLib not initialized!")
+        end)
+        
+        return Button
     end
     
-    CloseActiveDropdown()
+    -- Screen Size Change Detection
+    local currentCamera = workspace.CurrentCamera
+    currentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(updateSize)
     
-    local textBox = Create("TextBox", {
-        Name = "TextBox",
-        Size = UDim2.new(1, 0, 0, OrionLib.Config.ElementHeight),
-        BackgroundColor3 = OrionLib.Config.LightBackgroundColor,
-        Font = OrionLib.Config.Font,
-        PlaceholderText = placeholder or "Enter text...",
-        PlaceholderColor3 = OrionLib.Config.PlaceholderColor,
-        Text = "",
-        TextColor3 = OrionLib.Config.TextColor,
-        TextSize = 14,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        ClearTextOnFocus = false,
-        Parent = OrionLib.State.CurrentSection
-    })
-    ApplyCorner(textBox)
-    
-    Create("UIPadding", {
-        PaddingLeft = UDim.new(0, 10),
-        PaddingRight = UDim.new(0, 10),
-        Parent = textBox
-    })
-    
-    textBox.FocusLost:Connect(function(enterPressed)
-        if callback and enterPressed then
-            pcall(callback, textBox.Text)
-        end
-    end)
-    
-    UpdateCanvasSize(OrionLib.Elements.ContentFrame)
-    
-    return {
-        SetValue = function(value)
-            textBox.Text = tostring(value)
-        end,
-        GetValue = function()
-            return textBox.Text
-        end
-    }
+    return UI
 end
 
-function OrionLib:AddLabel(text)
-    if not OrionLib.State.Initialized then
-        error("OrionLib not initialized!")
-    end
-    
-    local label = Create("TextLabel", {
-        Name = "Label",
-        Size = UDim2.new(1, 0, 0, OrionLib.Config.ElementHeight),
-        BackgroundTransparency = 1,
-        Font = OrionLib.Config.Font,
-        Text = text,
-        TextColor3 = OrionLib.Config.TextColor,
-        TextSize = 14,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        TextWrapped = true,
-        Parent = OrionLib.State.CurrentSection
-    })
-    
-    UpdateCanvasSize(OrionLib.Elements.ContentFrame)
-    
-    return {
-        SetText = function(newText)
-            label.Text = tostring(newText)
-        end
-    }
-end
-
-function OrionLib:Destroy()
-    if OrionLib.Elements.ScreenGui then
-        OrionLib.Elements.ScreenGui:Destroy()
-    end
-    
-    -- Clean up connections
-    for _, connection in pairs(OrionLib.State.SliderConnections) do
-        if connection then
-            connection:Disconnect()
-        end
-    end
-    
-    -- Reset state
-    OrionLib.State = {
-        Initialized = false,
-        Visible = true,
-        Dragging = false,
-        DragStart = nil,
-        FrameStart = nil,
-        CurrentSection = nil,
-        ActiveDropdown = nil,
-        SliderConnections = {}
-    }
-    
-    OrionLib.Elements = {}
-    print("OrionLib destroyed successfully!")
-end
-
--- Make it global
-_G.OrionLib = OrionLib
-return OrionLib
+return UILibrary
