@@ -826,93 +826,217 @@ function Library:Init(options)
 		end
 		
 		function Tab:Section(options)
-			options = Library:validate({
-				messege = "This is Section",
-			}, options or {})
+            options = Library:validate({
+                title = "This is Section",
+                subtitle = "", -- Added subtitle option
+                collapsible = false, -- Added collapsible option
+                defaultCollapsed = false, -- Added default collapsed state
+                color = Color3.fromRGB(0, 170, 255) -- Added color customization
+            }, options or {})
 
-			local Section = {}
+            local Section = {
+                Expanded = not options.defaultCollapsed,
+                ContentHeight = 0
+            }
 
+            -- Render
+            do
+                -- Main container frame
+                Section["25"] = Instance.new("Frame", Tab["1c"])
+                Section["25"]["BorderSizePixel"] = 0
+                Section["25"]["BackgroundColor3"] = Color3.fromRGB(26, 26, 26)
+                Section["25"]["Size"] = UDim2.new(1, 0, 0, 30)
+                Section["25"]["BorderColor3"] = Color3.fromRGB(0, 0, 0)
+                Section["25"]["Name"] = "Section"
+                Section["25"]["Transparency"] = 0.3
+                Section["25"]["ClipsDescendants"] = true -- Clip content when collapsed
 
-			-- rander
+                -- Corner rounding
+                Section["26"] = Instance.new("UICorner", Section["25"])
+                Section["26"]["CornerRadius"] = UDim.new(0, 4)
 
-			do
-				-- StarterLable.MyLibrary.Main.ContantContainer.HomeTab.Lable
-				Section["25"] = Instance.new("Frame", Tab["1c"]);
-				Section["25"]["BorderSizePixel"] = 0;
-				Section["25"]["BackgroundColor3"] = Color3.fromRGB(26, 26, 26);
-				Section["25"]["Size"] = UDim2.new(1, 0, 0, 26);
-				Section["25"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-				Section["25"]["Name"] = [[Lable]];
-				Section["25"]["Transparency"] = 1;
+                -- Stroke/border
+                Section["27"] = Instance.new("UIStroke", Section["25"])
+                Section["27"]["Color"] = Color3.fromRGB(50, 50, 50)
+                Section["27"]["Thickness"] = 1
 
-				-- StarterLable.MyLibrary.Main.ContantContainer.HomeTab.Lable.UICorner
-				Section["26"] = Instance.new("UICorner", Section["25"]);
-				Section["26"]["CornerRadius"] = UDim.new(0, 4);
+                -- Header frame (contains title and toggle button)
+                Section["header"] = Instance.new("Frame", Section["25"])
+                Section["header"]["BorderSizePixel"] = 0
+                Section["header"]["BackgroundColor3"] = Color3.fromRGB(40, 40, 40)
+                Section["header"]["Size"] = UDim2.new(1, 0, 0, 30)
+                Section["header"]["BorderColor3"] = Color3.fromRGB(0, 0, 0)
+                Section["header"]["Name"] = "Header"
+                Section["header"]["Transparency"] = 0.2
 
+                -- Header corner rounding
+                Section["headerCorner"] = Instance.new("UICorner", Section["header"])
+                Section["headerCorner"]["CornerRadius"] = UDim.new(0, 4)
 
+                -- Title label
+                Section["28"] = Instance.new("TextLabel", Section["header"])
+                Section["28"]["BorderSizePixel"] = 0
+                Section["28"]["TextXAlignment"] = Enum.TextXAlignment.Left
+                Section["28"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255)
+                Section["28"]["TextSize"] = 14
+                Section["28"]["Font"] = Enum.Font.GothamBold
+                Section["28"]["TextColor3"] = options.color -- Use custom color
+                Section["28"]["BackgroundTransparency"] = 1
+                Section["28"]["Size"] = UDim2.new(1, -30, 1, 0)
+                Section["28"]["BorderColor3"] = Color3.fromRGB(0, 0, 0)
+                Section["28"]["Text"] = options.title
+                Section["28"]["Name"] = "Title"
+                Section["28"]["TextWrapped"] = true
 
-				
+                -- Subtitle label (only visible if subtitle exists)
+                if options.subtitle ~= "" then
+                    Section["subtitle"] = Instance.new("TextLabel", Section["header"])
+                    Section["subtitle"]["BorderSizePixel"] = 0
+                    Section["subtitle"]["TextXAlignment"] = Enum.TextXAlignment.Left
+                    Section["subtitle"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255)
+                    Section["subtitle"]["TextSize"] = 12
+                    Section["subtitle"]["Font"] = Enum.Font.Gotham
+                    Section["subtitle"]["TextColor3"] = Color3.fromRGB(200, 200, 200)
+                    Section["subtitle"]["BackgroundTransparency"] = 1
+                    Section["subtitle"]["Size"] = UDim2.new(1, -30, 0, 14)
+                    Section["subtitle"]["Position"] = UDim2.new(0, 0, 0, 16)
+                    Section["subtitle"]["BorderColor3"] = Color3.fromRGB(0, 0, 0)
+                    Section["subtitle"]["Text"] = options.subtitle
+                    Section["subtitle"]["Name"] = "Subtitle"
+                    Section["subtitle"]["TextWrapped"] = true
+                    
+                    -- Adjust header height if there's a subtitle
+                    Section["header"]["Size"] = UDim2.new(1, 0, 0, 44)
+                end
 
+                -- Toggle button (only visible if collapsible)
+                if options.collapsible then
+                    Section["toggle"] = Instance.new("ImageButton", Section["header"])
+                    Section["toggle"]["BorderSizePixel"] = 0
+                    Section["toggle"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255)
+                    Section["toggle"]["AnchorPoint"] = Vector2.new(1, 0.5)
+                    Section["toggle"]["Image"] = "rbxassetid://6031091003" -- Down arrow icon
+                    Section["toggle"]["ImageColor3"] = options.color
+                    Section["toggle"]["Size"] = UDim2.new(0, 20, 0, 20)
+                    Section["toggle"]["Position"] = UDim2.new(1, -5, 0.5, 0)
+                    Section["toggle"]["BorderColor3"] = Color3.fromRGB(0, 0, 0)
+                    Section["toggle"]["BackgroundTransparency"] = 1
+                    Section["toggle"]["Name"] = "Toggle"
+                    
+                    -- Rotate arrow if default is collapsed
+                    if options.defaultCollapsed then
+                        Section["toggle"].Rotation = -90
+                    end
+                end
 
+                -- Content frame (holds all section elements)
+                Section["content"] = Instance.new("Frame", Section["25"])
+                Section["content"]["BorderSizePixel"] = 0
+                Section["content"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255)
+                Section["content"]["BackgroundTransparency"] = 1
+                Section["content"]["Size"] = UDim2.new(1, 0, 0, 0)
+                Section["content"]["Position"] = UDim2.new(0, 0, 0, Section["header"].Size.Y.Offset)
+                Section["content"]["Name"] = "Content"
 
-				-- StarterLable.MyLibrary.Main.ContantContainer.HomeTab.Lable.Title
-				Section["28"] = Instance.new("TextLabel", Section["25"]);
-				Section["28"]["BorderSizePixel"] = 0;
-				Section["28"]["TextXAlignment"] = Enum.TextXAlignment.Left;
-				Section["28"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-				Section["28"]["TextSize"] = 14;
-				Section["28"]["Font"] = Enum.Font.GothamBold;
-				Section["28"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-				Section["28"]["BackgroundTransparency"] = 1;
-				Section["28"]["Size"] = UDim2.new(1, 0, 1, 0);
-				Section["28"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-				Section["28"]["Text"] = options.messege;
-				Section["28"]["Name"] = [[Title]];
-				Section["28"]["TextWrapped"] = true;
-				Section["28"]["TextYAlignment"] = Enum.TextYAlignment.Top;
+                -- Content layout
+                Section["contentLayout"] = Instance.new("UIListLayout", Section["content"])
+                Section["contentLayout"]["Padding"] = UDim.new(0, 6)
+                Section["contentLayout"]["SortOrder"] = Enum.SortOrder.LayoutOrder
 
+                -- Padding for content
+                Section["contentPadding"] = Instance.new("UIPadding", Section["content"])
+                Section["contentPadding"]["PaddingTop"] = UDim.new(0, 6)
+                Section["contentPadding"]["PaddingRight"] = UDim.new(0, 6)
+                Section["contentPadding"]["PaddingLeft"] = UDim.new(0, 6)
+                Section["contentPadding"]["PaddingBottom"] = UDim.new(0, 6)
 
+                -- Padding for header
+                Section["headerPadding"] = Instance.new("UIPadding", Section["header"])
+                Section["headerPadding"]["PaddingTop"] = UDim.new(0, 6)
+                Section["headerPadding"]["PaddingRight"] = UDim.new(0, 6)
+                Section["headerPadding"]["PaddingLeft"] = UDim.new(0, 6)
+                Section["headerPadding"]["PaddingBottom"] = UDim.new(0, 6)
+            end
 
-				-- StarterGui.MyLibrary.Main.ContentContainer.HomeTab.Warning.Title.Icon
-				--[[Lable["29"] = Instance.new("ImageLabel", Lable["28"]);
-				Lable["29"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-				Lable["29"]["ImageColor3"] = Color3.fromRGB(255, 255, 255);
-				Lable["29"]["Image"] = "rbxassetid://17722423440";
-				Lable["29"]["Size"] = UDim2.new(0, 14, 0, 14);
-				Lable["29"]["Name"] = [[Icon]]--;
-				--[[Lable["29"]["BackgroundTransparency"] = 1;
-				Lable["29"]["Position"] = UDim2.new(0, -20, 0, 0);]]
+            -- Update section size based on content
+            local function updateSectionSize()
+                if Section.Expanded then
+                    Section.ContentHeight = Section["contentLayout"].AbsoluteContentSize.Y + 12 -- Add padding
+                    Section["25"].Size = UDim2.new(1, 0, 0, Section["header"].Size.Y.Offset + Section.ContentHeight)
+                else
+                    Section["25"].Size = UDim2.new(1, 0, 0, Section["header"].Size.Y.Offset)
+                end
+            end
 
+            -- Connect layout changed event
+            Section["contentLayout"].Changed:Connect(updateSectionSize)
 
-				-- StarterLable.MyLibrary.Main.ContantContainer.HomeTab.Lable.UIPadding
-				Section["29"] = Instance.new("UIPadding", Section["25"]);
-				Section["29"]["PaddingTop"] = UDim.new(0, 6);
-				Section["29"]["PaddingRight"] = UDim.new(0, 6);
-				Section["29"]["PaddingLeft"] = UDim.new(0, 6);
-				Section["29"]["PaddingBottom"] = UDim.new(0, 6);
+            -- Methods
+            function Section:SetText(title, subtitle)
+                options.title = title or options.title
+                options.subtitle = subtitle or options.subtitle
+                
+                Section["28"].Text = options.title
+                if Section["subtitle"] then
+                    Section["subtitle"].Text = options.subtitle
+                end
+            end
 
-				--
-				--[[Lable["299"] = Instance.new("UIPadding", Lable["28"]);
-				Lable["299"]["PaddingLeft"] = UDim.new(0, 20);]]
-			end
+            function Section:SetColor(color)
+                options.color = color
+                Section["28"].TextColor3 = color
+                if Section["toggle"] then
+                    Section["toggle"].ImageColor3 = color
+                end
+            end
 
-			-- methods
-			function Section:SetText(text)
-				options.messege = text
-				Section:_update()
-			end
+            function Section:Toggle(expanded)
+                if not options.collapsible then return end
+                
+                if expanded == nil then
+                    Section.Expanded = not Section.Expanded
+                else
+                    Section.Expanded = expanded
+                end
+                
+                if Section.Expanded then
+                    Library:tween(Section["toggle"], {Rotation = 0}, 0.2)
+                    Library:tween(Section["25"], {
+                        Size = UDim2.new(1, 0, 0, Section["header"].Size.Y.Offset + Section.ContentHeight)
+                    }, 0.2)
+                else
+                    Library:tween(Section["toggle"], {Rotation = -90}, 0.2)
+                    Library:tween(Section["25"], {
+                        Size = UDim2.new(1, 0, 0, Section["header"].Size.Y.Offset)
+                    }, 0.2)
+                end
+            end
 
-			function Section:_update()
-				Section["28"].Text = options.messege
+            function Section:AddElement(element)
+                element.Parent = Section["content"]
+                return element
+            end
 
-				Section["28"].Size = UDim2.new(Section["28"].Size.X.Scale, Section["28"].Size.X.Offset, 0, math.huge)
-				Section["28"].Size = UDim2.new(Section["28"].Size.X.Scale, Section["28"].Size.X.Offset, 0, Section["28"].TextBounds.Y)
-				Section["25"].Size = UDim2.new(Section["25"].Size.X.Scale, Section["25"].Size.X.Offset, 0, Section["28"].TextBounds.Y + 12)
-			end
+            -- Connect toggle button if collapsible
+            if options.collapsible and Section["toggle"] then
+                Section["toggle"].MouseButton1Click:Connect(function()
+                    Section:Toggle()
+                end)
+                
+                -- Also allow clicking anywhere on header to toggle
+                Section["header"].MouseButton1Click:Connect(function()
+                    Section:Toggle()
+                end)
+            end
 
-			Section:_update()
-			return Section
-		end
+            -- Initialize size
+            updateSectionSize()
+            if options.defaultCollapsed then
+                Section:Toggle(false)
+            end
+
+            return Section
+        end
 		
 		function Tab:Toggle(options)
 			options = Library:validate({
