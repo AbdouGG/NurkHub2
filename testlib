@@ -420,28 +420,10 @@ function Library:CreateWindow(Settings: { Title: string, Size: UDim2, Transparen
 		Connect(MobileToggle.MouseButton1Click, Close)
 	end
 
+	-- Hide/Remove the traffic light buttons (Close, Maximize, Minimize)
 	for Index, Button in next, Sidebar.Top.Buttons:GetChildren() do
 		if Button:IsA("TextButton") then
-			local Name = Button.Name
-			Animations:Component(Button, true)
-
-			Connect(Button.MouseButton1Click, function() 
-				if Name == "Close" then
-					Close()
-				elseif Name == "Maximize" then
-					if Maximized then
-						Maximized = false
-						Tween(Window, .15, { Size = Setup.Size });
-					else
-						Maximized = true
-						Tween(Window, .15, { Size = UDim2.fromScale(1, 1), Position = UDim2.fromScale(0.5, 0.5 )});
-					end
-				elseif Name == "Minimize" then
-					Opened = false
-					Window.Visible = false
-					Blurs[Settings.Title].root.Parent = nil
-				end
-			end)
+			Button.Visible = false -- Hide these buttons
 		end
 	end
 
