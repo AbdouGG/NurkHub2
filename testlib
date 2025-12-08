@@ -1068,10 +1068,107 @@ function Library:CreateWindow(Settings: { Title: string, Size: UDim2, Transparen
 		end
 	end
 
-	SetProperty(Window, { Size = Settings.Size, Visible = true, Parent = Screen });
+	SetProperty(Window, { Size = windowSize, Visible = true, Parent = Screen });
 	Animations:Open(Window, Settings.Transparency or 0)
+	
+	--// Create floating toggle button function
+	function Options:CreateToggleButton(ButtonSettings)
+		ButtonSettings = ButtonSettings or {}
+		local BtnColor = ButtonSettings.Color or Theme.Primary
+		local BtnIcon = ButtonSettings.Icon or "☰"
+		local BtnSize = ButtonSettings.Size or 50
+		local BtnPosition = ButtonSettings.Position or UDim2.new(0, 15, 0.5, -25)
+		
+		local ToggleButton = Instance.new("TextButton")
+		ToggleButton.Name = "ToggleButton"
+		ToggleButton.Parent = Screen
+		ToggleButton.BackgroundColor3 = BtnColor
+		ToggleButton.Position = BtnPosition
+		ToggleButton.Size = UDim2.new(0, BtnSize, 0, BtnSize)
+		ToggleButton.Text = BtnIcon
+		ToggleButton.TextColor3 = Theme.Title
+		ToggleButton.TextSize = BtnSize * 0.45
+		ToggleButton.Font = Enum.Font.GothamBold
+		ToggleButton.AutoButtonColor = false
+		ToggleButton.ZIndex = 100
+		
+		local BtnCorner = Instance.new("UICorner")
+		BtnCorner.CornerRadius = UDim.new(0, 12)
+		BtnCorner.Parent = ToggleButton
+		
+		local BtnStroke = Instance.new("UIStroke")
+		BtnStroke.Parent = ToggleButton
+		BtnStroke.Thickness = 2
+		BtnStroke.Color = Theme.Outline
+		
+		-- Make draggable
+		Drag(ToggleButton)
+		
+		-- Connect to toggle visibility
+		Connect(ToggleButton.MouseButton1Click, function()
+			Close()
+			ToggleButton.Text = Opened and "✕" or "☰"
+		end)
+		
+		return ToggleButton
+	end
 
 	return Options
 end
+
+--// Built-in Themes
+Library.Themes = {
+	Dark = {
+		Primary = Color3.fromRGB(30, 30, 30),
+		Secondary = Color3.fromRGB(35, 35, 35),
+		Component = Color3.fromRGB(40, 40, 40),
+		Interactables = Color3.fromRGB(45, 45, 45),
+		Tab = Color3.fromRGB(200, 200, 200),
+		Title = Color3.fromRGB(240, 240, 240),
+		Description = Color3.fromRGB(200, 200, 200),
+		Shadow = Color3.fromRGB(0, 0, 0),
+		Outline = Color3.fromRGB(40, 40, 40),
+		Icon = Color3.fromRGB(220, 220, 220),
+	},
+	
+	Light = {
+		Primary = Color3.fromRGB(232, 232, 232),
+		Secondary = Color3.fromRGB(255, 255, 255),
+		Component = Color3.fromRGB(245, 245, 245),
+		Interactables = Color3.fromRGB(235, 235, 235),
+		Tab = Color3.fromRGB(50, 50, 50),
+		Title = Color3.fromRGB(0, 0, 0),
+		Description = Color3.fromRGB(100, 100, 100),
+		Shadow = Color3.fromRGB(255, 255, 255),
+		Outline = Color3.fromRGB(210, 210, 210),
+		Icon = Color3.fromRGB(100, 100, 100),
+	},
+	
+	Bloody = {
+		Primary = Color3.fromRGB(25, 10, 10),
+		Secondary = Color3.fromRGB(35, 15, 15),
+		Component = Color3.fromRGB(50, 20, 20),
+		Interactables = Color3.fromRGB(100, 30, 30),
+		Tab = Color3.fromRGB(255, 150, 150),
+		Title = Color3.fromRGB(255, 200, 200),
+		Description = Color3.fromRGB(200, 120, 120),
+		Shadow = Color3.fromRGB(0, 0, 0),
+		Outline = Color3.fromRGB(80, 25, 25),
+		Icon = Color3.fromRGB(255, 100, 100),
+	},
+	
+	Void = {
+		Primary = Color3.fromRGB(15, 15, 15),
+		Secondary = Color3.fromRGB(20, 20, 20),
+		Component = Color3.fromRGB(25, 25, 25),
+		Interactables = Color3.fromRGB(30, 30, 30),
+		Tab = Color3.fromRGB(200, 200, 200),
+		Title = Color3.fromRGB(240, 240, 240),
+		Description = Color3.fromRGB(200, 200, 200),
+		Shadow = Color3.fromRGB(0, 0, 0),
+		Outline = Color3.fromRGB(40, 40, 40),
+		Icon = Color3.fromRGB(220, 220, 220),
+	},
+}
 
 return Library
