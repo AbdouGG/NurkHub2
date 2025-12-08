@@ -420,10 +420,31 @@ function Library:CreateWindow(Settings: { Title: string, Size: UDim2, Transparen
 		Connect(MobileToggle.MouseButton1Click, Close)
 	end
 
-	-- Hide/Remove the traffic light buttons (Close, Maximize, Minimize)
+	-- Replace traffic light buttons with UI Title
+	local TitleLabel = nil
 	for Index, Button in next, Sidebar.Top.Buttons:GetChildren() do
 		if Button:IsA("TextButton") then
-			Button.Visible = false -- Hide these buttons
+			Button.Visible = false -- Hide the buttons
+		end
+	end
+	
+	-- Create title label in place of buttons
+	TitleLabel = Instance.new("TextLabel")
+	TitleLabel.Name = "UITitle"
+	TitleLabel.Parent = Sidebar.Top
+	TitleLabel.BackgroundTransparency = 1
+	TitleLabel.Position = UDim2.new(0, 10, 0, 0)
+	TitleLabel.Size = UDim2.new(1, -20, 1, 0)
+	TitleLabel.Font = Enum.Font.GothamBold
+	TitleLabel.Text = Settings.Title or "Hub"
+	TitleLabel.TextColor3 = Theme.Title
+	TitleLabel.TextSize = 14
+	TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+	
+	-- Function to change the title
+	function Options:SetTitle(newTitle)
+		if TitleLabel then
+			TitleLabel.Text = newTitle
 		end
 	end
 
