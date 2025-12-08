@@ -422,11 +422,14 @@ function Library:CreateWindow(Settings: { Title: string, Size: UDim2, Transparen
 
 	-- Replace traffic light buttons with UI Title
 	local TitleLabel = nil
-	for Index, Button in next, Sidebar.Top.Buttons:GetChildren() do
-		if Button:IsA("TextButton") then
-			Button.Visible = false -- Hide the buttons
+	-- Hide ALL elements in the buttons area (including dots/frames)
+	for Index, Element in next, Sidebar.Top.Buttons:GetChildren() do
+		if Element:IsA("GuiObject") then
+			Element.Visible = false
 		end
 	end
+	-- Also hide the Buttons container itself
+	Sidebar.Top.Buttons.Visible = false
 	
 	-- Create title label in place of buttons
 	TitleLabel = Instance.new("TextLabel")
