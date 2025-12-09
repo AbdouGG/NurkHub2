@@ -893,8 +893,11 @@ function Library:CreateWindow(Settings: { Title: string, Size: UDim2, Transparen
 					if count > 0 then
 						Text.Text = count .. " selected"
 					else
-						Text.Text = "None"
+						Text.Text = "Select Items..."
 					end
+					
+					-- IMPORTANT: For multi-select, we do NOT close the dropdown
+					-- This allows selecting multiple items easily
 					
 					-- Call callback with current selections
 					Settings.Callback(SelectedItems)
