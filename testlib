@@ -720,10 +720,14 @@ function Library:CreateWindow(Settings: { Title: string, Size: UDim2, Transparen
 		})
 	end
 
-	function Options:AddDropdown(Settings: { Title: string, Description: string, Options: {}, Tab: Instance, Callback: any }) 
+	function Options:AddDropdown(Settings: { Title: string, Description: string, Options: {}, Tab: Instance, Callback: any, OptionsFunc: any? }) 
 		local Dropdown = Clone(Components["Dropdown"]);
 		local Title, Description = Options:GetLabels(Dropdown);
 		local Text = Dropdown["Main"].Options;
+		
+		-- Store current options (can be updated dynamically)
+		local CurrentOptions = Settings.Options or {}
+		local OptionsFunc = Settings.OptionsFunc -- Function to get fresh options
 
 		Connect(Dropdown.MouseButton1Click, function()
 			local Example = Clone(Examples["DropdownExample"]);
@@ -746,7 +750,10 @@ function Library:CreateWindow(Settings: { Title: string, Size: UDim2, Transparen
 				end
 			end
 
-			for Index, Option in next, Settings.Options do
+			-- Use OptionsFunc if provided to get fresh options each time dropdown opens
+			local OptionsToShow = OptionsFunc and OptionsFunc() or CurrentOptions
+			
+			for Index, Option in next, OptionsToShow do
 				local Button = Clone(Examples["DropdownButtonExample"]);
 				local Title, Description = Options:GetLabels(Button);
 				local Selected = Button["Value"];
@@ -790,6 +797,28 @@ function Library:CreateWindow(Settings: { Title: string, Size: UDim2, Transparen
 			Parent = Settings.Tab,
 			Visible = true,
 		})
+		
+		-- Return controller object for dynamic updates
+		local Controller = {}
+		
+		-- Update options dynamically
+		function Controller:SetOptions(NewOptions)
+			CurrentOptions = NewOptions
+		end
+		
+		-- Set selected text
+		function Controller:SetText(NewText)
+			Text.Text = NewText
+		end
+		
+		-- Refresh options using OptionsFunc
+		function Controller:Refresh()
+			if OptionsFunc then
+				CurrentOptions = OptionsFunc()
+			end
+		end
+		
+		return Controller
 	end
 
 	function Options:AddSlider(Settings: { Title: string, Description: string, MaxValue: number, AllowDecimals: boolean, DecimalAmount: number, Tab: Instance, Callback: any }) 
