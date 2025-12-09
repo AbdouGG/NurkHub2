@@ -821,6 +821,119 @@ function Library:CreateWindow(Settings: { Title: string, Size: UDim2, Transparen
 		return Controller
 	end
 
+	-- Multi-select dropdown function
+	function Options:AddMultiDropdown(Settings: { Title: string, Description: string, Options: {}, Tab: Instance, Callback: any, OptionsFunc: any? }) 
+		local Dropdown = Clone(Components["Dropdown"]);
+		local Title, Description = Options:GetLabels(Dropdown);
+		local Text = Dropdown["Main"].Options;
+		
+		-- Store current options and selections
+		local CurrentOptions = Settings.Options or {}
+		local OptionsFunc = Settings.OptionsFunc
+		local SelectedItems = {} -- Table to store selected items
+
+		Connect(Dropdown.MouseButton1Click, function()
+			local Example = Clone(Examples["DropdownExample"]);
+			local Buttons = Example["Top"]["Buttons"];
+
+			Tween(BG, .25, { BackgroundTransparency = 0.6 });
+			SetProperty(Example, { Parent = Window });
+			Animations:Open(Example, 0, true)
+
+			-- Close button
+			for Index, Button in next, Buttons:GetChildren() do
+				if Button:IsA("TextButton") then
+					Animations:Component(Button, true)
+					Connect(Button.MouseButton1Click, function()
+						Tween(BG, .25, { BackgroundTransparency = 1 });
+						Animations:Close(Example);
+						task.wait(2)
+						Destroy(Example);
+					end)
+				end
+			end
+
+			-- Use OptionsFunc if provided to get fresh options each time dropdown opens
+			local OptionsToShow = OptionsFunc and OptionsFunc() or CurrentOptions
+			
+			for Index, Option in next, OptionsToShow do
+				local Button = Clone(Examples["DropdownButtonExample"]);
+				local BtnTitle, BtnDescription = Options:GetLabels(Button);
+				local Selected = Button["Value"];
+				
+				-- Check if this item is already selected
+				local isSelected = SelectedItems[Index] ~= nil
+				Selected.Value = isSelected
+				if isSelected then
+					Button.BackgroundColor3 = Theme.Interactables
+				end
+
+				Animations:Component(Button);
+				SetProperty(BtnTitle, { Text = Index });
+				SetProperty(Button, { Parent = Example.ScrollingFrame, Visible = true });
+				Destroy(BtnDescription);
+
+				Connect(Button.MouseButton1Click, function() 
+					local NewValue = not Selected.Value 
+					Selected.Value = NewValue
+
+					if NewValue then
+						-- Add to selections
+						SelectedItems[Index] = Option
+						Tween(Button, .25, { BackgroundColor3 = Theme.Interactables });
+					else
+						-- Remove from selections
+						SelectedItems[Index] = nil
+						Tween(Button, .25, { BackgroundColor3 = Theme.Component });
+					end
+					
+					-- Update display text with count
+					local count = 0
+					for _ in pairs(SelectedItems) do count = count + 1 end
+					if count > 0 then
+						Text.Text = count .. " selected"
+					else
+						Text.Text = "None"
+					end
+					
+					-- Call callback with current selections
+					Settings.Callback(SelectedItems)
+				end)
+			end
+		end)
+
+		Animations:Component(Dropdown);
+		SetProperty(Title, { Text = Settings.Title });
+		SetProperty(Description, { Text = Settings.Description });
+		SetProperty(Dropdown, {
+			Name = Settings.Title,
+			Parent = Settings.Tab,
+			Visible = true,
+		})
+		
+		-- Return controller object
+		local Controller = {}
+		
+		function Controller:SetOptions(NewOptions)
+			CurrentOptions = NewOptions
+		end
+		
+		function Controller:SetText(NewText)
+			Text.Text = NewText
+		end
+		
+		function Controller:GetSelected()
+			return SelectedItems
+		end
+		
+		function Controller:ClearSelection()
+			SelectedItems = {}
+			Text.Text = "None"
+		end
+		
+		return Controller
+	end
+
 	function Options:AddSlider(Settings: { Title: string, Description: string, MaxValue: number, AllowDecimals: boolean, DecimalAmount: number, Tab: Instance, Callback: any }) 
 		local Slider = Clone(Components["Slider"]);
 		local Title, Description = Options:GetLabels(Slider);
