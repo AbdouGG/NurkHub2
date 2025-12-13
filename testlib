@@ -1016,6 +1016,18 @@ function Library:CreateWindow(Settings: { Title: string, Size: UDim2, Transparen
 			Parent = Settings.Tab,
 			Visible = true,
 		})
+
+		local Controller = {}
+
+		function Controller:SetText(Text)
+			Description.Text = Text
+		end
+
+		function Controller:SetTitle(Text)
+			Title.Text = Text
+		end
+
+		return Controller
 	end
 
 	local Themes = {
