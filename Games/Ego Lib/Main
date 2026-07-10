@@ -807,7 +807,7 @@ function Library.new(title)
         AnchorPoint = Vector2.new(0.5, 0.5),
         Position = UDim2.new(0.5, 0, 0.5, 0),
         Size = UDim2.new(0.52, 0, 0.52, 0),
-        Image = "rbxassetid://6031075929", -- eye open
+        Image = "rbxassetid://10723346959", -- eye open
         ZIndex = 101,
     })
     themed(floatIcon, "ImageColor3", "Text")
@@ -826,7 +826,7 @@ function Library.new(title)
         tween(floatIcon, { ImageTransparency = 1 }, 0.06)
         task.spawn(function()
             task.wait(0.06)
-            floatIcon.Image = windowVisible and "rbxassetid://6031075929" or "rbxassetid://6031075941"
+            floatIcon.Image = windowVisible and "rbxassetid://10723346959" or "rbxassetid://10723346871"
             tween(floatIcon, { ImageTransparency = 0 }, 0.08)
         end)
 
